@@ -788,8 +788,88 @@
                 <td><code>F.01</code>: Nhập Company Code, chọn <code>ALV Tree Control</code> (hoặc <code>SIM1</code> trên Fiori). <code>ZITM</code>: Mua lại báo cáo bị khóa (€5,000). <code>ZRPA</code>: Công cụ AI (Event 8).</td>
                 <td>Tuyệt đối giữ số dư <code>113300 Bank Cash Account &gt; €0</code> mọi lúc để không bị Weizen Bank phạt thấu chi làm tụt Credit Rating!</td>
               </tr>
+              <tr>
+                <td>Vượt Khóa Báo Cáo</td>
+                <td><span class="badge-tcode emerald">MD07</span> • <span class="badge-tcode">ZODATA</span></td>
+                <td>Stock &amp; Requirements List</td>
+                <td>Chọn <code>Collective Access</code> &rarr; Nhập <code>Plant = Mã đội</code> &rarr; <code>Continue</code> &rarr; Chọn cả 6 mã <code>T01..T06</code></td>
+                <td><strong>Vũ khí bí mật chống Event 5 (System Glitch):</strong> <code>MD07</code> là T-code gốc của SAP nên <strong>không bị khóa</strong>, hiển thị cả <code>Stock</code> (ZMB52) lẫn <code>POitem</code> (ZME2N) miễn phí €0!</td>
+              </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- 8 Hidden Engine Algorithms of Preset 3 -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              8 Thuật Toán Ngầm &amp; Cơ Chế Ẩn Trong Mã Nguồn SAP — Logistics Sustainability (Preset 3)
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">
+              Khám phá từ mã macro <code>vbaProject.bin</code> của bộ slide <em>Logistics Sustainability w/Disruptors</em>, <em>Slides Logistics C2C</em> và <em>Participant's Guide 2024–2025</em>.
+            </p>
+          </div>
+          <span class="badge-tcode rose">8 Hidden ABAP Mechanics</span>
+        </div>
+
+        <div class="grid-2">
+          <div class="stat-box" style="border-left: 3px solid #10b981;">
+            <strong style="color:#34d399; font-size:0.84rem;">1. Lỗ Hổng T-Code <code>MD07</code> Vô Hiệu Hóa Event 5 (System Glitch — Tiết kiệm €5,000–€15,000)</strong>
+            <p style="font-size:0.78rem; color:#cbd5e1; margin-top:0.35rem;">
+              Khi dính <em>Event 5: System Glitch</em> (khóa <code>ZMB52</code>, <code>ZME2N</code>, <code>ZVC2</code>, <code>ZVA05</code> và các ô Fiori <code>SSB</code>, đòi €5,000/báo cáo trong <code>ZITM</code>), hệ thống chỉ khóa các báo cáo tùy chỉnh chữ <code>Z</code>. Bạn chỉ cần gõ T-code chuẩn <strong><code>MD07</code></strong> (chọn <em>Collective Access</em> theo <em>Plant</em>) để xem trực tiếp cả <strong>Tồn kho hiện tại (<code>Stock</code>)</strong> lẫn <strong>Đơn PO đang về &amp; Ngày giao (<code>POitem</code>)</strong> của cả 6 mã sữa với chi phí <strong>€0</strong>!
+            </p>
+          </div>
+
+          <div class="stat-box" style="border-left: 3px solid #3b82f6;">
+            <strong style="color:#60a5fa; font-size:0.84rem;">2. Quy Luật "12 Cửa Hàng × 4 Kệ Hàng Cố Định" (Trang 10 &amp; 18 Participant's Guide)</strong>
+            <p style="font-size:0.78rem; color:#cbd5e1; margin-top:0.35rem;">
+              Thị trường có đúng <strong>12 cửa hàng bán lẻ (4 cửa hàng mỗi vùng NO / SO / WE)</strong>, và mỗi cửa hàng chỉ bày bán <strong>4 trên 6 mặt hàng sữa</strong> với thị hiếu <strong>CỐ ĐỊNH 100% từ Ngày 1 đến hết game</strong>. Ngay khi có dữ liệu <code>ZVA05</code> ở Ngày 3–4 Hiệp 1, hãy dán vào Tab 1: tỷ lệ <code>NO : SO : WE</code> tìm ra ở Hiệp 1 là <strong>bất biến suốt cả 4 hiệp</strong>! Tuyệt đối không chia đều 1/3 vì hàng đã chuyển tới kho vùng nào sẽ bị khóa cứng ở vùng đó cho đến khi bán hết.
+            </p>
+          </div>
+
+          <div class="stat-box" style="border-left: 3px solid #f59e0b;">
+            <strong style="color:#fbbf24; font-size:0.84rem;">3. Thuật Toán Gộp Đơn PO Trong <code>ME59N</code> &amp; Chu Kỳ Đặt Hàng 3 Ngày/Lần (Trang 34)</strong>
+            <p style="font-size:0.78rem; color:#cbd5e1; margin-top:0.35rem;">
+              <code>ME59N</code> tự động gom tất cả yêu cầu mua hàng có <strong>cùng 1 Vendor</strong> vào <strong>1 đơn PO duy nhất</strong>. Nếu cả 6 mã đều chọn <code>V04</code>, bạn chỉ tốn <strong>1 lần phí €1,000 + 100kg CO₂e</strong> cho cả 6 mã. Ngược lại, nếu chia 2 nhà cung cấp hoặc bấm <code>ME59N</code> lắt nhắt mỗi ngày, bạn sẽ mất gấp 3–4 lần phí PO! Chiến thuật tối ưu: Đặt <em>Phủ hàng = 5 ngày</em> và chỉ bấm <code>MD61 &rarr; MD01 &rarr; ME59N</code> mỗi <strong>3 ngày/lần</strong> (tiết kiệm €7,000/hiệp).
+            </p>
+          </div>
+
+          <div class="stat-box" style="border-left: 3px solid #f43f5e;">
+            <strong style="color:#fb7185; font-size:0.84rem;">4. Bộ Lọc <code>Min Qty</code> Khi Tạm Bật <code>Sales from Sloc 3</code> Ở Ngày 1 (Job Aid Preset 3)</strong>
+            <p style="font-size:0.78rem; color:#cbd5e1; margin-top:0.35rem;">
+              Trong <code>ZMB1B</code>, bên cạnh ô <code>Sales from Sloc 3 (Use 03)</code> có ô <strong><code>Min Qty</code></strong>. Ở Ngày 1 Hiệp 1 (khi hàng chưa kịp ra kho vùng), nếu bật <code>Use 03</code> mà để <code>Min Qty</code> quá nhỏ, bot khách hàng đặt đơn lẻ 10–15 hộp cũng được xuất từ kho <code>03</code> và bị trừ cứng <strong>€350 + 300kg CO₂e/đơn</strong> (lỗ nặng!). Hãy đặt <strong><code>Min Qty = 80</code></strong> trong Ngày 1 để chỉ nhận đơn sỉ lớn, và <strong>bỏ tích <code>Sales from Sloc 3</code> ngay đầu Ngày 2</strong>!
+            </p>
+          </div>
+
+          <div class="stat-box" style="border-left: 3px solid #8b5cf6;">
+            <strong style="color:#a78bfa; font-size:0.84rem;">5. Quy Tắc Chia Tỷ Lệ Tự Động Khi Kho Tổng <code>03</code> Thiếu Hàng (Trang 14 &amp; 15)</strong>
+            <p style="font-size:0.78rem; color:#cbd5e1; margin-top:0.35rem;">
+              Khi đến ngày chạy chuyến xe <code>ZMB1B</code>, nếu tồn kho tại kho tổng <code>03</code> ít hơn tổng lượng cần chuyển ra 3 miền, thuật toán SAP sẽ <strong>tự động chia toàn bộ hàng hiện có ở kho <code>03</code> theo đúng tỷ lệ tương đối (Proportional Split)</strong> giữa <code>03N : 03S : 03W</code> mà bạn đã cài. Ngoài ra, phí <strong>€100 + 50kg CO₂e</strong> tính theo <strong>mỗi chuyến xe về 1 miền</strong> (bất kể chở nhiều hay ít hộp), nên đặt <code>Frequency = 2 hoặc 3 ngày</code> sẽ giảm 50%–67% phí chuyển kho!
+            </p>
+          </div>
+
+          <div class="stat-box" style="border-left: 3px solid #06b6d4;">
+            <strong style="color:#22d3ee; font-size:0.84rem;">6. Hàm Bậc Thang Container Vượt Kho <code>4,000 Units</code> &amp; Khóa <code>3,950 u</code> (Slide 12)</strong>
+            <p style="font-size:0.78rem; color:#cbd5e1; margin-top:0.35rem;">
+              Phí phạt vượt kho không tính theo từng hộp mà làm tròn lên theo <strong>từng Container 1,000 units</strong> (<code>Math.ceil((Stock - 4000) / 1000)</code>). Nghĩa là tồn kho <code>4,000 units</code> phạt <strong>€0</strong>, nhưng chỉ cần nhảy lên <strong><code>4,001 units</code> (lố 1 hộp)</strong> là bị trừ ngay <strong>€300 tiền mặt + 500kg CO₂e trong ngày hôm đó</strong>! Đó là lý do bộ tự động của chúng ta luôn khóa tổng <code>MD61 Target &le; 3,950 units</code>.
+            </p>
+          </div>
+
+          <div class="stat-box" style="border-left: 3px solid #ec4899;">
+            <strong style="color:#f472b6; font-size:0.84rem;">7. Độ Trễ Hạch Toán <code>MIGO &rarr; MIRO</code> Làm Tụt Hạng Tín Dụng Cuối Hiệp (Slide 31 &amp; 34)</strong>
+            <p style="font-size:0.78rem; color:#cbd5e1; margin-top:0.35rem;">
+              Ngay giây phút hàng PO cập kho <code>03</code>, bút toán <code>MIRO</code> tự động ghi tăng nợ phải trả <strong><code>160000 Accounts Payable (AP)</code></strong>, làm giảm trực tiếp <code>Debt Loading = (Cash + AR) - (Loans + AP)</code>, trong khi hàng tồn kho <code>792000</code> không được tính vào tử số! Vì vậy ở <strong>3 ngày cuối của Hiệp Cuối (Ngày 8–10)</strong>, nếu bạn còn bấm <code>ME59N</code>, hàng về kho sẽ làm phình <code>AP</code> và tụt hạng <code>AAA+</code> đúng lúc hết giờ!
+            </p>
+          </div>
+
+          <div class="stat-box" style="border-left: 3px solid #14b8a6;">
+            <strong style="color:#2dd4bf; font-size:0.84rem;">8. Định Giá Tồn Kho Cuối Game Bằng Giá Mua Trên P&amp;L (Trang 18 &amp; Slide 49)</strong>
+            <p style="font-size:0.78rem; color:#cbd5e1; margin-top:0.35rem;">
+              Trong SAP S/4HANA, tiền mua hàng nằm ở tài sản <code>792000 Finished goods</code> và chỉ bị trừ vào chi phí giá vốn <code>400020 COGS</code> khi thực sự xuất bán cho khách (<code>VL01N Goods Issue</code>). Hàng tồn kho còn dư ở Ngày 10 Hiệp Cuối <strong>được giữ nguyên giá trị bằng giá mua, KHÔNG bị tính là chi phí lỗ</strong>! Vì vậy: Cuối game hãy <strong>ngừng mua mới</strong> để gom tiền mặt lên <code>AAA+</code>, nhưng <strong>tuyệt đối không bán phá giá dưới giá vốn</strong>!
+            </p>
+          </div>
         </div>
       </div>
     </section>
