@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ERPsim Command Center — Hệ Thống Ánh Xạ Ngược & Tối Ưu Hóa Thuật Toán</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- TOP TELEMETRY HEADER -->
+  <header class="top-header">
+    <div class="brand-block">
+      <div class="brand-logo">ERP</div>
+      <div class="brand-title">
+        <h1>
+          ERPsim Reverse-Engineering Command Center
+          <span class="badge-tcode emerald">HEC Montréal MNL Engine</span>
+        </h1>
+        <p>Hệ thống Giải ngược Hàm Cầu, Tối ưu Giá (VK32), Quảng cáo Vùng (ZADS), Sản xuất (478000) & Định giá Công ty (AAA+)</p>
+      </div>
+    </div>
+
+    <div class="telemetry-strip">
+      <a href="cam_nang_erpsim.html" class="btn btn-primary" style="text-decoration:none; padding:0.5rem 0.9rem; font-size:0.8rem;">
+        📖 Mở Cẩm Nang Chiến Thuật (HTML)
+      </a>
+      <div class="kpi-pill">
+        <span class="label">Định giá Công ty (Valuation)</span>
+        <span class="val" id="top-valuation" style="color: #10b981;">€0</span>
+      </div>
+      <div class="kpi-pill">
+        <span class="label">Hạng Tín Dụng / Risk</span>
+        <span class="val" id="top-credit" style="color: #34d399;">AAA+ (3.00%)</span>
+      </div>
+      <div class="kpi-pill">
+        <span class="label">Debt Loading (Nợ ròng)</span>
+        <span class="val" id="top-debt-loading">€0</span>
+      </div>
+      <div class="kpi-pill">
+        <span class="label">Setup Time (TK 478000)</span>
+        <span class="val" id="top-setup-time" style="color: #60a5fa;">4.00 giờ</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVIGATION TABS -->
+  <nav class="nav-tabs">
+    <button class="tab-btn active" data-tab="tab-logistics-disruptors" style="border-color: rgba(16, 185, 129, 0.45);">
+      ★ Logistics Sustainability (Preset 3) & 8 Disruptors
+    </button>
+    <button class="tab-btn" data-tab="tab-valuation">
+      1. Định Giá & Tín Dụng (Valuation & AAA+)
+    </button>
+    <button class="tab-btn" data-tab="tab-pricing">
+      2. Ánh Xạ Ngược Cầu & Giá Tối Ưu (VK32 / ZMARKET)
+    </button>
+    <button class="tab-btn" data-tab="tab-marketing">
+      3. Ma Trận Thị Hiếu Vùng & Quảng Cáo (ZADS / ZVC2)
+    </button>
+    <button class="tab-btn" data-tab="tab-production">
+      4. Sản Xuất, Setup Time (478000) & Carbon CO2e
+    </button>
+    <button class="tab-btn" data-tab="tab-odata">
+      5. Nhập Bảng SAP (ZVC2/ZMARKET) & Kết Nối OData
+    </button>
+    <button class="tab-btn" data-tab="tab-handbook">
+      6. Cẩm Nang Nút Bấm, T-Code & Quy Trình Chuẩn
+    </button>
+  </nav>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="main-container">
+
+    <!-- ================================================================= -->
+    <!-- TAB 0 (NEW): LOGISTICS SUSTAINABILITY (PRESET 3) & 8 DISRUPTORS   -->
+    <!-- ================================================================= -->
+    <section id="tab-logistics-disruptors" class="tab-pane active">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              Bộ Giải Thuật Toán Logistics Sustainability (Preset 3 - Dairy) & 8 Sự Kiện Xúc Xắc (Disruptors)
+              <span class="badge-tcode emerald">MD61: $$-T</span>
+              <span class="badge-tcode amber">ZME12: V04 vs V08</span>
+              <span class="badge-tcode">ZMB1B: 03 -> 03N/S/W</span>
+              <span class="badge-tcode rose">VK32: DC 16</span>
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">
+              Khớp 100% với 2 file <strong>ERPsim Logistics Sustainability Disruptors Guide (Rev 2.0)</strong> & <strong>Preset 3 Job Aid</strong>. Khi giảng viên tung xúc xắc trúng sự kiện nào, hãy bật công tắc sự kiện đó bên dưới để hệ thống tính lại Nhà cung cấp tối ưu (V04 hay V08), Giá vốn đã cộng Thuế Carbon và Giá bán tối ưu trên kênh DC 16!
+            </p>
+          </div>
+        </div>
+
+        <!-- Controls & Active Disruptor Switches -->
+        <div class="grid-2" style="margin-bottom: 1rem;">
+          <div class="stat-box">
+            <div class="s-label" style="color:#60a5fa; font-weight:700; margin-bottom:0.6rem;">THÔNG SỐ VẬN HÀNH & KHO BÃI HIỆN TẠI (PRESET 3)</div>
+            <div class="form-grid" style="grid-template-columns: repeat(3, 1fr);">
+              <div class="form-group">
+                <label>Thuế Carbon Gốc (€/kg)</label>
+                <input type="number" id="log-base-tax" class="form-control" value="0.10" step="0.05" />
+              </div>
+              <div class="form-group">
+                <label>Cỡ lô đặt mỗi PO (Units)</label>
+                <input type="number" id="log-po-lot" class="form-control" value="600" step="100" />
+              </div>
+              <div class="form-group">
+                <label>Tổng Tồn Kho 4 Kho (ZMB52)</label>
+                <input type="number" id="log-total-stock" class="form-control" value="3600" step="200" />
+              </div>
+              <div class="form-group">
+                <label>Số chuyến ZMB1B / ngày</label>
+                <input type="number" id="log-transfers-day" class="form-control" value="3" min="0" max="20" />
+              </div>
+              <div class="form-group">
+                <label>Đơn bán từ Kho Vùng/ngày</label>
+                <input type="number" id="log-reg-orders" class="form-control" value="32" min="0" max="100" />
+              </div>
+              <div class="form-group">
+                <label>Đơn bán từ Kho Tổng 03</label>
+                <input type="number" id="log-dir-orders" class="form-control" value="0" min="0" max="100" />
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-box" style="border-left: 3px solid #f59e0b;">
+            <div class="s-label" style="color:#fbbf24; font-weight:700; margin-bottom:0.6rem;">BẬT / TẮT 8 SỰ KIỆN XÚC XẮC NGẪU NHIÊN (CUMULATIVE DISRUPTORS)</div>
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 0.55rem;">
+              <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="checkbox" id="dis-1-cold" /> <strong>1. Cold Spell</strong> (+5kg CO2/unit)
+              </label>
+              <select id="dis-1-combo" class="form-control" style="padding:0.25rem 0.4rem; font-size:0.76rem;">
+                <option value="T01_T02">Xúc xắc 1: Milk (T01) & Cream (T02)</option>
+                <option value="T01_T03">Xúc xắc 2: Milk (T01) & Yoghurt (T03)</option>
+                <option value="T01_T05">Xúc xắc 3: Milk (T01) & Butter (T05)</option>
+                <option value="T02_T03">Xúc xắc 4: Cream (T02) & Yoghurt (T03)</option>
+                <option value="T02_T05">Xúc xắc 5: Cream (T02) & Butter (T05)</option>
+                <option value="T03_T05">Xúc xắc 6: Yoghurt (T03) & Butter (T05)</option>
+              </select>
+
+              <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="checkbox" id="dis-2-carbon" /> <strong>2. Carbon Decree</strong> (+€0.20/kg Tax)
+              </label>
+              <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="checkbox" id="dis-4-gridlock" /> <strong>4. Hub Gridlock</strong> (Tắc kho tổng 03)
+              </label>
+
+              <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="checkbox" id="dis-3-supplier" /> <strong>3. Supplier Disruption</strong>
+              </label>
+              <select id="dis-3-vendor" class="form-control" style="padding:0.25rem 0.4rem; font-size:0.76rem;">
+                <option value="V04">Xúc xắc 1: V04 bị phạt (+2.5kg/unit, +200kg/PO)</option>
+                <option value="V08">Xúc xắc 2: V08 bị phạt (+2.5kg/unit, +200kg/PO)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI Summary Strip for Logistics Preset 3 -->
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="s-label">THUẾ SUẤT CARBON HIỆU LỰC</div>
+            <div class="s-value" id="log-eff-tax" style="color:#fbbf24;">€0.10 / kg CO2e</div>
+            <div class="s-sub">Tăng +€0.05 mỗi Round (+€0.20 nếu Carbon Decree)</div>
+          </div>
+          <div class="stat-box">
+            <div class="s-label">PHÍ PHẠT VƯỢT KHO (> 4,000 UNITS)</div>
+            <div class="s-value" id="log-overstock-fee" style="color:#10b981;">€0 / ngày</div>
+            <div class="s-sub" id="log-overstock-co2">Vượt 0 units (0 kg CO2e/ngày)</div>
+          </div>
+          <div class="stat-box">
+            <div class="s-label">TỔNG PHÍ VẬN CHUYỂN + THUẾ CARBON/NGÀY</div>
+            <div class="s-value" id="log-daily-total-cost" style="color:#fb7185;">€0 / ngày</div>
+            <div class="s-sub" id="log-daily-co2-sub">Phát thải vận hành: 0 kg CO2e/ngày</div>
+          </div>
+          <div class="stat-box">
+            <div class="s-label">SỐ TIỀN MẤT NẾU BÁN TỪ KHO TỔNG 03</div>
+            <div class="s-value" id="log-direct-loss" style="color:#f43f5e;">-€372.50 / đơn</div>
+            <div class="s-sub">Luôn bỏ tích "Use 03" trong ZMB1B khi kho vùng có hàng!</div>
+          </div>
+        </div>
+
+        <!-- 6 Dairy Products Vendor & Pricing Solver Table -->
+        <div class="table-wrap" style="margin-bottom: 1.25rem;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Mã Sản Phẩm Dairy</th>
+                <th>Tồn Đầu Kỳ</th>
+                <th>Giá Gốc V04 (Lead 1-2d)</th>
+                <th>Giá Gốc V08 (Lead 1-4d)</th>
+                <th>CO2/Unit (V04 | V08)</th>
+                <th>Giá Vốn Thực Đã Cộng Ship & Carbon (V04)</th>
+                <th>Giá Vốn Thực Đã Cộng Ship & Carbon (V08)</th>
+                <th>CHỌN NCC TỐI ƯU (ZME12)</th>
+                <th>Ngưỡng Lô Hòa Vốn V04</th>
+                <th>Giá Khởi Điểm</th>
+                <th>GIÁ BÁN TỐI ƯU VK32 (KÊNH DC 16)</th>
+                <th>Lãi Ròng /Unit</th>
+              </tr>
+            </thead>
+            <tbody id="logistics-sku-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- 8 Disruptors Tactical Counter-Playbook -->
+        <div class="panel-header" style="margin-top: 0.5rem;">
+          <div class="panel-title">Bảng Chiến Thuật Phản Công Tức Thì Cho Cả 8 Sự Kiện Xúc Xắc (Disruptors Playbook)</div>
+          <span class="badge-tcode">ZCONTROL / ZSTART</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Sự Kiện (Disruptor)</th>
+                <th>Tác Động Vào Thuật Toán Hệ Thống SAP</th>
+                <th>Chiến Thuật Khắc Chế & Thao Tác Nút Bấm Để Chiến Thắng</th>
+              </tr>
+            </thead>
+            <tbody id="logistics-disruptors-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 1: COMPANY VALUATION & 21-TIER CREDIT RATING OPTIMIZER        -->
+    <!-- ================================================================= -->
+    <section id="tab-valuation" class="tab-pane">
+      <div class="grid-sidebar">
+        <!-- Input Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              Nhập Chỉ Số Tài Chính <span class="badge-tcode">F.01</span> <span class="badge-tcode">ZFF7B</span>
+            </div>
+            <button class="btn btn-outline" id="btn-load-endgame-demo" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+              Mẫu Round 3
+            </button>
+          </div>
+
+          <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="form-group">
+              <label>Lợi nhuận hiện tại (€)</label>
+              <input type="number" id="val-profit" class="form-control" value="1850000" step="50000" />
+            </div>
+            <div class="form-group">
+              <label>Số dư TK 478000 (Lean €)</label>
+              <input type="number" id="val-setup-inv" class="form-control" value="500000" step="50000" />
+            </div>
+            <div class="form-group">
+              <label>Số ngày đã chạy (Elapsed)</label>
+              <input type="number" id="val-elapsed" class="form-control" value="42" min="1" max="120" />
+            </div>
+            <div class="form-group">
+              <label>Tổng số Round</label>
+              <input type="number" id="val-rounds" class="form-control" value="3" min="1" max="6" />
+            </div>
+            <div class="form-group">
+              <label>Số ngày / Round</label>
+              <input type="number" id="val-steps-round" class="form-control" value="20" min="5" max="30" />
+            </div>
+            <div class="form-group">
+              <label>Market Risk Rate (%)</label>
+              <input type="number" id="val-mkt-risk" class="form-control" value="7.0" step="0.25" />
+            </div>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid var(--border); margin: 1rem 0;" />
+          <div style="font-size: 0.82rem; font-weight: 700; margin-bottom: 0.65rem; color: #60a5fa;">
+            Bảng Cân Đối Kế Toán — Tính Debt Loading & Credit Rating
+          </div>
+
+          <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="form-group">
+              <label>Tiền mặt (Cash €)</label>
+              <input type="number" id="val-cash" class="form-control" value="950000" step="50000" />
+            </div>
+            <div class="form-group">
+              <label>Phải thu KH (AR €)</label>
+              <input type="number" id="val-ar" class="form-control" value="1450000" step="50000" />
+            </div>
+            <div class="form-group">
+              <label>Nợ Vay NH (Bank Loans €)</label>
+              <input type="number" id="val-loans" class="form-control" value="3800000" step="100000" />
+            </div>
+            <div class="form-group">
+              <label>Phải trả NCC (AP €)</label>
+              <input type="number" id="val-ap" class="form-control" value="950000" step="50000" />
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label>Giá trị Tồn kho Thành phẩm + NVL (ZMB52 € - Không tính vào Debt Loading!)</label>
+              <input type="number" id="val-inventory" class="form-control" value="1600000" step="50000" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Output & End-Game Hack Advisor -->
+        <div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                Kết Quả Giải Ngược Công Thức Định Giá & Đòn Bẩy Tín Dụng
+              </div>
+              <span class="badge-tcode emerald">Zero-Growth Dividend Discount Model</span>
+            </div>
+
+            <div class="formula-box">
+              Company Valuation = [ ((Current Profit - TK_478000) / Elapsed_Steps) × Total_Game_Steps + TK_478000 ] / (Market_Risk_7% + Company_Risk_Rate)
+            </div>
+
+            <div class="stat-grid">
+              <div class="stat-box">
+                <div class="s-label">ĐỊNH GIÁ CÔNG TY HIỆN TẠI</div>
+                <div class="s-value" id="res-company-valuation" style="color: #10b981;">€0</div>
+                <div class="s-sub" id="res-val-multiplier">Hệ số nhân: ×10.00 lần</div>
+              </div>
+              <div class="stat-box">
+                <div class="s-label">XẾP HẠNG TÍN DỤNG & RISK</div>
+                <div class="s-value" id="res-credit-rating">AAA+</div>
+                <div class="s-sub" id="res-discount-rate">Tổng chiết khấu: 10.00%</div>
+              </div>
+              <div class="stat-box">
+                <div class="s-label">DEBT LOADING (NỢ RÒNG)</div>
+                <div class="s-value" id="res-debt-loading">€0</div>
+                <div class="s-sub">(Cash + AR) - (Loans + AP)</div>
+              </div>
+              <div class="stat-box">
+                <div class="s-label">ĐỊNH GIÁ NẾU ĐẠT AAA+</div>
+                <div class="s-value" id="res-aaa-valuation" style="color: #60a5fa;">€0</div>
+                <div class="s-sub" id="res-lost-valuation">Đang mất: €0 do nợ</div>
+              </div>
+            </div>
+
+            <div id="valuation-advisor-box" class="alert-card"></div>
+          </div>
+
+          <!-- 21-Tier Official Credit Rating Table -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Bảng Ánh Xạ 21 Bậc Xếp Hạng Tín Dụng Chuẩn ERPsim</div>
+              <span class="badge-tcode">Trạng thái trực tiếp</span>
+            </div>
+            <div class="table-wrap" style="max-height: 310px; overflow-y: auto;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Bậc</th>
+                    <th>Ngưỡng Debt Loading (€)</th>
+                    <th>Credit Rating</th>
+                    <th>Company Risk Rate</th>
+                    <th>Tổng Chiết Khấu (7% + Risk)</th>
+                    <th>Hệ Số Nhân Định Giá</th>
+                    <th>Định Giá Ứng Với Lợi Nhuận Này</th>
+                  </tr>
+                </thead>
+                <tbody id="credit-tier-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 2: DEMAND REVERSE-ENGINEERING & OPTIMAL PRICING (VK32)        -->
+    <!-- ================================================================= -->
+    <section id="tab-pricing" class="tab-pane">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              Bộ Giải Ngược Độ Co Giãn Giá ($\hat{\epsilon}_{j,c}$) & Tối Ưu Hóa Bảng Giá <span class="badge-tcode">VK32</span> <span class="badge-tcode amber">ZMARKET</span> <span class="badge-tcode emerald">ZVC2</span>
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">
+              Nhập hoặc chỉnh sửa Giá vốn (ZCK11), Giá kỳ trước, Sản lượng bán, Giá trung bình thị trường (ZMARKET) và Tồn kho (ZMB52). Hệ thống tự động giải phương trình Amoroso-Robinson & Multinomial Logit để tìm mức giá tối đa hóa lợi nhuận ròng cho từng kênh DC10, DC12, DC14.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <select id="pricing-channel-filter" class="form-control">
+              <option value="ALL">Tất cả kênh (DC10, DC12, DC14)</option>
+              <option value="DC10">Chỉ DC10 - Hypermarkets (1kg)</option>
+              <option value="DC12">Chỉ DC12 - Grocery Chains (500g & 1kg)</option>
+              <option value="DC14">Chỉ DC14 - Independent Grocers (500g)</option>
+            </select>
+            <button class="btn btn-emerald" id="btn-apply-optimal-prices">
+              Áp Dụng Toàn Bộ Giá Tối Ưu P*
+            </button>
+          </div>
+        </div>
+
+        <div class="formula-box">
+          Arc Elasticity ε̂ = -[(Q₂ - Q₁)/((Q₁+Q₂)/2)] / [(P₂ - P₁)/((P₁+P₂)/2)] &nbsp;|&nbsp;
+          Marketing Damping: ε_eff = ε_base / (1 + λ·ln(1 + M/250)) &nbsp;|&nbsp;
+          Optimal Price P* = COGS × [ ε_eff / (ε_eff - 1) ]
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="s-label">TỔNG LỢI NHUẬN GỘP HIỆN TẠI / NGÀY</div>
+            <div class="s-value" id="price-curr-profit">€0</div>
+            <div class="s-sub">Theo bảng giá VK32 hiện hành</div>
+          </div>
+          <div class="stat-box">
+            <div class="s-label">LỢI NHUẬN GỘP KỲ VỌNG VỚI GIÁ P* / NGÀY</div>
+            <div class="s-value" id="price-opt-profit" style="color: #10b981;">€0</div>
+            <div class="s-sub" id="price-profit-gain" style="color: #34d399;">+€0 / ngày</div>
+          </div>
+          <div class="stat-box">
+            <div class="s-label">SỐ MÃ ĐANG BỊ ĐỨT HÀNG (ZMB52 = 0)</div>
+            <div class="s-value" id="price-stockout-count" style="color: #fbbf24;">0 mã</div>
+            <div class="s-sub">Đứt hàng = Phải tăng giá ngay để chặn tràn cầu!</div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Mã SKU</th>
+                <th>Kênh</th>
+                <th>COGS (€)</th>
+                <th>Giá Cũ P₁</th>
+                <th>SL Cũ Q₁</th>
+                <th>Giá Hiện Tại P₂</th>
+                <th>SL Hiện Tại Q₂</th>
+                <th>Giá TB Thị Trường (ZMARKET)</th>
+                <th>Marketing /Ngày (€)</th>
+                <th>Tồn Kho (ZMB52)</th>
+                <th>Độ Co Giãn ε̂_eff</th>
+                <th>Giá Trần Choke</th>
+                <th>GIÁ TỐI ƯU P* (VK32)</th>
+                <th>Biên LN (%)</th>
+                <th>Tăng Lợi Nhuận/Ngày</th>
+                <th>Lệnh Hành Động</th>
+              </tr>
+            </thead>
+            <tbody id="pricing-solver-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 3: REGIONAL PREFERENCE HEATMAP & MARKETING OPTIMIZER (ZADS)   -->
+    <!-- ================================================================= -->
+    <section id="tab-marketing" class="tab-pane">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              Ánh Xạ Ngược Ma Trận Thị Hiếu Vùng ($\Theta_{j,r}$) & Phân Bổ Quảng Cáo Chống Tự Ăn Mòn <span class="badge-tcode">ZADS</span> <span class="badge-tcode emerald">ZVC2</span>
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">
+              Hệ thống tự động khử nhiễu quảng cáo cũ để tìm ra <strong>Chỉ số Thị hiếu Tự nhiên ($\Theta_{j,r}$)</strong> của từng vùng (North, South, West) và chỉ định đúng <strong>Top 1–2 SKU chủ lực mỗi vùng</strong> để bơm tiền trong ZADS, cắt bỏ các mã gây tự pha loãng (Cannibalization).
+            </p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.65rem;">
+            <label style="font-size: 0.8rem; color: var(--text-muted);">Ngân sách ZADS tối đa/ngày (€):</label>
+            <input type="number" id="mkt-total-budget" class="form-control" value="5400" step="300" style="width: 115px;" />
+          </div>
+        </div>
+
+        <div class="grid-3" id="region-champions-cards" style="margin-bottom: 1rem;"></div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Mã SKU & Hương Vị</th>
+                <th>Lãi Gộp /Hộp (€)</th>
+                <th>SL Bán North</th>
+                <th>SL Bán South</th>
+                <th>SL Bán West</th>
+                <th>Chỉ Số Thị Hiếu $\Theta_{\text{North}}$</th>
+                <th>Chỉ Số Thị Hiếu $\Theta_{\text{South}}$</th>
+                <th>Chỉ Số Thị Hiếu $\Theta_{\text{West}}$</th>
+                <th>Đề Xuất ZADS NORTH (€)</th>
+                <th>Đề Xuất ZADS SOUTH (€)</th>
+                <th>Đề Xuất ZADS WEST (€)</th>
+              </tr>
+            </thead>
+            <tbody id="regional-marketing-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 4: PRODUCTION, SETUP TIME (478000) & CARBON TAX               -->
+    <!-- ================================================================= -->
+    <section id="tab-production" class="tab-pane">
+      <div class="grid-2">
+        <!-- Lean Manufacturing 478000 & Lot Sizing -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              Tối Ưu Hóa Setup Time (TK 478000) & Cỡ Lô Sản Xuất <span class="badge-tcode">FB50</span> <span class="badge-tcode">MD01</span> <span class="badge-tcode">CO41</span>
+            </div>
+          </div>
+
+          <div class="formula-box">
+            Setup Time (giờ) = 2 + (6 × 250,000) / (250,000 + Số dư TK 478000)
+          </div>
+
+          <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="form-group">
+              <label>Đầu tư TK 478000 (€)</label>
+              <input type="number" id="prod-478000" class="form-control" value="500000" step="50000" />
+            </div>
+            <div class="form-group">
+              <label>Mở rộng Công suất TK 11000 (+Hộp/ngày)</label>
+              <input type="number" id="prod-11000" class="form-control" value="0" step="1000" />
+            </div>
+            <div class="form-group">
+              <label>Productivity Nhà máy (%)</label>
+              <input type="number" id="prod-productivity" class="form-control" value="82" min="50" max="100" />
+            </div>
+            <div class="form-group">
+              <label>Cỡ lô trung bình (Lot Size - Hộp)</label>
+              <input type="number" id="prod-lot-size" class="form-control" value="18000" step="2000" />
+            </div>
+            <div class="form-group">
+              <label>Lãi gộp TB / Hộp (€)</label>
+              <input type="number" id="prod-avg-margin" class="form-control" value="1.65" step="0.1" />
+            </div>
+            <div class="form-group">
+              <label>Số ngày còn lại của Game</label>
+              <input type="number" id="prod-rem-days" class="form-control" value="35" min="1" max="120" />
+            </div>
+          </div>
+
+          <div class="stat-grid" style="margin-top: 1rem;">
+            <div class="stat-box">
+              <div class="s-label">THỜI GIAN SETUP MỖI LÔ</div>
+              <div class="s-value" id="res-prod-setup" style="color: #60a5fa;">4.00 giờ</div>
+              <div class="s-sub" id="res-prod-saved">Tiết kiệm 4.00 giờ/lần đổi mã</div>
+            </div>
+            <div class="stat-box">
+              <div class="s-label">SẢN LƯỢNG THỰC TẾ / NGÀY</div>
+              <div class="s-value" id="res-prod-output" style="color: #10b981;">0 hộp</div>
+              <div class="s-sub" id="res-prod-util">Hiệu suất dây chuyền: 0%</div>
+            </div>
+            <div class="stat-box">
+              <div class="s-label">LỢI NHUẬN TĂNG THÊM DO GIẢM SETUP</div>
+              <div class="s-value" id="res-prod-extra-profit" style="color: #34d399;">+€0</div>
+              <div class="s-sub">Nhớ: TK 478000 được hoàn lại vào Valuation!</div>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Mốc Đầu Tư TK 478000 (€)</th>
+                  <th>Setup Time (Giờ)</th>
+                  <th>% Ngày Mất/Lần Đổi</th>
+                  <th>Sản Lượng Thực/Ngày</th>
+                  <th>Hộp Tăng Thêm/Ngày</th>
+                  <th>Lợi Nhuận Cộng Thêm Kỳ Vọng</th>
+                </tr>
+              </thead>
+              <tbody id="setup-milestones-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Carbon Footprint & Sustainability Calculator -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              Thuật Toán Thuế Carbon & Phát Thải $CO_2e$ (Bản S/4HANA Sustainability)
+            </div>
+            <span class="badge-tcode emerald">Green Logistics & Production</span>
+          </div>
+
+          <div class="formula-box">
+            Total Carbon Tax (€) = [ CO2_Prod (0.30kg/box) + CO2_Setup + CO2_Storage + CO2_Transport ] × Carbon_Tax_Rate (€/kg)
+          </div>
+
+          <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="form-group">
+              <label>Sản lượng sản xuất/ngày (Hộp)</label>
+              <input type="number" id="co2-boxes" class="form-control" value="19500" step="1000" />
+            </div>
+            <div class="form-group">
+              <label>Tổng giờ Setup/ngày</label>
+              <input type="number" id="co2-setup-hrs" class="form-control" value="4.0" step="0.5" />
+            </div>
+            <div class="form-group">
+              <label>Tồn kho trung bình (ZMB52 - Hộp)</label>
+              <input type="number" id="co2-inventory" class="form-control" value="28000" step="2000" />
+            </div>
+            <div class="form-group">
+              <label>Số chuyến giao hàng/ngày</label>
+              <input type="number" id="co2-deliveries" class="form-control" value="24" step="2" />
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label>Thuế suất Carbon (€ / kg CO2e - Mặc định 0.30 €)</label>
+              <input type="number" id="co2-tax-rate" class="form-control" value="0.30" step="0.05" />
+            </div>
+          </div>
+
+          <div class="stat-grid" style="margin-top: 1rem;">
+            <div class="stat-box">
+              <div class="s-label">TỔNG PHÁT THẢI CO2e / NGÀY</div>
+              <div class="s-value" id="res-co2-total">0 kg</div>
+              <div class="s-sub" id="res-co2-breakdown">SX: 0kg | Setup: 0kg | Kho & Giao: 0kg</div>
+            </div>
+            <div class="stat-box">
+              <div class="s-label">THUẾ CARBON PHẢI NỘP / NGÀY</div>
+              <div class="s-value" id="res-co2-tax" style="color: #fb7185;">€0 / ngày</div>
+              <div class="s-sub">Trừ trực tiếp vào Current Profit</div>
+            </div>
+          </div>
+
+          <div class="alert-card">
+            <strong>Chiến thuật Tối ưu hóa Carbon & Chi phí Sản xuất:</strong>
+            <ul style="margin-left: 1.1rem; margin-top: 0.4rem; font-size: 0.82rem;">
+              <li><strong>Gom lô sản xuất lớn (Lot Size $\ge 18,000 - 24,000$ hộp):</strong> Nếu 2 lệnh sản xuất liên tiếp cùng 1 mã SKU, thuật toán SAP tính <code>Setup Time = 0 giờ</code> và <code>CO2_Setup = 0 kg</code>.</li>
+              <li><strong>Không để đứt nguyên vật liệu bao bì (Box & Bag):</strong> Thiếu 1 túi nilon hoặc vỏ hộp sẽ làm treo toàn bộ dây chuyền sản xuất trong khi chi phí cố định và khấu hao vẫn trừ đều mỗi ngày.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 5: SAP TABLE PASTE IMPORTER & LIVE ODATA BRIDGE               -->
+    <!-- ================================================================= -->
+    <section id="tab-odata" class="tab-pane">
+      <div class="grid-2">
+        <!-- Direct SAP Clipboard / CSV Importer -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              Nhập Nhanh Bảng Copy-Paste Từ SAP GUI / Fiori (<span class="badge-tcode">ZVC2</span> / <span class="badge-tcode">ZMARKET</span>)
+            </div>
+            <button class="btn btn-outline" id="btn-load-sample-tsv" style="padding: 0.3rem 0.65rem; font-size: 0.75rem;">
+              Nạp Dữ Liệu Mẫu SAP
+            </button>
+          </div>
+
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+            Mở báo cáo <code>ZVC2</code> hoặc <code>ZMARKET</code> trong SAP, xuất ra Clipboard/Excel hoặc bôi đen copy rồi dán vào ô dưới đây để tự động cập nhật bảng giải ngược giá & thị hiếu vùng:
+          </p>
+
+          <textarea id="sap-raw-paste" class="form-control" rows="8" style="width: 100%; font-size: 0.78rem;" placeholder="SKU&#9;Channel&#9;Region&#9;Price&#9;Qty&#9;MarketAvgPrice&#9;COGS&#9;Marketing&#9;Inventory&#10;F02&#9;DC12&#9;North&#9;3.45&#9;2150&#9;3.35&#9;1.72&#9;1200&#9;1400"></textarea>
+
+          <div style="display: flex; gap: 0.65rem; margin-top: 0.85rem;">
+            <button class="btn btn-primary" id="btn-parse-sap-paste">
+              Phân Tích & Đồng Bộ Vào Bộ Giải Ngược
+            </button>
+          </div>
+          <div id="sap-parse-status" style="margin-top: 0.75rem; font-size: 0.82rem; color: #34d399;"></div>
+        </div>
+
+        <!-- Live SAP OData Connection via Python Local Proxy -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              Kết Nối Trực Tiếp Cổng SAP ERPsim OData Feed
+            </div>
+            <span class="badge-tcode amber">Real-time Telemetry</span>
+          </div>
+
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+            Khi chạy qua máy chủ proxy đi kèm (<code>python server.py</code>), hệ thống có thể tự động kéo dữ liệu trực tiếp từ đường dẫn OData của trường / ban tổ chức sau mỗi bước mô phỏng mà không bị chặn CORS:
+          </p>
+
+          <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="form-group" style="grid-column: span 2;">
+              <label>SAP OData Service Base URL</label>
+              <input type="text" id="odata-url" class="form-control" placeholder="https://erpsim.hec.ca:8000/sap/opu/odata/hec1/ERPSIM_SRV/" />
+            </div>
+            <div class="form-group">
+              <label>SAP Username (Ví dụ: Z1, A1...)</label>
+              <input type="text" id="odata-user" class="form-control" placeholder="Z1" />
+            </div>
+            <div class="form-group">
+              <label>SAP Password</label>
+              <input type="password" id="odata-pass" class="form-control" placeholder="••••••••" />
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.65rem; margin-top: 0.95rem;">
+            <button class="btn btn-emerald" id="btn-test-odata">
+              Đồng Bộ Từ OData Ngay
+            </button>
+          </div>
+          <div id="odata-status-box" class="formula-box" style="margin-top: 0.85rem; margin-bottom: 0;">
+            Trạng thái OData: Đang ở chế độ Tính toán Độc lập (Offline/Sandbox Mode). Có thể nhập tay hoặc dán bảng SAP trực tiếp.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 6: INTERACTIVE ERPSIM HANDBOOK, T-CODES & BUTTON GUIDE        -->
+    <!-- ================================================================= -->
+    <section id="tab-handbook" class="tab-pane">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              Quy Trình Vận Hành Khép Kín 5 Bước & Chức Năng Từng Nút Bấm Trong SAP GUI / Fiori
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">
+              Thực hiện đúng thứ tự 5 bước dưới đây để nhà máy hoạt động trơn tru, không bao giờ bị treo lệnh sản xuất hoặc quên mua nguyên vật liệu.
+            </p>
+          </div>
+          <span class="badge-tcode emerald">ERPsim Official Job Aid</span>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-box" style="border-top: 3px solid #3b82f6;">
+            <div class="s-label">BƯỚC 1: LẬP DỰ BÁO (PIR)</div>
+            <div class="s-value" style="font-size:1.05rem;">MD61</div>
+            <div class="s-sub">Chọn <code>Product group</code> = <strong>$$-F</strong>, Plant = <strong>$$</strong> $\to$ Nhập số lượng hộp muốn SX (VD: 24,000) $\to$ Bấm <strong>Save (Ctrl+S)</strong>.</div>
+          </div>
+          <div class="stat-box" style="border-top: 3px solid #06b6d4;">
+            <div class="s-label">BƯỚC 2: CHẠY TÍNH TOÁN MRP</div>
+            <div class="s-value" style="font-size:1.05rem;">MD01</div>
+            <div class="s-sub">Thông số: <strong>NEUPL - 1 - 3 - 1 - 3 - 1</strong>. Bấm <strong>Enter 2 lần liên tiếp</strong> để SAP đẻ ra lệnh mua NVL và lệnh SX dự kiến.</div>
+          </div>
+          <div class="stat-box" style="border-top: 3px solid #10b981;">
+            <div class="s-label">BƯỚC 3: MUA NGUYÊN VẬT LIỆU</div>
+            <div class="s-value" style="font-size:1.05rem;">ME59N</div>
+            <div class="s-sub">Nhập Purch.Org = <strong>$$</strong>, Plant = <strong>$$</strong> $\to$ <strong>BỎ TÍCH ô Test Run</strong> $\to$ Bấm <strong>Execute (F8)</strong>. Chờ 1–5 ngày hàng tự về kho.</div>
+          </div>
+          <div class="stat-box" style="border-top: 3px solid #f59e0b;">
+            <div class="s-label">BƯỚC 4: ĐẨY LỆNH XUỐNG XƯỞNG</div>
+            <div class="s-value" style="font-size:1.05rem;">CO41</div>
+            <div class="s-sub">Nhập Plant = <strong>$$</strong> $\to$ Bấm <strong>F8</strong> $\to$ Tích chọn các lô muốn sản xuất $\to$ Bấm nút <strong>Collective Conversion</strong>.</div>
+          </div>
+          <div class="stat-box" style="border-top: 3px solid #f43f5e;">
+            <div class="s-label">BƯỚC 5: ĐỊNH GIÁ & QUẢNG CÁO</div>
+            <div class="s-value" style="font-size:1.05rem;">VK32 & ZADS</div>
+            <div class="s-sub">Vào <strong>VK32</strong> cập nhật giá bán cho DC10 (1kg), DC12 (cả 2), DC14 (500g). Vào <strong>ZADS</strong> chi quảng cáo theo Vùng rồi bấm <strong>Save</strong>.</div>
+          </div>
+        </div>
+
+        <div class="table-wrap" style="margin-top: 1rem;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nhóm Chức Năng</th>
+                <th>T-Code (SAP GUI)</th>
+                <th>Tên Ứng Dụng (SAP Fiori Tile)</th>
+                <th>Các Nút Bấm Cụ Thể & Thông Số Bắt Buộc</th>
+                <th>Lỗi Thường Gặp & Lưu Ý Sống Còn</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Hoạch định</td>
+                <td><span class="badge-tcode">MD61</span></td>
+                <td>Create Planned Independent Requirements</td>
+                <td>Chọn tròn <code>Product group</code> (nhập <code>AA-F</code>), Plant <code>AA</code> $\to$ <code>Enter</code> $\to$ Nhập số lượng vào cột kỳ hiện tại $\to$ <code>Ctrl+S (Save)</code></td>
+                <td>Nếu chỉ nhập số mà quên bấm <code>Ctrl+S</code> hoặc chưa chạy <code>MD01</code> ngay sau đó thì số dự báo vô tác dụng.</td>
+              </tr>
+              <tr>
+                <td>Hoạch định</td>
+                <td><span class="badge-tcode">MD01</span></td>
+                <td>MRP Run / Execute MRP</td>
+                <td>Plant: <code>AA</code> | Key: <code>NEUPL</code> | Create Purchase Req: <code>1</code> | Schedule Lines: <code>3</code> | MRP List: <code>1</code> | Planning Mode: <code>3</code> | Scheduling: <code>1</code> $\to$ <code>Enter 2 lần</code></td>
+                <td>Nếu để mặc định <code>Create Purchase Req = 2</code>, qua <code>ME59N</code> sẽ không mua được nguyên vật liệu nào! Phải đổi sang số <strong>1</strong>.</td>
+              </tr>
+              <tr>
+                <td>Mua hàng</td>
+                <td><span class="badge-tcode emerald">ME59N</span></td>
+                <td>Create Purchase Orders</td>
+                <td>Purch. Org: <code>AA</code> | Plant: <code>AA</code> | <strong>Bỏ dấu tích <code>Test Run</code></strong> $\to$ Bấm nút đồng hồ <code>Execute (F8)</code></td>
+                <td>Quên bỏ dấu tích <code>Test Run</code> là lỗi phổ biến nhất khiến nhà máy hết sạch nguyên vật liệu sau 3 ngày!</td>
+              </tr>
+              <tr>
+                <td>Sản xuất</td>
+                <td><span class="badge-tcode amber">CO41</span></td>
+                <td>Convert Planned Orders</td>
+                <td>Planning Plant: <code>AA</code> $\to$ <code>Execute (F8)</code> $\to$ Tích chọn dòng lô hàng $\to$ Bấm nút <code>Convert</code> (Bánh răng)</td>
+                <td>Xếp 2 lô cùng mã SKU chạy nối đuôi nhau sẽ được <strong>miễn 100% Setup Time (0 giờ)</strong>!</td>
+              </tr>
+              <tr>
+                <td>Sản xuất</td>
+                <td><span class="badge-tcode">ZCS02</span></td>
+                <td>Change Bill of Material (BOM)</td>
+                <td>Material: <code>$$-F01..F16</code> | Plant: <code>$$</code> | BOM Usage: <code>1</code> $\to$ <code>Enter</code> $\to$ Sửa định mức kg $\to$ <code>Ctrl+S</code></td>
+                <td>Hệ thống khóa không cho sửa BOM nếu mã đó đang còn tồn kho thành phẩm (<code>ZMB52 > 0</code>). Tổng trọng lượng phải đúng <code>0.5kg</code> hoặc <code>1.0kg</code>.</td>
+              </tr>
+              <tr>
+                <td>Bán hàng</td>
+                <td><span class="badge-tcode emerald">VK32</span></td>
+                <td>Change Price List</td>
+                <td>Mở <code>Prices</code> $\to$双击 <code>Price List Price</code> $\to$ <code>Execute (F8)</code> $\to$ Sửa cột <code>Amount</code> theo kênh 10, 12, 14 $\to$ <code>Ctrl+S</code></td>
+                <td>DC10 chỉ mua hộp <code>1kg</code>; DC14 chỉ mua hộp <code>500g</code>; DC12 mua cả hai. Sửa xong phải thoát <code>F3</code> để không khóa màn hình của đồng đội.</td>
+              </tr>
+              <tr>
+                <td>Marketing</td>
+                <td><span class="badge-tcode amber">ZADS</span></td>
+                <td>Marketing Expense Planning</td>
+                <td>Nhập số tiền (€) vào ô giao giữa Mã SKU và Vùng (<code>North</code> / <code>South</code> / <code>West</code>) $\to$ Bấm <code>Save / Post</code></td>
+                <td>Chi phí trong <code>ZADS</code> tự động trừ lặp lại <strong>MỖI NGÀY</strong>! Phải xóa về <code>0</code> ở 3–4 ngày cuối của Round cuối cùng.</td>
+              </tr>
+              <tr>
+                <td>Tài chính</td>
+                <td><span class="badge-tcode">FB50</span></td>
+                <td>Post General Journal Entries</td>
+                <td>Dòng 1: G/L <code>478000</code> (Debit - Nợ) | Dòng 2: G/L <code>113100</code> (Credit - Có) | Nhập số tiền (VD: <code>250000</code>) & Cost Center $\to$ <code>Post (Ctrl+S)</code></td>
+                <td>Giảm Setup Time từ 8h xuống 5h (€250k) hoặc 4h (€500k). Tiền đầu tư vào TK <code>478000</code> được cộng hoàn lại trong công thức Company Valuation!</td>
+              </tr>
+              <tr>
+                <td>Báo cáo</td>
+                <td><span class="badge-tcode">ZMB52</span></td>
+                <td>Warehouse Stock (Tồn kho)</td>
+                <td>Xem tồn kho Thành phẩm (<code>F01..F16</code>) và Nguyên vật liệu (<code>Bag</code>, <code>Box</code>, <code>Oats</code>, <code>Nuts</code>...)</td>
+                <td>Nếu lệnh sản xuất trong <code>ZCO11</code> đứng im không chạy, kiểm tra ngay <code>ZMB52</code> xem có bị hết vỏ hộp (<code>Box</code>) hoặc túi (<code>Bag</code>) không.</td>
+              </tr>
+              <tr>
+                <td>Báo cáo</td>
+                <td><span class="badge-tcode">ZVC2</span> & <span class="badge-tcode">ZMARKET</span></td>
+                <td>Sales Summary & Market Report</td>
+                <td><code>ZVC2</code>: Xem lượng bán đội mình theo Vùng & Kênh. <code>ZMARKET</code>: Xem giá bán trung bình của toàn thị trường.</td>
+                <td>Copy dữ liệu từ 2 bảng này dán vào <strong>Tab 2, Tab 3, Tab 5</strong> của công cụ này để tìm ngay giá bán tối ưu $P^*$!</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="erpsim_engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

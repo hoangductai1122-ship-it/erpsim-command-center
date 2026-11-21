@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cẩm Nang Toàn Tập & Chiến Thuật Vô Địch ERPsim — Logistics Sustainability & Manufacturing</title>
+  <style>
+    :root {
+      --bg-body: #0b1120;
+      --bg-sidebar: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-alt: #162032;
+      --bg-code: #090d16;
+      --border: #334155;
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --blue: #3b82f6;
+      --cyan: #06b6d4;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --purple: #8b5cf6;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+    }
+
+    body.light-mode {
+      --bg-body: #f1f5f9;
+      --bg-sidebar: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-alt: #f8fafc;
+      --bg-code: #0f172a;
+      --border: #cbd5e1;
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-body);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      line-height: 1.65;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* SIDEBAR NAVIGATION */
+    .sidebar {
+      width: 310px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      overflow-y: auto;
+      padding: 1.25rem 1rem;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding-bottom: 0.9rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--emerald), var(--blue));
+      color: #fff;
+      font-weight: 900;
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+
+    .sidebar-brand h2 {
+      font-size: 0.96rem;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .sidebar-brand span {
+      font-size: 0.72rem;
+      color: var(--emerald);
+      font-weight: 600;
+    }
+
+    .sidebar-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 0.45rem 0.6rem;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      transition: all 0.15s;
+    }
+
+    .action-btn:hover {
+      border-color: var(--blue);
+    }
+
+    .action-btn.primary {
+      background: linear-gradient(135deg, var(--blue), #2563eb);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--bg-card-alt);
+      color: var(--text-primary);
+      font-size: 0.82rem;
+    }
+
+    .search-box input:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+
+    .toc-group-title {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin: 0.5rem 0 0.25rem 0.4rem;
+    }
+
+    .toc-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .toc-link {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.48rem 0.65rem;
+      border-radius: 7px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+
+    .toc-link:hover {
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--blue);
+    }
+
+    .toc-num {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.1rem 0.38rem;
+      border-radius: 4px;
+      background: rgba(59, 130, 246, 0.18);
+      color: #60a5fa;
+    }
+
+    /* MAIN CONTENT AREA */
+    .content-wrapper {
+      margin-left: 310px;
+      flex: 1;
+      max-width: 1240px;
+      padding: 2rem 2.5rem 5rem;
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar {
+        position: static;
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      body {
+        flex-direction: column;
+      }
+      .content-wrapper {
+        margin-left: 0;
+        padding: 1.25rem;
+      }
+    }
+
+    /* HERO BANNER */
+    .hero-banner {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #064e3b 100%);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      border-radius: 16px;
+      padding: 2rem 2.25rem;
+      margin-bottom: 2.25rem;
+      color: #f8fafc;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.22rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .tag-pill.emerald { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .tag-pill.blue    { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+    .tag-pill.amber   { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .tag-pill.rose    { background: rgba(244, 63, 94, 0.2);  color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.4); }
+    .tag-pill.purple  { background: rgba(139, 92, 246, 0.2); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.4); }
+
+    .hero-banner h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.65rem;
+    }
+
+    .hero-banner p {
+      font-size: 0.95rem;
+      color: #cbd5e1;
+      max-width: 920px;
+    }
+
+    /* SECTION HEADERS */
+    .chapter-section {
+      margin-bottom: 3rem;
+      scroll-margin-top: 1.5rem;
+    }
+
+    .chapter-header {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .chapter-badge {
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      color: #fff;
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: 0.85rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+
+    .chapter-header h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    /* CARDS & GRIDS */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.35rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.15rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.15rem;
+    }
+
+    @media (max-width: 860px) {
+      .grid-2, .grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* VISUAL FLOWCHART PIPELINE */
+    .pipeline-flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 0.75rem;
+      margin: 1.1rem 0 1.5rem;
+    }
+
+    .flow-step {
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border);
+      border-top: 4px solid var(--blue);
+      border-radius: 10px;
+      padding: 0.9rem;
+      position: relative;
+    }
+
+    .flow-step.step-1 { border-top-color: #3b82f6; }
+    .flow-step.step-2 { border-top-color: #06b6d4; }
+    .flow-step.step-3 { border-top-color: #ec4899; }
+    .flow-step.step-4 { border-top-color: #f43f5e; }
+    .flow-step.step-5 { border-top-color: #f59e0b; }
+    .flow-step.step-6 { border-top-color: #8b5cf6; }
+
+    .flow-step .step-num {
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .flow-step .step-tcode {
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin: 0.2rem 0;
+    }
+
+    .flow-step .step-name {
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+    }
+
+    .flow-step .step-desc {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* BUTTON & KEYBOARD SHORTCUT BADGES */
+    .kbd-btn {
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: 5px;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      font-weight: 700;
+      background: #0f172a;
+      color: #38bdf8;
+      border: 1px solid #334155;
+      box-shadow: inset 0 -1px 0 #1e293b;
+    }
+
+    .tcode {
+      display: inline-block;
+      padding: 0.12rem 0.48rem;
+      border-radius: 5px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: rgba(59, 130, 246, 0.16);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+    }
+
+    /* TABLES */
+    .table-container {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin: 0.85rem 0 1.25rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    th {
+      background: rgba(15, 23, 42, 0.75);
+      color: #94a3b8;
+      font-weight: 700;
+      text-align: left;
+      padding: 0.75rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    body.light-mode th {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    td {
+      padding: 0.7rem 0.9rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+      vertical-align: top;
+    }
+
+    tr:hover td {
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+    }
+
+    /* CALLOUT BOXES */
+    .callout {
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      margin: 1rem 0;
+      border-left: 4px solid var(--blue);
+      background: rgba(59, 130, 246, 0.09);
+      font-size: 0.88rem;
+    }
+
+    .callout.emerald {
+      border-left-color: var(--emerald);
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .callout.amber {
+      border-left-color: var(--amber);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .callout.rose {
+      border-left-color: var(--rose);
+      background: rgba(244, 63, 94, 0.1);
+    }
+
+    .callout-title {
+      font-weight: 800;
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    /* SECRET WEAPON CARDS */
+    .weapon-card {
+      background: linear-gradient(145deg, var(--bg-card) 0%, var(--bg-card-alt) 100%);
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--emerald);
+      border-radius: 12px;
+      padding: 1.35rem;
+      margin-bottom: 1.15rem;
+    }
+
+    .weapon-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .weapon-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #34d399;
+    }
+
+    body.light-mode .weapon-title {
+      color: #059669;
+    }
+
+    /* STEP LISTS */
+    ol.step-list, ul.step-list {
+      padding-left: 1.35rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      font-size: 0.88rem;
+    }
+
+    .formula-block {
+      background: var(--bg-code);
+      color: #38bdf8;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      padding: 0.9rem 1.15rem;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      margin: 0.75rem 0;
+      overflow-x: auto;
+    }
+
+    /* ROLE FILTER PILLS */
+    .role-filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.15rem;
+    }
+
+    .role-btn {
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-card-alt);
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .role-btn.active {
+      background: var(--blue);
+      color: #fff;
+      border-color: var(--blue);
+    }
+
+    .role-card.dimmed {
+      opacity: 0.28;
+      transform: scale(0.98);
+    }
+
+    .role-card {
+      transition: all 0.2s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LEFT STICKY SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo">ERP</div>
+      <div>
+        <h2>CẨM NANG VÔ ĐỊCH ERPSIM</h2>
+        <span>Logistics Sustainability & Muesli</span>
+      </div>
+    </div>
+
+    <div class="sidebar-actions">
+      <a href="index.html" class="action-btn primary">⚡ Mở Bộ Giải Toán</a>
+      <button class="action-btn" id="btn-toggle-theme">🌗 Giao diện</button>
+    </div>
+
+    <div class="search-box">
+      <input type="text" id="guide-search" placeholder="🔍 Tìm nhanh T-code, sự kiện, nút bấm..." />
+    </div>
+
+    <div>
+      <div class="toc-group-title">Mục Lục Chiến Thuật</div>
+      <ul class="toc-list">
+        <li><a href="#ch1" class="toc-link"><span class="toc-num">01</span> Quy Trình 6 Bước & Nút Bấm (Preset 3)</a></li>
+        <li><a href="#ch2" class="toc-link"><span class="toc-num">02</span> 6 Mặt Hàng Sữa, V04 vs V08 & Phí Carbon</a></li>
+        <li><a href="#ch3" class="toc-link"><span class="toc-num">03</span> Phản Công 8 Sự Kiện Xúc Xắc (Disruptors)</a></li>
+        <li><a href="#ch4" class="toc-link"><span class="toc-num">04</span> 6 Vũ Khí Bí Mật (Lỗ Hổng Thuật Toán ABAP)</a></li>
+        <li><a href="#ch5" class="toc-link"><span class="toc-num">05</span> Chiến Thuật Đội Hình 4 Người & Timeline</a></li>
+        <li><a href="#ch6" class="toc-link"><span class="toc-num">06</span> Công Thức Định Giá AAA+ & Bản Muesli</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="content-wrapper">
+
+    <!-- HERO BANNER -->
+    <header class="hero-banner">
+      <div class="hero-tags">
+        <span class="tag-pill emerald">Logistics Sustainability (Preset 3 - Dairy)</span>
+        <span class="tag-pill amber">8 Random Disruptors (Rev 2.0)</span>
+        <span class="tag-pill blue">SAP S/4HANA Fiori & GUI</span>
+        <span class="tag-pill purple">6 Hidden ABAP Exploits</span>
+      </div>
+      <h1>Cẩm Nang Thực Chiến, Nút Bấm & Vũ Khí Bí Mật ERPsim</h1>
+      <p>
+        Tài liệu hướng dẫn toàn diện từng thao tác bấm nút, thông số chuẩn, kịch bản khắc chế 8 sự kiện xúc xắc ngẫu nhiên,
+        phối hợp đội hình 4 người và 6 lỗ hổng thuật toán ngầm bên trong SAP S/4HANA giúp đội bạn nắm chắc vị trí Số 1.
+      </p>
+    </header>
+
+    <!-- ================================================================= -->
+    <!-- CHƯƠNG 1: QUY TRÌNH 6 BƯỚC & NÚT BẤM (LOGISTICS PRESET 3)         -->
+    <!-- ================================================================= -->
+    <section id="ch1" class="chapter-section searchable-section">
+      <div class="chapter-header">
+        <span class="chapter-badge">CHƯƠNG 01</span>
+        <h2>Quy Trình Vận Hành 6 Bước & Chức Năng Từng Nút Bấm (Logistics Sustainability Preset 3)</h2>
+      </div>
+
+      <p style="margin-bottom: 0.75rem; color: var(--text-secondary);">
+        Trong bản <strong>Logistics Sustainability (Preset 3 – Ngành hàng Sữa / Dairy)</strong>, công ty bạn nhập khẩu và phân phối <strong>6 sản phẩm sữa (<code>$$-T01</code> đến <code>$$-T06</code>)</strong> từ <strong>2 Nhà cung cấp (<code>V04</code> và <code>V08</code>)</strong> về <strong>Kho tổng (<code>03</code>)</strong>, sau đó điều phối ra <strong>3 Kho vùng (<code>03N</code> North, <code>03S</code> South, <code>03W</code> West)</strong> để bán cho các cửa hàng bán lẻ trên <strong>Kênh phân phối <code>DC 16</code></strong>.
+      </p>
+
+      <!-- VISUAL FLOWCHART -->
+      <div class="pipeline-flow">
+        <div class="flow-step step-1">
+          <div class="step-num">Bước 1 • Planning</div>
+          <div class="step-tcode" style="color:#60a5fa;">MD61</div>
+          <div class="step-name">Lập Dự Báo Mua Hàng</div>
+          <div class="step-desc">Chọn <code>Product group</code> = <strong>$$-T</strong>. Nhập số lượng vào <strong>cột ngày thứ 2</strong> rồi bấm <strong>Save</strong>.</div>
+        </div>
+        <div class="flow-step step-2">
+          <div class="step-num">Bước 2 • Planning</div>
+          <div class="step-tcode" style="color:#22d3ee;">MD01</div>
+          <div class="step-name">Chạy Tính Toán MRP</div>
+          <div class="step-desc">Bấm <strong>Enter</strong> &amp; <strong>Execute</strong>. Bỏ qua cảnh báo cam, bấm <strong>Enter 2 lần nữa</strong> &amp; <strong>Continue</strong>.</div>
+        </div>
+        <div class="flow-step step-3">
+          <div class="step-num">Bước 3 • Sourcing</div>
+          <div class="step-tcode" style="color:#f472b6;">ZME12</div>
+          <div class="step-name">Chọn Nhà Cung Cấp</div>
+          <div class="step-desc">Bấm <strong>Assign Source of Supply</strong>. Gán <strong>V04</strong> (hoặc V08) cho 6 mặt hàng rồi <strong>Save</strong>.</div>
+        </div>
+        <div class="flow-step step-4">
+          <div class="step-num">Bước 4 • Ordering</div>
+          <div class="step-tcode" style="color:#fb7185;">ME59N</div>
+          <div class="step-name">Phát Hành Đơn PO</div>
+          <div class="step-desc">Đảm bảo ô <em>Fixed Vendor</em> để trống (bỏ tích <em>Test Run</em>). Bấm <strong>Execute (F8)</strong>.</div>
+        </div>
+        <div class="flow-step step-5">
+          <div class="step-num">Bước 5 • Logistics</div>
+          <div class="step-tcode" style="color:#fbbf24;">ZMB1B</div>
+          <div class="step-name">Điều Chuyển Kho Vùng</div>
+          <div class="step-desc">Chọn <strong>Push/Pull</strong>, nhập tần suất, <strong>bỏ tích Use 03</strong> khi kho vùng có hàng, bấm <strong>Save</strong>.</div>
+        </div>
+        <div class="flow-step step-6">
+          <div class="step-num">Bước 6 • Sales</div>
+          <div class="step-tcode" style="color:#c084fc;">VK32</div>
+          <div class="step-name">Cập Nhật Bảng Giá</div>
+          <div class="step-desc">Mở <em>Prices &rarr; Price List</em>. Kiểm tra <strong>Channel = 16</strong>, bấm <strong>Execute</strong>, sửa giá &amp; <strong>Save</strong>.</div>
+        </div>
+      </div>
+
+      <!-- DETAILED STEP-BY-STEP BUTTON CARDS -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">
+            <span>1. Lập Dự Báo Nhu Cầu Mua Hàng</span>
+            <span class="tcode">MD61</span>
+          </div>
+          <ol class="step-list">
+            <li>Tích chọn ô tròn <span class="kbd-btn">Product group</span> và nhập <strong><code>$$-T</code></strong> <em>(thay <code>$$</code> bằng ký hiệu đội của bạn, ví dụ <code>A1-T</code> hoặc <code>Z1-T</code>)</em>.</li>
+            <li>Bấm nút <span class="kbd-btn">Continue</span> (hoặc phím <span class="kbd-btn">Enter</span>).</li>
+            <li>Nhập số lượng muốn đặt mua cho từng mặt hàng (<code>T01..T06</code>) vào <strong>Cột ngày thứ 2 (2nd date column)</strong>. <em>Lưu ý sống còn: Chỉ nhập vào đúng 1 cột ngày duy nhất để SAP gộp chung thành 1 PO!</em></li>
+            <li>Bấm nút <span class="kbd-btn">Save (Ctrl + S)</span>.</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>2. Chạy Hoạch Định Vật Tư (MRP Run)</span>
+            <span class="tcode">MD01</span>
+          </div>
+          <ol class="step-list">
+            <li>Kiểm tra mã <strong>Plant</strong> của đội, bấm <span class="kbd-btn">Enter</span> và nhấp nút <span class="kbd-btn">Execute</span>.</li>
+            <li>Màn hình hiện cảnh báo màu cam ở thanh trạng thái: <strong>Bỏ qua cảnh báo cam</strong> và bấm phím <span class="kbd-btn">Enter</span> thêm <strong>2 lần liên tiếp</strong>.</li>
+            <li>Khi cửa sổ Pop-up hiện lên, bấm nút <span class="kbd-btn">Continue</span> để hệ thống sinh ra Yêu cầu mua hàng (Purchase Requisitions).</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>3. Chọn Nhà Cung Cấp (Procurement Sourcing)</span>
+            <span class="tcode">ZME12</span>
+          </div>
+          <ol class="step-list">
+            <li>Mở <span class="tcode">ZME12</span>: Bảng trên cùng hiển thị giá bán và phát thải Carbon/unit của 2 nhà cung cấp <strong><code>V04</code></strong> và <strong><code>V08</code></strong>.</li>
+            <li>Nhấp vào nút <span class="kbd-btn">Assign Source of Supply</span> trên thanh công cụ.</li>
+            <li>Tại từng dòng sản phẩm (<code>$$-T01</code> đến <code>$$-T06</code>), chọn <strong><code>V04</code></strong> (hoặc <code>V08</code>) ở cột Vendor.</li>
+            <li>Bấm nút <span class="kbd-btn">Save (Ctrl + S)</span>.</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>4. Tạo Đơn Đặt Hàng Chính Thức (Create POs)</span>
+            <span class="tcode">ME59N</span>
+          </div>
+          <ol class="step-list">
+            <li>Mở <span class="tcode">ME59N</span>: Kiểm tra ô <strong><code>Fixed Vendor</code> phải để TRỐNG</strong> (Empty).</li>
+            <li>Nếu trên màn hình SAP GUI có ô <strong><code>Test Run</code></strong>: Đảm bảo đã <strong>BỎ DẤU TÍCH (Uncheck)</strong> ô <code>Test Run</code>.</li>
+            <li>Bấm nút <span class="kbd-btn">Execute (F8)</span>.</li>
+            <li>Màn hình báo <em>"Purchase orders are created"</em> là thành công. (Nếu báo <em>"No suitable requisitions found"</em> nghĩa là bạn quên bấm Save ở <code>MD61</code> hoặc quên chạy <code>MD01</code>!).</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>5. Điều Chuyển Kho Từ Kho Tổng 03 Về 3 Kho Vùng</span>
+            <span class="tcode">ZMB1B</span>
+          </div>
+          <ol class="step-list">
+            <li><strong>Planning Mode</strong>: Chọn chiến lược <strong><code>Push</code></strong> (đẩy số lượng cố định/tỷ lệ từ kho tổng 03) hoặc <strong><code>Pull</code></strong> (bơm bù để duy trì mức tồn kho mục tiêu tại kho vùng <code>03N, 03S, 03W</code>).</li>
+            <li><strong>Scheduling (Delivery Frequency)</strong>: Nhập chu kỳ ngày giữa 2 lần chuyển kho (khuyên dùng: <strong><code>2</code> hoặc <code>3</code> ngày/lần</strong> để tiết kiệm phí €100 + 50kg CO2e mỗi chuyến).</li>
+            <li><strong>Direct Sales (Bán từ kho tổng 03)</strong>: <strong>BỎ DẤU TÍCH <code>Use 03</code></strong> ngay sau khi chuyến hàng đầu tiên đã về tới 3 kho vùng (để không bị phạt €350 + 300kg CO2e mỗi đơn bán từ kho 03!).</li>
+            <li>Nhập số lượng từng mặt hàng cho 3 vùng <strong>North (03N)</strong>, <strong>South (03S)</strong>, <strong>West (03W)</strong> rồi bấm <span class="kbd-btn">Save</span>.</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>6. Thay Đổi Giá Bán Lẻ Trên Kênh DC 16</span>
+            <span class="tcode">VK32</span>
+          </div>
+          <ol class="step-list">
+            <li>Mở thư mục <strong><code>Prices</code></strong> ở cây thư mục bên trái và nhấp đúp vào <strong><code>Price List</code></strong>.</li>
+            <li>Kiểm tra ô <strong><code>Distribution Channel = 16</code></strong> (DC 16: Retail Stores).</li>
+            <li>Bấm nút <span class="kbd-btn">Execute (F8)</span>.</li>
+            <li>Sửa giá bán của 6 mặt hàng (<code>$$-T01..T06</code>) tại cột <strong>Amount</strong> rồi bấm <span class="kbd-btn">Save (Ctrl + S)</span>. Sửa xong bấm <span class="kbd-btn">F3 (Back)</span> thoát ra để không khóa màn hình.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- 5 REPORTING TRANSACTIONS TABLE -->
+      <div class="card">
+        <div class="card-title">
+          <span>Bảng Tra Cứu Nhanh 6 Mã Lệnh Báo Cáo & Quản Trị Hệ Thống</span>
+          <span class="tag-pill emerald">Reports &amp; Analytics</span>
+        </div>
+        <div class="table-container" style="margin-bottom:0;">
+          <table>
+            <thead>
+              <tr>
+                <th>T-Code</th>
+                <th>Tên Báo Cáo / Chức Năng</th>
+                <th>Thao Tác Mở &amp; Thông Tin Quan Trọng Cần Đọc</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="tcode">F.01</span></td>
+                <td><strong>Financial Statements</strong> (Báo cáo Tài chính)</td>
+                <td>Nhập <em>Company Code</em> của đội. Trên SAP GUI: Chọn <code>ALV Tree Control</code> &rarr; <span class="kbd-btn">Execute</span>. Trên Fiori: Nhập <em>Statement Version</em> = <strong><code>SIM1</code></strong> &rarr; <span class="kbd-btn">Go</span>. Xem Lợi nhuận ròng, Tiền mặt, Phải thu, Nợ vay.</td>
+              </tr>
+              <tr>
+                <td><span class="tcode">ZMB52</span></td>
+                <td><strong>Inventory Report</strong> (Tồn kho 4 kho)</td>
+                <td>Hiển thị tồn kho hiện tại của 6 mặt hàng tại Kho tổng (<code>03</code>) và 3 Kho vùng (<code>03N</code>, <code>03S</code>, <code>03W</code>). <strong>Tổng tồn kho 4 kho cộng lại không được vượt quá 4,000 units!</strong></td>
+              </tr>
+              <tr>
+                <td><span class="tcode">ZME2N</span></td>
+                <td><strong>Purchase Order Tracking</strong> (Theo dõi đơn mua PO)</td>
+                <td>Xem trạng thái các đơn PO đã đặt ở <code>ME59N</code> và chính xác <strong>Step (Ngày) thứ mấy</strong> hàng sẽ cập bến kho tổng <code>03</code>.</td>
+              </tr>
+              <tr>
+                <td><span class="tcode">ZVC2</span> &amp; <span class="tcode">ZVA05</span></td>
+                <td><strong>Summary &amp; Detailed Sales</strong> (Báo cáo Doanh số)</td>
+                <td><code>ZVC2</code>: Tổng lượng bán mỗi ngày theo mặt hàng. <code>ZVA05</code>: Chi tiết doanh thu và sản lượng bán <strong>theo từng Vùng (North 03N, South 03S, West 03W)</strong> để tìm thị hiếu vùng!</td>
+              </tr>
+              <tr>
+                <td><span class="tcode">ZITM</span></td>
+                <td><strong>Report Management</strong> (Mở khóa báo cáo bị lỗi)</td>
+                <td>Dùng khi xảy ra <em>Event 5: System Glitch</em> làm khóa báo cáo. Cho phép bỏ <code>€5,000 / báo cáo</code> để mở khóa (hoặc lách miễn phí qua <code>ZODATA</code>).</td>
+              </tr>
+              <tr>
+                <td><span class="tcode">ZRPA</span></td>
+                <td><strong>AI Forecasting &amp; Pricing Tool</strong> (Công cụ AI)</td>
+                <td>Chỉ mở khóa khi giảng viên quay trúng <em>Event 8: AI Innovation</em>. Hỗ trợ tự động điền dự báo <code>MD61</code> và gợi ý giá <code>VK32</code>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- CHƯƠNG 2: 6 MẶT HÀNG DAIRY, V04 VS V08 & MA TRẬN THUẾ CARBON      -->
+    <!-- ================================================================= -->
+    <section id="ch2" class="chapter-section searchable-section">
+      <div class="chapter-header">
+        <span class="chapter-badge">CHƯƠNG 02</span>
+        <h2>Bảng Thông Số 6 Mặt Hàng Dairy, Bài Toán V04 vs V08 &amp; Ma Trận Phí Carbon</h2>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>1. Bảng Thông Số Gốc &amp; Khung Giá Khai Cuộc Tối Ưu Cho 6 Mặt Hàng Dairy (Kênh DC 16)</span>
+          <span class="tag-pill blue">Quy mô thị trường: ~€72,000 / đội / ngày • Khách trả tiền sau 4 ngày</span>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Mã SKU</th>
+                <th>Tên Sản Phẩm</th>
+                <th>Tồn Đầu Kỳ (Tại Kho 03)</th>
+                <th>Giá Mua V04 (Lead 1-2d)</th>
+                <th>Giá Mua V08 (Lead 1-4d)</th>
+                <th>Chênh Lệch (V08 - V04)</th>
+                <th>Giá Khởi Điểm Mặc Định</th>
+                <th>GIÁ KHAI CUỘC TỐI ƯU (VK32 - DC 16)</th>
+                <th>Lãi Gộp Kỳ Vọng / Unit</th>
+                <th>Hiệu Suất Lãi / 1 Kg CO2e (V04)</th>
+              </tr>
+            </thead>
+            <tbody class="mono">
+              <tr>
+                <td><strong>$$-T01</strong></td>
+                <td>Milk (Sữa tươi)</td>
+                <td>950 units</td>
+                <td style="color:#34d399;font-weight:700;">€22.95</td>
+                <td>€24.10</td>
+                <td>V04 rẻ hơn <strong>€1.15</strong></td>
+                <td>€25.25</td>
+                <td style="background:rgba(16,185,129,0.15);color:#10b981;font-weight:800;">€27.90 – €28.50</td>
+                <td>~€5.10</td>
+                <td>€4.25 / kg CO2e</td>
+              </tr>
+              <tr>
+                <td><strong>$$-T02</strong></td>
+                <td>Cream (Kem sữa)</td>
+                <td>300 units</td>
+                <td style="color:#34d399;font-weight:700;">€72.07</td>
+                <td>€73.67</td>
+                <td>V04 rẻ hơn <strong>€1.60</strong></td>
+                <td>€75.78</td>
+                <td style="background:rgba(16,185,129,0.15);color:#10b981;font-weight:800;">€84.50 – €86.50</td>
+                <td>~€13.20</td>
+                <td style="color:#38bdf8;font-weight:700;">€11.00 / kg CO2e (Cao #3)</td>
+              </tr>
+              <tr>
+                <td><strong>$$-T03</strong></td>
+                <td>Yoghurt (Sữa chua)</td>
+                <td>700 units</td>
+                <td style="color:#34d399;font-weight:700;">€25.85</td>
+                <td>€27.14</td>
+                <td>V04 rẻ hơn <strong>€1.29</strong></td>
+                <td>€28.43</td>
+                <td style="background:rgba(16,185,129,0.15);color:#10b981;font-weight:800;">€31.50 – €32.40</td>
+                <td>~€5.95</td>
+                <td>€4.95 / kg CO2e</td>
+              </tr>
+              <tr>
+                <td><strong>$$-T04</strong></td>
+                <td>Cheese (Phô mai)</td>
+                <td>350 units</td>
+                <td style="color:#34d399;font-weight:700;">€82.68</td>
+                <td>€86.81</td>
+                <td>V04 rẻ hơn <strong>€4.13</strong></td>
+                <td>€90.95</td>
+                <td style="background:rgba(16,185,129,0.15);color:#10b981;font-weight:800;">€101.50 – €104.50</td>
+                <td>~€20.20</td>
+                <td style="color:#10b981;font-weight:800;">€16.83 / kg CO2e (Vua #1)</td>
+              </tr>
+              <tr>
+                <td><strong>$$-T05</strong></td>
+                <td>Butter (Bơ)</td>
+                <td>400 units</td>
+                <td style="color:#34d399;font-weight:700;">€59.88</td>
+                <td>€62.87</td>
+                <td>V04 rẻ hơn <strong>€2.99</strong></td>
+                <td>€65.87</td>
+                <td style="background:rgba(16,185,129,0.15);color:#10b981;font-weight:800;">€73.00 – €75.00</td>
+                <td>~€14.00</td>
+                <td style="color:#34d399;font-weight:700;">€11.67 / kg CO2e (Cao #2)</td>
+              </tr>
+              <tr>
+                <td><strong>$$-T06</strong></td>
+                <td>Ice Cream (Kem lạnh)</td>
+                <td>300 units</td>
+                <td style="color:#34d399;font-weight:700;">€43.15</td>
+                <td>€45.31</td>
+                <td>V04 rẻ hơn <strong>€2.16</strong></td>
+                <td>€47.47</td>
+                <td style="background:rgba(16,185,129,0.15);color:#10b981;font-weight:800;">€52.80 – €54.50</td>
+                <td>~€10.20</td>
+                <td>€8.50 / kg CO2e</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- SUPPLIERS V04 VS V08 -->
+        <div class="card">
+          <div class="card-title">
+            <span>2. So Sánh 2 Nhà Cung Cấp: V04 vs V08</span>
+            <span class="tcode">ZME12</span>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tiêu Chí</th>
+                  <th>V04 (Dairy Cooperative)</th>
+                  <th>V08 (Nordik Dairy Co.)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Giá mua hàng (Unit Cost)</strong></td>
+                  <td style="color:#10b981;font-weight:700;">Rẻ hơn ở cả 6 mã (-€1.15 đến -€4.13)</td>
+                  <td>Đắt hơn ở cả 6 mã</td>
+                </tr>
+                <tr>
+                  <td><strong>Thời gian giao (Lead Time)</strong></td>
+                  <td style="color:#10b981;font-weight:700;">1 – 2 ngày (Cực nhanh)</td>
+                  <td style="color:#f59e0b;">1 – 4 ngày (Chậm &amp; thất thường)</td>
+                </tr>
+                <tr>
+                  <td><strong>Phí vận chuyển mỗi PO</strong></td>
+                  <td>€1,000 / PO</td>
+                  <td>€600 / PO</td>
+                </tr>
+                <tr>
+                  <td><strong>Carbon mỗi đơn PO</strong></td>
+                  <td style="color:#10b981;font-weight:700;">100 kg CO2e / PO</td>
+                  <td style="color:#fb7185;">400 kg CO2e / PO</td>
+                </tr>
+                <tr>
+                  <td><strong>Carbon trên mỗi Unit</strong></td>
+                  <td>1.2 kg CO2e / unit</td>
+                  <td style="color:#38bdf8;">0.8 kg CO2e / unit</td>
+                </tr>
+                <tr>
+                  <td><strong>Hạn thanh toán (AP)</strong></td>
+                  <td>5 ngày</td>
+                  <td>10 ngày</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout emerald" style="margin-bottom:0;">
+            <div class="callout-title">✅ Định Lý Chọn Nhà Cung Cấp Bất Bại:</div>
+            Chênh lệch Carbon đơn vị giữa V04 và V08 chỉ là <code>0.4 kg/unit</code> (tương đương chỉ <strong>€0.04 – €0.10 tiền thuế Carbon/unit</strong>), quá nhỏ so với số tiền V04 rẻ hơn trên mỗi sản phẩm (<strong>€1.15 – €4.13/unit</strong>)! Vì vậy: <strong>Luôn chọn V04 cho cả 6 sản phẩm trong <code>ZME12</code></strong> (chỉ xét đổi sang V08 nếu xúc xắc <em>Event 3: Supplier Disruption</em> đánh trúng V04).
+          </div>
+        </div>
+
+        <!-- TRANSPORTATION, WAREHOUSING & CARBON FEES -->
+        <div class="card">
+          <div class="card-title">
+            <span>3. Ma Trận Phí Vận Chuyển, Lưu Kho &amp; Thuế Carbon</span>
+            <span class="tag-pill rose">Tránh Bẫy Phí Ship</span>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Hoạt Động Vận Hành</th>
+                  <th>Chi Phí Tiền Mặt (€)</th>
+                  <th>Phát Thải Carbon (CO2e)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Bán từ Kho Vùng (03N/S/W &rarr; Khách)</strong></td>
+                  <td style="color:#10b981;font-weight:800;">€0 (MIỄN PHÍ SHIP!)</td>
+                  <td style="color:#10b981;font-weight:700;">75 kg CO2e / Sales Order</td>
+                </tr>
+                <tr>
+                  <td><strong>Bán từ Kho Tổng (03 &rarr; Khách)</strong></td>
+                  <td style="color:#f43f5e;font-weight:800;">€350 / Sales Order (BẪY!)</td>
+                  <td style="color:#f43f5e;font-weight:700;">300 kg CO2e / Sales Order</td>
+                </tr>
+                <tr>
+                  <td><strong>Chuyển kho nội bộ (03 &rarr; 03N/S/W)</strong></td>
+                  <td>€100 / chuyến Transfer</td>
+                  <td>50 kg CO2e / chuyến Transfer</td>
+                </tr>
+                <tr>
+                  <td><strong>Trần kho miễn phí (4 kho gộp lại)</strong></td>
+                  <td colspan="2" style="color:#38bdf8;font-weight:700;">Tối đa 4,000 Units không mất phí lưu kho</td>
+                </tr>
+                <tr>
+                  <td><strong>Phạt vượt trần kho (&gt; 4,000 Units)</strong></td>
+                  <td style="color:#fbbf24;">€300 / ngày / mỗi 1,000 units vượt</td>
+                  <td style="color:#fbbf24;">500 kg CO2e / ngày / 1,000 units vượt</td>
+                </tr>
+                <tr>
+                  <td><strong>Carbon cố định (Overhead / 5 ngày)</strong></td>
+                  <td>Tính vào chi phí vận hành</td>
+                  <td>500 kg Năng lượng + 500 kg Khác / 5 ngày</td>
+                </tr>
+                <tr>
+                  <td><strong>Thuế suất Carbon (Variable Tax)</strong></td>
+                  <td colspan="2" style="color:#fbbf24;font-weight:700;">Khởi điểm €0.10 / kg CO2e (Tăng thêm +€0.05/kg sau mỗi Round)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout rose" style="margin-bottom:0;">
+            <div class="callout-title">🚨 Tại Sao Phải Tắt "Use 03" Trong ZMB1B?</div>
+            Mỗi đơn hàng khách mua trực tiếp từ Kho tổng <code>03</code> làm bạn mất oan <strong>€350 + 225 kg CO2e</strong> so với bán từ Kho vùng! Với 30 đơn/ngày, nếu quên bỏ tích <code>Use 03</code>, đội bạn mất trắng <strong>~€11,000 mỗi ngày</strong>!
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- CHƯƠNG 3: PHẢN CÔNG TỨC THÌ 8 SỰ KIỆN XÚC XẮC (8 DISRUPTORS)      -->
+    <!-- ================================================================= -->
+    <section id="ch3" class="chapter-section searchable-section">
+      <div class="chapter-header">
+        <span class="chapter-badge">CHƯƠNG 03</span>
+        <h2>Cẩm Nang Phản Công Tức Thì 8 Sự Kiện Xúc Xắc Ngẫu Nhiên (8 Random Disruptors)</h2>
+      </div>
+
+      <div class="callout amber">
+        <div class="callout-title">🎲 Quy Tắc Quay Xúc Xắc Của Giảng Viên:</div>
+        Đầu mỗi Round (từ Round 2 trở đi), giảng viên quay xúc xắc công khai ngay trước mặt các đội và kích hoạt trong hệ thống SAP qua <code>ZCONTROL</code> (hoặc <code>ZSTART</code>). <strong>Hiệu ứng của các sự kiện có tính CỘNG DỒN (Cumulative) cho đến hết trận</strong> và không lặp lại sự kiện đã ra.
+      </div>
+
+      <div class="grid-2">
+        <!-- EVENT 1 -->
+        <div class="card" style="border-top: 4px solid #38bdf8;">
+          <div class="card-title">
+            <span>❄️ Event 1: Cold Spell (Đợt Giá Rét)</span>
+            <span class="tag-pill blue">Xúc xắc 1 – 6 chọn 2 mặt hàng</span>
+          </div>
+          <p style="font-size:0.84rem; color:var(--text-secondary); margin-bottom:0.5rem;">
+            <strong>Bảng xúc xắc cặp sản phẩm bị ảnh hưởng:</strong><br/>
+            <code>[1] Milk &amp; Cream</code> • <code>[2] Milk &amp; Yoghurt</code> • <code>[3] Milk &amp; Butter</code><br/>
+            <code>[4] Cream &amp; Yoghurt</code> • <code>[5] Cream &amp; Butter</code> • <code>[6] Yoghurt &amp; Butter</code>
+          </p>
+          <ul class="step-list" style="margin-bottom:0.75rem;">
+            <li><strong>Tác động xấu:</strong> 2 mặt hàng trúng xúc xắc bị cộng thêm <strong><code>+5.0 kg CO2e / unit</code></strong> khi mua (áp dụng cho cả V04 và V08).</li>
+            <li><strong>Tác động tốt 1:</strong> Phạt Carbon vượt trần kho 4,000 units giảm sâu <strong><code>-300 kg/container</code></strong> (từ 500 kg xuống chỉ còn <strong>200 kg/1,000 units vượt</strong>).</li>
+            <li><strong>Tác động tốt 2:</strong> Phát thải năng lượng mua ngoài giảm <strong><code>-25 kg/ngày</code></strong> (từ 100 xuống 75 kg/ngày).</li>
+          </ul>
+          <div class="callout emerald" style="margin:0;">
+            <strong>⚡ Thao tác phản công trong 15 giây:</strong><br/>
+            1. Tích chọn <em>Cold Spell</em> trên công cụ Web &rarr; Vào <span class="tcode">VK32</span> tăng ngay giá bán của 2 mặt hàng bị trúng xúc xắc thêm <strong>€0.80 – €2.20/unit</strong> (tùy mức thuế Carbon hiện tại) để chuyển chi phí thuế sang khách hàng.<br/>
+            2. Giảm lượng nhập <code>MD61</code> của mặt hàng biên lãi mỏng bị dính (như <em>Milk/Yoghurt</em>), tăng lượng nhập các mặt hàng không bị dính!
+          </div>
+        </div>
+
+        <!-- EVENT 2 -->
+        <div class="card" style="border-top: 4px solid #f59e0b;">
+          <div class="card-title">
+            <span>⚖️ Event 2: Carbon Decree (Sắc Lệnh Thuế Carbon)</span>
+            <span class="tag-pill amber">Tăng sốc thuế Carbon</span>
+          </div>
+          <ul class="step-list" style="margin-bottom:0.75rem;">
+            <li><strong>Tác động chính:</strong> Thuế suất Carbon (Carbon Tax) tăng vọt thêm <strong><code>+€0.20 / kg CO2e</code></strong> ngay lập tức (ví dụ từ €0.15/kg nhảy thẳng lên <strong>€0.35/kg</strong>!).</li>
+            <li><strong>Tác động phụ:</strong> Phát thải năng lượng mua ngoài (Purchased Energy) giảm <strong><code>-50 kg/ngày</code></strong> (từ 100 xuống còn 50 kg/ngày).</li>
+          </ul>
+          <div class="callout emerald" style="margin:0;">
+            <strong>⚡ Thao tác phản công trong 15 giây:</strong><br/>
+            1. Kiểm tra tuyệt đối <span class="tcode">ZMB1B</span> đã <strong>bỏ tích <code>Use 03</code></strong> (vì 300 kg CO2e bán từ kho tổng lúc này tốn thêm €60 tiền thuế mỗi đơn!).<br/>
+            2. Giãn tần suất chuyển kho <code>Delivery Frequency</code> trong <span class="tcode">ZMB1B</span> lên <strong>3 ngày/lần</strong>.<br/>
+            3. Vào <span class="tcode">VK32</span> nâng giá bán cả 6 mặt hàng thêm <strong>€0.50 – €1.20/unit</strong> theo bảng tính trên Web Command Center.
+          </div>
+        </div>
+
+        <!-- EVENT 3 -->
+        <div class="card" style="border-top: 4px solid #ec4899;">
+          <div class="card-title">
+            <span>🚚 Event 3: Supplier Disruption (Đứt Gãy NCC)</span>
+            <span class="tag-pill rose">Xúc xắc: [1] = V04 | [2] = V08</span>
+          </div>
+          <ul class="step-list" style="margin-bottom:0.75rem;">
+            <li><strong>Tác động 1:</strong> Nhà cung cấp trúng xúc xắc (<code>V04</code> hoặc <code>V08</code>) bị phạt thêm <strong><code>+2.50 kg CO2e / unit</code></strong> cho tất cả mặt hàng mua từ NCC đó.</li>
+            <li><strong>Tác động 2:</strong> Mỗi đơn PO đặt từ NCC đó bị phạt thêm <strong><code>+200 kg CO2e / PO</code></strong>.</li>
+          </ul>
+          <div class="callout emerald" style="margin:0;">
+            <strong>⚡ Thao tác phản công trong 15 giây:</strong><br/>
+            • <strong>Nếu xúc xắc ra <code>[2] V08</code>:</strong> Đội bạn cười lớn vì đang mua 100% ở <code>V04</code> — không cần đổi bất cứ thứ gì!<br/>
+            • <strong>Nếu xúc xắc ra <code>[1] V04</code>:</strong> Bật nút <em>Supplier Disruption (V04)</em> trên Web Command Center. Nếu thuế Carbon còn thấp (&le; €0.25/kg), <code>V04</code> vẫn rẻ hơn ở <em>Cheese, Butter, Ice Cream</em>! Nếu thuế Carbon cao (&ge; €0.35/kg), vào <span class="tcode">ZME12</span> chuyển <em>Milk (T01), Cream (T02), Yoghurt (T03)</em> sang <code>V08</code>.
+          </div>
+        </div>
+
+        <!-- EVENT 4 -->
+        <div class="card" style="border-top: 4px solid #f43f5e;">
+          <div class="card-title">
+            <span>🚧 Event 4: Hub Gridlock (Tắc Nghẽn Kho Tổng 03)</span>
+            <span class="tag-pill rose">Phạt nặng vận chuyển qua Kho 03</span>
+          </div>
+          <ul class="step-list" style="margin-bottom:0.75rem;">
+            <li><strong>Bán trực tiếp từ Kho tổng 03:</strong> Bị cộng thêm <strong><code>+300 kg CO2e / Sales Order</code></strong> (tổng vọt lên <strong>600 kg CO2e + €350 mỗi đơn hàng</strong>!).</li>
+            <li><strong>Chuyển kho nội bộ (<code>ZMB1B</code>):</strong> Bị cộng thêm <strong><code>+100 kg CO2e / transfer</code></strong> (từ 50 kg lên <strong>150 kg/chuyến</strong>).</li>
+            <li><strong>Nhận hàng mua PO:</strong> Bị cộng thêm <strong><code>+100 kg CO2e / PO</code></strong>.</li>
+          </ul>
+          <div class="callout emerald" style="margin:0;">
+            <strong>⚡ Thao tác phản công trong 15 giây:</strong><br/>
+            1. <strong>Cấm tuyệt đối bán từ Kho tổng 03</strong> (<code>Use 03</code> = Unchecked trong <span class="tcode">ZMB1B</span>). Đội nào còn tích <code>Use 03</code> ở vòng này sẽ cháy sạch lợi nhuận!<br/>
+            2. Vào <span class="tcode">ZMB1B</span> đổi <code>Delivery Frequency</code> từ 1–2 ngày lên <strong>3 – 4 ngày/lần</strong> và tăng số lượng mỗi lần chuyển để giảm 70% số chuyến xe nội bộ!
+          </div>
+        </div>
+
+        <!-- EVENT 5 -->
+        <div class="card" style="border-top: 4px solid #a855f7;">
+          <div class="card-title">
+            <span>💻 Event 5: System Glitch (Lỗi Khóa Báo Cáo)</span>
+            <span class="tag-pill purple">Xúc xắc 1 – 6 khóa báo cáo</span>
+          </div>
+          <p style="font-size:0.84rem; color:var(--text-secondary); margin-bottom:0.5rem;">
+            <strong>Bảng xúc xắc nhóm báo cáo bị khóa:</strong><br/>
+            <code>[1] Inventory (ZMB52)</code> • <code>[2] Sales (ZVA05, ZVC2)</code> • <code>[3] Procurement (ZME2N)</code><br/>
+            <code>[4] Inventory &amp; Sales</code> • <code>[5] Inventory &amp; Procurement</code> • <code>[6] Sales &amp; Procurement</code>
+          </p>
+          <ul class="step-list" style="margin-bottom:0.75rem;">
+            <li>Muốn mở khóa báo cáo trong SAP phải vào T-code <span class="tcode">ZITM</span> trả phí thuê chuyên gia <strong><code>€5,000 / mỗi báo cáo</code></strong>.</li>
+          </ul>
+          <div class="callout emerald" style="margin:0;">
+            <strong>⚡ Thao tác phản công trong 15 giây:</strong><br/>
+            • <strong>Cách 1 (Miễn phí €0):</strong> Mở bảng dữ liệu từ cổng <strong>OData (<code>ZODATA</code> / Excel OData Feed / SAC Dashboard)</strong> — dữ liệu OData vẫn hoạt động 100% mà không tốn một đồng nào!<br/>
+            • <strong>Cách 2 (Nếu không nối OData):</strong> Chỉ vào <span class="tcode">ZITM</span> bỏ đúng <strong>€5,000</strong> mua lại duy nhất báo cáo <span class="tcode">ZMB52</span> (Tồn kho), không cần mua các báo cáo phụ khác.
+          </div>
+        </div>
+
+        <!-- EVENT 6 -->
+        <div class="card" style="border-top: 4px solid #06b6d4;">
+          <div class="card-title">
+            <span>🔓 Event 6: Data Breach (Rò Rỉ OData Toàn Ngành)</span>
+            <span class="tag-pill blue">Soi toàn bộ bài của đối thủ</span>
+          </div>
+          <ul class="step-list" style="margin-bottom:0.75rem;">
+            <li><strong>Tác động:</strong> Quyền xem dữ liệu OData mở khóa toàn bộ: Bạn xem được <strong>Tồn kho, Giá bán, Doanh số và Nhà cung cấp của TẤT CẢ các đội đối thủ</strong> (và họ cũng xem được của bạn).</li>
+          </ul>
+          <div class="callout emerald" style="margin:0;">
+            <strong>⚡ Thao tác phản công trong 15 giây:</strong><br/>
+            1. Người 4 bấm Refresh bảng OData <code>Current_Inventory</code>, lọc tìm xem ở mặt hàng đắt tiền nào (<code>Cheese T04</code>, <code>Cream T02</code>, <code>Butter T05</code>) các đội đối thủ đang có <strong>Tồn kho = 0 (Đứt hàng)</strong>.<br/>
+            2. Báo ngay cho Người 2 đẩy hàng đó vào vùng bị trống qua <span class="tcode">ZMB1B</span> và Người 3 tăng giá mặt hàng đó trong <span class="tcode">VK32</span> thêm <strong>+10% đến +15%</strong> để độc quyền thu lời!
+          </div>
+        </div>
+
+        <!-- EVENT 7 -->
+        <div class="card" style="border-top: 4px solid #ef4444;">
+          <div class="card-title">
+            <span>🌊 Event 7: Flash Flood (Lũ Quét Mất Trắng 1 Kho)</span>
+            <span class="tag-pill rose">Xúc xắc: [1]=03 | [2]=03N | [3]=03S | [4]=03W</span>
+          </div>
+          <ul class="step-list" style="margin-bottom:0.75rem;">
+            <li><strong>Tác động:</strong> Toàn bộ 100% hàng tồn kho đang nằm tại kho trúng xúc xắc bị tiêu hủy hoàn toàn (và bị ghi nhận thành chi phí hủy hàng trừ thẳng vào lợi nhuận).</li>
+          </ul>
+          <div class="callout emerald" style="margin:0;">
+            <strong>⚡ Thao tác phản công trong 15 giây:</strong><br/>
+            • <strong>Nếu trúng Kho vùng (<code>03N, 03S, hoặc 03W</code>):</strong> Vào <span class="tcode">ZMB1B</span> đẩy ngay hàng từ Kho tổng <code>03</code> xuống kho vùng vừa bị lũ quét, đồng thời <strong>tăng giá <code>VK32</code> +12%</strong> vì toàn bộ đối thủ cũng vừa mất sạch hàng ở vùng đó!<br/>
+            • <strong>Nếu trúng Kho tổng (<code>03</code>):</strong> 3 kho vùng của bạn vẫn đang còn đầy hàng để bán! Lập tức chạy <span class="tcode">MD61</span> &rarr; <span class="tcode">MD01</span> &rarr; <span class="tcode">ME59N</span> với nhà cung cấp <strong><code>V04</code></strong> (chỉ 1–2 ngày sau hàng mới về lại kho 03!).
+          </div>
+        </div>
+
+        <!-- EVENT 8 -->
+        <div class="card" style="border-top: 4px solid #10b981;">
+          <div class="card-title">
+            <span>🤖 Event 8: AI Innovation (Mở Khóa Công Cụ AI ZRPA)</span>
+            <span class="tag-pill emerald">Kích hoạt qua ZSTART</span>
+          </div>
+          <ul class="step-list" style="margin-bottom:0.75rem;">
+            <li><strong>Tác động:</strong> Giảng viên bật quyền sử dụng T-code <span class="tcode">ZRPA</span> (<em>AI Requirements Planning</em> hỗ trợ <code>MD61</code> và <em>AI Price Management</em> hỗ trợ <code>VK32</code>).</li>
+          </ul>
+          <div class="callout emerald" style="margin:0;">
+            <strong>⚡ Thao tác phản công trong 15 giây:</strong><br/>
+            • Dùng <span class="tcode">ZRPA</span> để tự động hóa nhanh việc tính lượng đặt hàng bổ sung cho <code>MD61</code>.<br/>
+            • <strong>Lưu ý về giá:</strong> Thuật toán AI mặc định của <code>ZRPA</code> thường đặt giá khá thấp để an toàn; hãy luôn đối chiếu với cột <strong>GIÁ BÁN TỐI ƯU VK32 (DC 16)</strong> trên Web Command Center để cộng đủ phần trượt giá Thuế Carbon!
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- CHƯƠNG 4: 6 VŨ KHÍ BÍ MẬT (LỖ HỔNG THUẬT TOÁN ABAP & KẾ TOÁN SAP) -->
+    <!-- ================================================================= -->
+    <section id="ch4" class="chapter-section searchable-section">
+      <div class="chapter-header">
+        <span class="chapter-badge">CHƯƠNG 04</span>
+        <h2>6 "Vũ Khí Bí Mật" — Khai Thác Lỗ Hổng Thuật Toán ABAP &amp; Kế Toán SAP</h2>
+      </div>
+
+      <div class="weapon-card">
+        <div class="weapon-header">
+          <div class="weapon-title">Vũ Khí Bí Mật #1: Lỗ Hổng Gộp 6 Mặt Hàng Vào 1 Đơn PO Duy Nhất ("1-PO Multi-SKU Exploit")</div>
+          <span class="tag-pill emerald">Lời thêm +€25,000 đến +€35,000 / Round</span>
+        </div>
+        <p style="font-size:0.88rem; margin-bottom:0.5rem;">
+          <strong>Cơ chế ABAP bên dưới:</strong> Bộ máy tính phí của ERPsim quét bảng Header đơn mua hàng (<code>EKKO</code> — Số chứng từ PO) để trừ <strong>€1,000 + 100 kg CO2e mỗi PO</strong>, chứ không trừ theo từng mặt hàng (<code>EKPO</code>)! Khi các đội khác gõ dự báo <code>MD61</code> rải ra nhiều cột ngày hoặc chia 2 nhà cung cấp, SAP tách thành 6 PO riêng biệt và trừ <strong>€6,000 + 600 kg CO2e</strong>.
+        </p>
+        <p style="font-size:0.88rem; color:#38bdf8;">
+          <strong>Cách kích hoạt:</strong> (1) Trong <span class="tcode">ZME12</span> gán cả 6 mặt hàng về cùng <strong><code>V04</code></strong>. (2) Trong <span class="tcode">MD61</span> chỉ gõ số lượng của cả 6 mặt hàng vào <strong>đúng 1 cột ngày duy nhất (Cột ngày thứ 2)</strong>, các cột khác xóa về 0. (3) Chạy <span class="tcode">MD01</span> rồi bấm <span class="tcode">ME59N</span> đúng 1 lần &rarr; Cả 6 mặt hàng được gộp vào <strong>1 số PO duy nhất</strong>, chỉ mất đúng <strong>€1,000 và 100 kg CO2e cho cả 6 mặt hàng</strong> (tiết kiệm 83% chi phí)!
+        </p>
+      </div>
+
+      <div class="weapon-card">
+        <div class="weapon-header">
+          <div class="weapon-title">Vũ Khí Bí Mật #2: Tỉa Danh Mục Theo "Lợi Nhuận / 1 Chỗ Trống Trong Kho &amp; 1 Kg Carbon"</div>
+          <span class="tag-pill blue">Hiệu suất gấp 400%</span>
+        </div>
+        <p style="font-size:0.88rem; margin-bottom:0.5rem;">
+          <strong>Cơ chế ABAP bên dưới:</strong> Trần kho <code>4,000 units</code> và Carbon mua hàng <code>1.2 kg/unit</code> (hoặc <code>+5.0 kg/unit</code> khi <em>Cold Spell</em>) đều phạt đồng giá trên từng <strong>Đơn vị sản phẩm (Unit)</strong> bất kể giá trị!
+          1 đơn vị <strong>Cheese (<code>T04</code>)</strong> tạo ra <strong>~€20.20 lãi gộp</strong> (tức <strong>€16.83 lãi / 1 kg CO2e</strong>), trong khi 1 đơn vị <strong>Milk (<code>T01</code>)</strong> cũng tốn 1 chỗ trong kho và 1.2 kg CO2e nhưng chỉ tạo ra <strong>~€5.10 lãi gộp</strong> (<strong>€4.25 lãi / 1 kg CO2e</strong>).
+        </p>
+        <p style="font-size:0.88rem; color:#38bdf8;">
+          <strong>Cách kích hoạt:</strong> Khi thuế Carbon tăng cao hoặc khi <code>Milk (T01)</code> / <code>Yoghurt (T03)</code> bị dính <em>Cold Spell (+5kg CO2e/unit)</em>, hãy nâng giá <code>Milk/Yoghurt</code> lên sát trần và giảm 40% lượng nhập của 2 mã này, nhường chỗ trống trong trần 4,000 units kho cho <strong><code>Cheese (T04)</code>, <code>Butter (T05)</code>, <code>Cream (T02)</code>, <code>Ice Cream (T06)</code></strong>!
+        </p>
+      </div>
+
+      <div class="weapon-card">
+        <div class="weapon-header">
+          <div class="weapon-title">Vũ Khí Bí Mật #3: Khai Thác Điểm Mù Độc Quyền Vùng (N_avail = 1) Trong Hàm Cầu Logit</div>
+          <span class="tag-pill amber">Biên lợi nhuận siêu ngạch +25%</span>
+        </div>
+        <p style="font-size:0.88rem; margin-bottom:0.5rem;">
+          <strong>Cơ chế ABAP bên dưới:</strong> Bot khách hàng tại mỗi vùng (<code>03N, 03S, 03W</code>) chỉ tính Giá trung bình thị trường dựa trên <strong>các đội ĐANG CÓ TỒN KHO &gt; 0 tại đúng kho vùng đó</strong>. Nếu các đối thủ đứt hàng tại vùng đó (chỉ còn đội bạn có hàng: $N_{\text{avail}} = 1$), giá của bạn trở thành giá chuẩn của cả vùng và độ nhạy cảm giá giảm mạnh cho đến tận ngưỡng Giá trần tuyệt đối (Choke Price).
+        </p>
+        <p style="font-size:0.88rem; color:#38bdf8;">
+          <strong>Cách kích hoạt:</strong> Vào <strong>Ngày 3 – Ngày 5 của Round 1</strong> (khi các đội mua từ V08 bị trễ hàng 4 ngày) hoặc ngay sau <strong>Event 7: Flash Flood</strong>, đội bạn dùng <code>V04</code> (giao 1–2 ngày) và <span class="tcode">ZMB1B</span> bơm hàng lấp vào vùng bị trống đầu tiên, đồng thời nâng giá <span class="tcode">VK32</span> thêm <strong>+12% đến +18%</strong> trong 2 ngày độc quyền!
+        </p>
+      </div>
+
+      <div class="weapon-card">
+        <div class="weapon-header">
+          <div class="weapon-title">Vũ Khí Bí Mật #4: Trích Xuất "Tỷ Lệ Thị Hiếu Bất Đối Xứng Cố Định 3 Vùng" Ở Ngày 4 Round 1</div>
+          <span class="tag-pill purple">Không bao giờ ứ đọng tồn kho</span>
+        </div>
+        <p style="font-size:0.88rem; margin-bottom:0.5rem;">
+          <strong>Cơ chế ABAP bên dưới:</strong> Tỷ trọng sức mua của 6 mặt hàng giữa 3 vùng <code>North (03N) : South (03S) : West (03W)</code> là bất đối xứng nhưng <strong>được giữ cố định không đổi suốt cả 4 Round</strong>. Đội nào cứ chia đều <code>1/3 : 1/3 : 1/3</code> sẽ luôn bị cháy hàng ở vùng hot và ứ đọng vượt trần 4,000 units ở vùng lạnh.
+        </p>
+        <p style="font-size:0.88rem; color:#38bdf8;">
+          <strong>Cách kích hoạt:</strong> Đúng <strong>Ngày 4 của Round 1</strong>, mở báo cáo chi tiết <span class="tcode">ZVA05</span>, xem tỷ lệ lượng bán thực tế của từng mặt hàng theo cột <code>Storage Location (03N, 03S, 03W)</code>, rồi cài đặt tỷ lệ chuyển kho trong <span class="tcode">ZMB1B</span> khớp 100% với tỷ lệ tiêu thụ đó cho suốt phần còn lại của trận đấu!
+        </p>
+      </div>
+
+      <div class="weapon-card">
+        <div class="weapon-header">
+          <div class="weapon-title">Vũ Khí Bí Mật #5: Cửa Hậu OData (ZODATA) Miễn Nhiễm System Glitch (€0) &amp; Đánh Úp Data Breach</div>
+          <span class="tag-pill blue">Tiết kiệm €15,000 – €25,000</span>
+        </div>
+        <p style="font-size:0.88rem; color:#38bdf8;">
+          <strong>Cách kích hoạt:</strong> Ngay đầu trận, Người 4 lấy đường link trong ô <span class="tcode">ZODATA</span> kết nối sẵn vào Excel (<em>Data &rarr; From OData Feed</em>) hoặc Tab 5 của Web Command Center. Khi xảy ra <strong>Event 5: System Glitch</strong> khóa các T-code <code>ZMB52, ZVC2, ZME2N</code>, cổng OData vẫn mở 100% — bạn chỉ việc bấm Refresh để xem tồn kho mà không tốn một đồng nào trong <code>ZITM</code>! Và khi xảy ra <strong>Event 6: Data Breach</strong>, cú bấm Refresh đó sẽ tải về toàn bộ tồn kho và giá bán của mọi đối thủ chỉ trong 3 giây!
+        </p>
+      </div>
+
+      <div class="weapon-card">
+        <div class="weapon-header">
+          <div class="weapon-title">Vũ Khí Bí Mật #6: Lá Chắn Kế Toán Chống Sốc Lũ Quét (Flash Flood Shield) &amp; Chốt Sổ Cuối Game</div>
+          <span class="tag-pill rose">Bảo toàn Lợi nhuận ròng</span>
+        </div>
+        <p style="font-size:0.88rem; margin-bottom:0.5rem;">
+          <strong>Cơ chế Kế toán SAP:</strong> Hàng tồn kho nằm trên Bảng cân đối kế toán (chưa bị trừ vào Lợi nhuận), nhưng nếu bị <strong>Flash Flood</strong> cuốn trôi sẽ lập tức bị hạch toán thành <em>Chi phí hủy hàng (Scrap Loss)</em> trừ thẳng vào Lợi nhuận! Ngược lại, phí tạo đơn PO (€1,000) và thuế Carbon bị trừ ngay lập tức khi phát sinh.
+        </p>
+        <p style="font-size:0.88rem; color:#38bdf8;">
+          <strong>Cách kích hoạt:</strong> (1) Không bao giờ tích trữ hàng nằm ỳ ở Kho tổng <code>03</code>; ngay khi hàng về <code>03</code> là dùng <span class="tcode">ZMB1B</span> phân tán ra 3 kho vùng <code>03N, 03S, 03W</code> để nếu lũ quét trúng bất kỳ kho nào cũng chỉ mất tối đa 1/4 lượng hàng. (2) Ở <strong>3 – 4 ngày cuối cùng của Round cuối</strong>, <strong>NGỪNG chạy <code>ME59N</code> đặt đơn PO mới</strong> (vì đơn PO đặt ở 3 ngày cuối bị trừ ngay €1,000 + thuế Carbon nhưng hàng chưa kịp chuyển ra kho vùng để bán) và giảm giá nhẹ 4% ở <span class="tcode">VK32</span> để vét sạch doanh thu từ số hàng còn lại trong kho!
+        </p>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- CHƯƠNG 5: CHIẾN THUẬT ĐỘI HÌNH 4 NGƯỜI & TIMELINE TÁC CHIẾN        -->
+    <!-- ================================================================= -->
+    <section id="ch5" class="chapter-section searchable-section">
+      <div class="chapter-header">
+        <span class="chapter-badge">CHƯƠNG 05</span>
+        <h2>Chiến Thuật Phân Công Đội Hình 4 Người (Zero Lock-Conflict) &amp; Timeline Tác Chiến</h2>
+      </div>
+
+      <p style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:0.75rem;">
+        Bấm vào từng vị trí dưới đây để lọc riêng nhiệm vụ và màn hình SAP độc quyền cho từng thành viên trong đội 4 người của bạn:
+      </p>
+
+      <div class="role-filter-bar">
+        <button class="role-btn active" data-role="ALL">Tất Cả 4 Thành Viên</button>
+        <button class="role-btn" data-role="R1">👤 Người 1 ($1): Mua Hàng &amp; Trần Kho</button>
+        <button class="role-btn" data-role="R2">👤 Người 2 ($2): Điều Phối Kho Vùng ZMB1B</button>
+        <button class="role-btn" data-role="R3">👤 Người 3 ($3): Định Giá Chiến Thuật VK32</button>
+        <button class="role-btn" data-role="R4">👤 Người 4 ($4): Đội Trưởng &amp; Web Command Center</button>
+      </div>
+
+      <div class="grid-2" id="role-cards-grid">
+        <div class="card role-card" data-role-card="R1" style="border-left: 4px solid #3b82f6;">
+          <div class="card-title">
+            <span>👤 Người 1 (User <code>$_1</code>) — Giám Đốc Mua Hàng &amp; MRP</span>
+            <span class="tag-pill blue">MD61 • MD01 • ZME12 • ME59N • ZME2N</span>
+          </div>
+          <ul class="step-list">
+            <li><strong>Độc quyền mở:</strong> <span class="tcode">MD61</span>, <span class="tcode">MD01</span>, <span class="tcode">ZME12</span>, <span class="tcode">ME59N</span> (3 người kia tuyệt đối không vào các mã này để tránh khóa dữ liệu).</li>
+            <li><strong>Ngay Ngày 1 Round 1:</strong> Vào <span class="tcode">ZME12</span> gán cả 6 mặt hàng cho nhà cung cấp <strong><code>V04</code></strong> và bấm Save.</li>
+            <li><strong>Nhịp đặt hàng (3–4 ngày/lần):</strong> Khi Người 2 báo tổng tồn kho 4 kho hạ xuống mức <strong>~1,600 – 1,800 units</strong>, vào <span class="tcode">MD61</span> (nhóm <code>$$-T</code>) nhập tổng cộng khoảng <strong>1,800 – 2,200 units</strong> cho cả 6 mã vào <strong>đúng cột ngày thứ 2</strong> &rarr; Chạy <span class="tcode">MD01</span> &rarr; Chạy <span class="tcode">ME59N</span> để gộp thành <strong>1 PO duy nhất</strong>!</li>
+            <li><strong>4 ngày cuối Round cuối:</strong> Dừng hoàn toàn việc chạy <code>ME59N</code> để không mất oan phí PO và thuế Carbon cuối trận.</li>
+          </ul>
+        </div>
+
+        <div class="card role-card" data-role-card="R2" style="border-left: 4px solid #f59e0b;">
+          <div class="card-title">
+            <span>👤 Người 2 (User <code>$_2</code>) — Giám Đốc Kho Vùng &amp; Logistics</span>
+            <span class="tag-pill amber">ZMB1B • ZMB52</span>
+          </div>
+          <ul class="step-list">
+            <li><strong>Độc quyền mở:</strong> <span class="tcode">ZMB1B</span> và <span class="tcode">ZMB52</span>.</li>
+            <li><strong>Giây thứ 1 của Ngày 1 Round 1:</strong> Mở <span class="tcode">ZMB1B</span>, cài đặt chuyển 3,000 units tồn kho đầu kỳ từ Kho tổng <code>03</code> ra 3 kho vùng <code>03N, 03S, 03W</code> (tần suất <strong>Delivery Frequency = 2 ngày</strong>). Trong Ngày 1 tạm giữ <code>Use 03</code> để khách vẫn mua được hàng khi kho vùng chưa kịp nhận.</li>
+            <li><strong>Ngay Ngày 2 – Ngày 3 (Khi hàng vừa tới 03N/03S/03W):</strong> Vào lại <span class="tcode">ZMB1B</span>, <strong>BỎ DẤU TÍCH <code>Use 03</code></strong> và bấm Save để cắt đứt khoản phạt €350 + 300kg CO2e mỗi đơn hàng!</li>
+            <li><strong>Từ Ngày 4 Round 1 trở đi:</strong> Nhận tỷ lệ thị hiếu 3 vùng từ Người 3 (<span class="tcode">ZVA05</span>) để phân bổ lượng hàng chuyển về <code>03N, 03S, 03W</code> khớp đúng sức mua từng vùng.</li>
+          </ul>
+        </div>
+
+        <div class="card role-card" data-role-card="R3" style="border-left: 4px solid #10b981;">
+          <div class="card-title">
+            <span>👤 Người 3 (User <code>$_3</code>) — Giám Đốc Định Giá &amp; Doanh Số</span>
+            <span class="tag-pill emerald">VK32 (DC 16) • ZVC2 • ZVA05</span>
+          </div>
+          <ul class="step-list">
+            <li><strong>Độc quyền mở:</strong> <span class="tcode">VK32</span> (Distribution Channel = <code>16</code>), <span class="tcode">ZVC2</span> và <span class="tcode">ZVA05</span>.</li>
+            <li><strong>Giây thứ 1 của Ngày 1 Round 1:</strong> Mở <span class="tcode">VK32</span> (Kênh <code>16</code>), nâng ngay giá cả 6 mặt hàng từ giá mặc định lên <strong>Khung Giá Khai Cuộc Tối Ưu</strong> (T01: ~€28.20 | T02: ~€85.50 | T03: ~€31.80 | T04: ~€103.00 | T05: ~€74.00 | T06: ~€53.50) rồi bấm Save.</li>
+            <li><strong>Ngày 4 Round 1:</strong> Mở <span class="tcode">ZVA05</span> đọc tỷ lệ lượng bán giữa <code>03N : 03S : 03W</code> của từng mã cho Người 2.</li>
+            <li><strong>Nhịp điều chỉnh giá mỗi 2 ngày:</strong> Mã nào ở kho vùng còn &lt; 150 units mà hàng mới chưa về &rarr; <strong>Tăng giá +6% đến +10%</strong>. Nếu tổng tồn kho 4 kho tiến sát 3,800 units &rarr; <strong>Giảm giá nhẹ -4%</strong> ở mã tồn nhiều nhất để xả kho dưới trần 4,000 units.</li>
+          </ul>
+        </div>
+
+        <div class="card role-card" data-role-card="R4" style="border-left: 4px solid #8b5cf6;">
+          <div class="card-title">
+            <span>👤 Người 4 (User <code>$_4</code>) — Đội Trưởng &amp; Chỉ Huy Thuật Toán</span>
+            <span class="tag-pill purple">Web Command Center • F.01 • ZODATA • ZITM • ZRPA</span>
+          </div>
+          <ul class="step-list">
+            <li><strong>Phụ trách:</strong> Vận hành công cụ <a href="index.html" style="color:#38bdf8;font-weight:700;">Web Command Center (index.html)</a>, bảng <span class="tcode">ZODATA</span>, <span class="tcode">F.01</span>, <span class="tcode">ZITM</span>, <span class="tcode">ZRPA</span>.</li>
+            <li><strong>Giữa các Round (Khi giảng viên bấm Roll xúc xắc):</strong> Ngay khi xúc xắc dừng lại trên màn hình chiếu, tích chọn sự kiện trên <strong>Tab đầu tiên của Web Command Center</strong> (và cộng thêm <code>+€0.05</code> vào ô Thuế Carbon gốc cho Round mới).</li>
+            <li><strong>Đọc lệnh trong 15 giây cho cả đội:</strong>
+              <ul>
+                <li>Đọc cho Người 1: Giữ <code>V04</code> hay đổi mã nào sang <code>V08</code>.</li>
+                <li>Đọc cho Người 2: Giãn chu kỳ <code>ZMB1B</code> hay bơm cứu viện kho vừa bị <em>Flash Flood</em>.</li>
+                <li>Đọc cho Người 3: Đọc chính xác 6 mức giá mới ở cột <strong>GIÁ BÁN TỐI ƯU VK32 (DC 16)</strong>.</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- TIMELINE TABLE -->
+      <div class="card">
+        <div class="card-title">
+          <span>Kịch Bản Tác Chiến Theo Từng Cột Mốc Thời Gian (Timeline Chuẩn Thi Đấu)</span>
+          <span class="tag-pill emerald">Step-by-Step Checklist</span>
+        </div>
+        <div class="table-container" style="margin-bottom:0;">
+          <table>
+            <thead>
+              <tr>
+                <th>Giai Đoạn</th>
+                <th>Thời Điểm</th>
+                <th>Hành Động Phối Hợp Của Cả 4 Người</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Trước Giờ G</strong></td>
+                <td>5 phút trước Round 1</td>
+                <td>• Mở sẵn <a href="index.html" style="color:#38bdf8;">index.html</a> trên máy Người 4.<br/>• Người 4 lấy link <span class="tcode">ZODATA</span> kết nối sẵn vào Excel/Trình duyệt.<br/>• Người 1, 2, 3 mở sẵn đúng màn hình của mình (<code>ZME12</code>, <code>ZMB1B</code>, <code>VK32</code>).</td>
+              </tr>
+              <tr>
+                <td><strong>Khai Cuộc R1</strong></td>
+                <td>Step 1 (Ngày 1 Round 1)</td>
+                <td>• <strong>Người 3:</strong> Nâng giá <span class="tcode">VK32</span> (Kênh 16) lên Khung Giá Tối Ưu &rarr; Save &amp; F3.<br/>• <strong>Người 2:</strong> Cài <span class="tcode">ZMB1B</span> đẩy 3,000 units từ <code>03</code> ra <code>03N, 03S, 03W</code> (Frequency = 2).<br/>• <strong>Người 1:</strong> Vào <span class="tcode">ZME12</span> gán cả 6 mã cho <strong><code>V04</code></strong> &rarr; Save.</td>
+              </tr>
+              <tr>
+                <td><strong>Chốt Kho Vùng</strong></td>
+                <td>Step 2 – 3 (Ngày 2–3 R1)</td>
+                <td>• <strong>Người 2:</strong> Kiểm tra <span class="tcode">ZMB52</span> thấy hàng đã ra tới <code>03N, 03S, 03W</code> &rarr; Vào <span class="tcode">ZMB1B</span> <strong>BỎ TÍCH <code>Use 03</code></strong> &rarr; Save!<br/>• <strong>Người 1:</strong> Chạy đợt mua hàng gộp 1 PO đầu tiên (<span class="tcode">MD61</span> cột ngày 2 &rarr; <span class="tcode">MD01</span> &rarr; <span class="tcode">ME59N</span>).</td>
+              </tr>
+              <tr>
+                <td><strong>Giải Mã Vùng</strong></td>
+                <td>Step 4 – 5 (Ngày 4–5 R1)</td>
+                <td>• <strong>Người 3:</strong> Mở <span class="tcode">ZVA05</span> tính tỷ lệ tiêu thụ 3 vùng <code>03N : 03S : 03W</code> của từng sản phẩm đọc cho Người 2 cập nhật vào <span class="tcode">ZMB1B</span>.</td>
+              </tr>
+              <tr>
+                <td><strong>Giữa Các Round</strong></td>
+                <td>Đầu Round 2, 3, 4 (Quay xúc xắc)</td>
+                <td>• <strong>Người 4:</strong> Tăng ô Thuế Carbon gốc thêm <code>+€0.05</code>, bật công tắc Disruptor vừa quay trúng trên Web Command Center &rarr; Đọc bảng giá <span class="tcode">VK32</span> mới cho Người 3 và NCC <span class="tcode">ZME12</span> cho Người 1.</td>
+              </tr>
+              <tr>
+                <td><strong>Nước Rút Cuối Trận</strong></td>
+                <td>4 Ngày Cuối Của Round Cuối</td>
+                <td>• <strong>Người 1:</strong> <strong>NGỪNG chạy <code>ME59N</code></strong> để không chịu thêm phí PO €1,000 và thuế Carbon mua hàng vô ích.<br/>• <strong>Người 2:</strong> Đẩy nốt toàn bộ hàng còn ở <code>03</code> ra 3 kho vùng.<br/>• <strong>Người 3:</strong> Hạ nhẹ giá <span class="tcode">VK32</span> 3%–5% ở những mã còn tồn nhiều để vét sạch doanh thu thành Tiền mặt!</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- CHƯƠNG 6: CÔNG THỨC ĐỊNH GIÁ AAA+ & BẢN SẢN XUẤT MUESLI           -->
+    <!-- ================================================================= -->
+    <section id="ch6" class="chapter-section searchable-section">
+      <div class="chapter-header">
+        <span class="chapter-badge">CHƯƠNG 06</span>
+        <h2>Phụ Lục Công Thức Toán Học Lõi: Định Giá Công Ty (AAA+) &amp; Bản Sản Xuất Muesli</h2>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">
+            <span>1. Công Thức Định Giá Công Ty &amp; Xếp Hạng Tín Dụng AAA+</span>
+            <span class="tcode">F.01</span>
+          </div>
+          <div class="formula-block">
+            Debt Loading = (Cash + Accounts Receivable) - (|Bank Loans| + |Accounts Payable|)
+          </div>
+          <div class="formula-block">
+            Company Valuation = [ ((Current Profit - TK_478000) / Elapsed_Steps) × Total_Steps + TK_478000 ] / (7% + Company_Risk_Rate)
+          </div>
+          <ul class="step-list">
+            <li>Khi <strong><code>Debt Loading &ge; €0</code></strong>: Đạt hạng tín dụng cao nhất <strong><code>AAA+</code></strong> (Company Risk Rate = <strong>3.00%</strong>, tổng mẫu số chiết khấu = <strong>10.00%</strong> &rarr; Nhân <strong>10 lần</strong> lợi nhuận năm hóa).</li>
+            <li>Mỗi <code>-€1,000,000</code> Debt Loading âm sẽ làm tụt 1 bậc tín dụng (<code>AA+, AA, AA-, A+...</code> xuống <code>C = 15% risk</code>).</li>
+            <li><strong>Mẹo Cuối Game:</strong> Giá trị Hàng tồn kho (<code>ZMB52</code>) không được cộng vào <code>Debt Loading</code>, nhưng nợ phải trả nhà cung cấp (<code>AP</code>) lại bị trừ trực tiếp. Vì vậy ở 4–5 ngày cuối trận, ngừng mua hàng mới và xả tồn kho thành Tiền mặt/Phải thu sẽ đẩy hạng tín dụng vọt lên <strong><code>AAA+</code></strong>!</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>2. Công Thức Riêng Cho Bản Sản Xuất (Manufacturing Muesli)</span>
+            <span class="tcode">CO41 • ZADS • FB50</span>
+          </div>
+          <div class="formula-block">
+            Setup Time (giờ) = 2 + (6 × 250,000) / (250,000 + Số dư TK 478000)
+          </div>
+          <div class="formula-block">
+            Giá Tối Ưu P* (Amoroso-Robinson) = COGS × [ ε_eff / (ε_eff - 1) ]
+          </div>
+          <ul class="step-list">
+            <li><strong>Đầu tư Lean Manufacturing (<span class="tcode">FB50</span> &rarr; Nợ TK <code>478000</code> / Có TK <code>113100</code>):</strong> Đầu tư <strong>€250,000</strong> giảm Setup Time từ 8h xuống <strong>5h</strong>; đầu tư <strong>€500,000</strong> giảm xuống <strong>4h</strong>. Số tiền đầu tư vào TK <code>478000</code> được cộng hoàn lại vào tử số của Company Valuation.</li>
+            <li><strong>3 Kênh phân phối Muesli:</strong> <strong><code>DC10</code></strong> (Đại siêu thị – chỉ mua hộp <code>1kg</code>, cực nhạy về giá), <strong><code>DC12</code></strong> (Chuỗi siêu thị – mua cả <code>500g &amp; 1kg</code>, chiếm 62% thị trường), <strong><code>DC14</code></strong> (Tạp hóa tiện lợi – chỉ mua hộp <code>500g</code>, nhạy với quảng cáo <span class="tcode">ZADS</span>, chịu được giá bán rất cao).</li>
+            <li><strong>Miễn 100% Setup Time trong <span class="tcode">CO41</span>:</strong> Nếu 2 lệnh sản xuất liên tiếp cùng 1 mã SKU, hệ thống tính <code>Setup Time = 0 giờ</code>!</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // 1. Dark / Light Theme Toggle
+    const themeBtn = document.getElementById('btn-toggle-theme');
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('light-mode');
+    });
+
+    // 2. Role Filter in Chapter 5
+    const roleBtns = document.querySelectorAll('.role-btn');
+    const roleCards = document.querySelectorAll('.role-card');
+    roleBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        roleBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const targetRole = btn.dataset.role;
+        roleCards.forEach(card => {
+          if (targetRole === 'ALL' || card.dataset.roleCard === targetRole) {
+            card.classList.remove('dimmed');
+          } else {
+            card.classList.add('dimmed');
+          }
+        });
+      });
+    });
+
+    // 3. Instant Live Search Filter across sections & cards
+    const searchInput = document.getElementById('guide-search');
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      const cards = document.querySelectorAll('.card, .weapon-card, .flow-step');
+      cards.forEach(c => {
+        if (!q || c.textContent.toLowerCase().includes(q)) {
+          c.style.display = '';
+        } else {
+          c.style.display = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
