@@ -3,12 +3,18 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Format helpers
+  // Format & Safe Number Parsing helpers
   const fmtEur = (n) => {
     const sign = n < 0 ? '-' : '';
     return sign + '€' + Math.round(Math.abs(n)).toLocaleString('en-US');
   };
   const fmtDec = (n, d = 2) => Number(n).toFixed(d);
+  const numVal = (id, fallback = 0) => {
+    const el = document.getElementById(id);
+    if (!el || el.value === '') return fallback;
+    const v = Number(el.value);
+    return Number.isFinite(v) ? v : fallback;
+  };
 
   // 1. TAB SWITCHING
   const tabBtns = document.querySelectorAll('.tab-btn');
@@ -34,17 +40,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateValuationModule() {
     const params = {
-      currentProfit: Number(document.getElementById('val-profit').value) || 0,
-      setupInvestment478000: Number(document.getElementById('val-setup-inv').value) || 0,
-      elapsedSteps: Number(document.getElementById('val-elapsed').value) || 1,
-      totalRounds: Number(document.getElementById('val-rounds').value) || 3,
-      stepsPerRound: Number(document.getElementById('val-steps-round').value) || 20,
-      marketRiskRate: (Number(document.getElementById('val-mkt-risk').value) || 7) / 100,
-      cash: Number(document.getElementById('val-cash').value) || 0,
-      accountsReceivable: Number(document.getElementById('val-ar').value) || 0,
-      bankLoans: Number(document.getElementById('val-loans').value) || 0,
-      accountsPayable: Number(document.getElementById('val-ap').value) || 0,
-      inventoryValue: Number(document.getElementById('val-inventory').value) || 0
+      currentProfit: numVal('val-profit', 0),
+      setupInvestment478000: numVal('val-setup-inv', 0),
+      elapsedSteps: Math.max(1, numVal('val-elapsed', 1)),
+      totalRounds: Math.max(1, numVal('val-rounds', 3)),
+      stepsPerRound: Math.max(1, numVal('val-steps-round', 20)),
+      marketRiskRate: numVal('val-mkt-risk', 7) / 100,
+      cash: numVal('val-cash', 0),
+      accountsReceivable: numVal('val-ar', 0),
+      bankLoans: numVal('val-loans', 0),
+      accountsPayable: numVal('val-ap', 0),
+      inventoryValue: numVal('val-inventory', 0)
     };
 
     const res = ERPsimEngine.calculateCompanyValuation(params);
@@ -116,6 +122,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', updateValuationModule);
   });
+
+  const btnStartDemo = document.getElementById('btn-load-start-demo');
+  if (btnStartDemo) {
+    btnStartDemo.addEventListener('click', () => {
+      document.getElementById('val-profit').value = 450000;
+      document.getElementById('val-setup-inv').value = 250000;
+      document.getElementById('val-elapsed').value = 10;
+      document.getElementById('val-cash').value = 1250000;
+      document.getElementById('val-ar').value = 850000;
+      document.getElementById('val-loans').value = 1200000;
+      document.getElementById('val-ap').value = 650000;
+      document.getElementById('val-inventory').value = 950000;
+      updateValuationModule();
+    });
+  }
 
   document.getElementById('btn-load-endgame-demo').addEventListener('click', () => {
     document.getElementById('val-profit').value = 2450000;
@@ -316,14 +337,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const co2Inputs = ['co2-boxes', 'co2-setup-hrs', 'co2-inventory', 'co2-deliveries', 'co2-tax-rate'];
 
   function updateProductionModule() {
-    const account478000 = Number(document.getElementById('prod-478000').value) || 0;
+    const account478000 = numVal('prod-478000', 0);
     const res = ERPsimEngine.calculateSetupAndProduction({
       account478000,
-      account11000ExtraUnits: Number(document.getElementById('prod-11000').value) || 0,
-      productivityPct: Number(document.getElementById('prod-productivity').value) || 75,
-      lotSize: Number(document.getElementById('prod-lot-size').value) || 16000,
-      avgMarginPerBox: Number(document.getElementById('prod-avg-margin').value) || 1.65,
-      remainingDays: Number(document.getElementById('prod-rem-days').value) || 35
+      account11000ExtraUnits: numVal('prod-11000', 0),
+      productivityPct: Math.max(10, numVal('prod-productivity', 75)),
+      lotSize: Math.max(1000, numVal('prod-lot-size', 16000)),
+      avgMarginPerBox: numVal('prod-avg-margin', 1.65),
+      remainingDays: Math.max(1, numVal('prod-rem-days', 35))
     });
 
     document.getElementById('top-setup-time').textContent = `${fmtDec(res.setupTimeHours, 2)} giờ`;
@@ -351,11 +372,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateCarbonModule() {
     const res = ERPsimEngine.calculateCarbonFootprint({
-      dailyBoxesProduced: Number(document.getElementById('co2-boxes').value) || 0,
-      dailySetupHours: Number(document.getElementById('co2-setup-hrs').value) || 0,
-      averageInventoryBoxes: Number(document.getElementById('co2-inventory').value) || 0,
-      dailyDeliveriesCount: Number(document.getElementById('co2-deliveries').value) || 0,
-      carbonTaxRatePerKg: Number(document.getElementById('co2-tax-rate').value) || 0.30
+      dailyBoxesProduced: numVal('co2-boxes', 0),
+      dailySetupHours: numVal('co2-setup-hrs', 0),
+      averageInventoryBoxes: numVal('co2-inventory', 0),
+      dailyDeliveriesCount: numVal('co2-deliveries', 0),
+      carbonTaxRatePerKg: numVal('co2-tax-rate', 0.30)
     });
 
     document.getElementById('res-co2-total').textContent = `${res.totalDailyCo2Kg.toLocaleString('en-US')} kg CO2e`;
@@ -486,32 +507,81 @@ document.addEventListener('DOMContentLoaded', () => {
   const logInputs = [
     'log-base-tax', 'log-po-lot', 'log-total-stock', 'log-transfers-day',
     'log-reg-orders', 'log-dir-orders', 'dis-1-cold', 'dis-1-combo',
-    'dis-2-carbon', 'dis-3-supplier', 'dis-3-vendor', 'dis-4-gridlock'
+    'dis-2-carbon', 'dis-3-supplier', 'dis-3-vendor', 'dis-4-gridlock',
+    'dis-5-glitch', 'dis-6-breach', 'dis-7-flood', 'dis-7-warehouse', 'dis-8-ai'
   ];
 
   function updateLogisticsPreset3Module() {
+    const coldActive = document.getElementById('dis-1-cold').checked;
+    const carbonActive = document.getElementById('dis-2-carbon').checked;
+    const supplierActive = document.getElementById('dis-3-supplier').checked;
+    const gridlockActive = document.getElementById('dis-4-gridlock').checked;
+    const glitchActive = document.getElementById('dis-5-glitch') ? document.getElementById('dis-5-glitch').checked : false;
+    const breachActive = document.getElementById('dis-6-breach') ? document.getElementById('dis-6-breach').checked : false;
+    const floodActive = document.getElementById('dis-7-flood') ? document.getElementById('dis-7-flood').checked : false;
+    const floodWh = document.getElementById('dis-7-warehouse') ? document.getElementById('dis-7-warehouse').value : '03';
+    const aiActive = document.getElementById('dis-8-ai') ? document.getElementById('dis-8-ai').checked : false;
+
     const res = ERPsimEngine.solveLogisticsSustainabilityPreset3({
-      baseCarbonTax: Number(document.getElementById('log-base-tax').value) || 0.10,
-      orderLotSizePerPo: Number(document.getElementById('log-po-lot').value) || 600,
-      totalWarehouseUnits: Number(document.getElementById('log-total-stock').value) || 3600,
-      transfersPerDay: Number(document.getElementById('log-transfers-day').value) || 0,
-      regionalSalesOrdersPerDay: Number(document.getElementById('log-reg-orders').value) || 0,
-      directSalesOrdersPerDay: Number(document.getElementById('log-dir-orders').value) || 0,
-      coldSpellActive: document.getElementById('dis-1-cold').checked,
+      baseCarbonTax: numVal('log-base-tax', 0.10),
+      orderLotSizePerPo: Math.max(50, numVal('log-po-lot', 600)),
+      totalWarehouseUnits: numVal('log-total-stock', 3600),
+      transfersPerDay: numVal('log-transfers-day', 0),
+      regionalSalesOrdersPerDay: numVal('log-reg-orders', 0),
+      directSalesOrdersPerDay: numVal('log-dir-orders', 0),
+      coldSpellActive: coldActive,
       coldSpellCombo: document.getElementById('dis-1-combo').value,
-      carbonDecreeActive: document.getElementById('dis-2-carbon').checked,
-      supplierDisruptionActive: document.getElementById('dis-3-supplier').checked,
+      carbonDecreeActive: carbonActive,
+      supplierDisruptionActive: supplierActive,
       impactedSupplier: document.getElementById('dis-3-vendor').value,
-      hubGridlockActive: document.getElementById('dis-4-gridlock').checked
+      hubGridlockActive: gridlockActive
     });
 
-    document.getElementById('log-eff-tax').textContent = `€${fmtDec(res.effectiveCarbonTax, 2)} / kg CO2e`;
+    document.getElementById('log-eff-tax').textContent = `€${fmtDec(res.effectiveCarbonTax, 2)} / kg CO₂e`;
     document.getElementById('log-overstock-fee').textContent = `${fmtEur(res.overstockFeePerDay)} / ngày`;
     document.getElementById('log-overstock-fee').style.color = res.overstockFeePerDay > 0 ? '#f43f5e' : '#10b981';
-    document.getElementById('log-overstock-co2').textContent = `Vượt ${res.excessUnits.toLocaleString('en-US')} units (+${res.overstockCo2PerDay} kg CO2e/ngày)`;
+    document.getElementById('log-overstock-co2').textContent = `Vượt ${res.excessUnits.toLocaleString('en-US')} units (+${res.overstockCo2PerDay} kg CO₂e/ngày)`;
     document.getElementById('log-daily-total-cost').textContent = `${fmtEur(res.dailyCarbonTaxEur + res.dailyTransportAndStorageFeesEur)} / ngày`;
-    document.getElementById('log-daily-co2-sub').textContent = `Phát thải vận hành: ${res.dailyLogisticsCo2.toLocaleString('en-US')} kg CO2e/ngày (Thuế: ${fmtEur(res.dailyCarbonTaxEur)})`;
+    document.getElementById('log-daily-co2-sub').textContent = `Phát thải vận hành: ${res.dailyLogisticsCo2.toLocaleString('en-US')} kg CO₂e/ngày (Thuế: ${fmtEur(res.dailyCarbonTaxEur)})`;
     document.getElementById('log-direct-loss').textContent = `-€${fmtDec(res.lossPerDirectSaleOrder, 2)} / đơn`;
+
+    // Active Disruptor Alert Banner
+    const activeFlags = {
+      1: coldActive,
+      2: carbonActive,
+      3: supplierActive,
+      4: gridlockActive,
+      5: glitchActive,
+      6: breachActive,
+      7: floodActive,
+      8: aiActive
+    };
+    const activeAlerts = [];
+    if (coldActive) activeAlerts.push(`<li><strong>[Event 1 - Cold Spell]:</strong> Đã tự động cộng +5.0 kg CO₂e/unit vào 2 sản phẩm bị ảnh hưởng và tính lại cột <strong>GIÁ BÁN TỐI ƯU VK32 (DC 16)</strong> bên dưới. Phạt Carbon vượt kho giảm còn 200 kg/container!</li>`);
+    if (carbonActive) activeAlerts.push(`<li><strong>[Event 2 - Carbon Decree]:</strong> Thuế suất Carbon đã cộng thêm +€0.20/kg (lên <strong>€${fmtDec(res.effectiveCarbonTax, 2)}/kg</strong>). Hãy cập nhật ngay giá VK32 mới theo bảng dưới!</li>`);
+    if (supplierActive) activeAlerts.push(`<li><strong>[Event 3 - Supplier Disruption (${document.getElementById('dis-3-vendor').value})]:</strong> Đã cộng +2.50 kg/unit &amp; +200 kg/PO vào ${document.getElementById('dis-3-vendor').value}. Kiểm tra cột <strong>CHỌN NCC TỐI ƯU (ZME12)</strong> bên dưới!</li>`);
+    if (gridlockActive) activeAlerts.push(`<li><strong>[Event 4 - Hub Gridlock]:</strong> Bán từ Kho tổng 03 hiện mất tới <strong>-€${fmtDec(res.lossPerDirectSaleOrder, 2)}/đơn</strong>! Bắt buộc bỏ tích <code>Use 03</code> và giãn chu kỳ <code>ZMB1B</code> ra 3–4 ngày/lần!</li>`);
+    if (glitchActive) activeAlerts.push(`<li><strong>[Event 5 - System Glitch]:</strong> Mở dữ liệu qua cổng <code>ZODATA</code> (miễn phí €0) hoặc vào <code>ZITM</code> chỉ mua lại duy nhất báo cáo <code>ZMB52</code> (€5,000).</li>`);
+    if (breachActive) activeAlerts.push(`<li><strong>[Event 6 - Data Breach]:</strong> Mở ngay bảng OData <code>Current_Inventory</code> soi xem đối thủ đang đứt hàng (Stock = 0) ở mặt hàng nào/vùng nào → Dùng <code>ZMB1B</code> đẩy hàng vào đó và tăng giá <code>VK32</code> +12%!</li>`);
+    if (floodActive) {
+      if (floodWh === '03') {
+        activeAlerts.push(`<li><strong>[Event 7 - Flash Flood trúng Kho Tổng 03]:</strong> 3 kho vùng (03N, 03S, 03W) vẫn còn hàng bán! Người 1 chạy ngay <code>MD61 → MD01 → ZME12 (V04) → ME59N</code> để 1–2 ngày sau hàng mới về lại kho 03!</li>`);
+      } else {
+        activeAlerts.push(`<li><strong>[Event 7 - Flash Flood trúng Kho Vùng ${floodWh}]:</strong> Người 2 vào ngay <code>ZMB1B</code> đẩy hàng từ Kho tổng 03 xuống cứu viện kho <strong>${floodWh}</strong>; Người 3 tăng giá <code>VK32</code> +12% vì các đối thủ cũng vừa mất trắng kho ${floodWh}!</li>`);
+      }
+    }
+    if (aiActive) activeAlerts.push(`<li><strong>[Event 8 - AI Innovation]:</strong> Đã mở khóa T-code <code>ZRPA</code> hỗ trợ điền nhanh <code>MD61</code>. Với giá bán <code>VK32</code>, hãy ưu tiên áp dụng cột <strong>GIÁ BÁN TỐI ƯU VK32 (KÊNH DC 16)</strong> bên dưới!</li>`);
+
+    const alertBox = document.getElementById('active-disruptor-alerts');
+    if (alertBox) {
+      if (activeAlerts.length > 0) {
+        alertBox.style.display = 'block';
+        alertBox.className = 'alert-card warning';
+        alertBox.innerHTML = `<strong>⚡ LỆNH PHẢN CÔNG KHẨN CẤP CHO SỰ KIỆN ĐANG DIỄN RA:</strong><ul style="margin-left:1.2rem;margin-top:0.35rem;font-size:0.82rem;">${activeAlerts.join('')}</ul>`;
+      } else {
+        alertBox.style.display = 'none';
+      }
+    }
 
     const skuTbody = document.getElementById('logistics-sku-tbody');
     skuTbody.innerHTML = res.skuAnalysis.map(s => {
@@ -544,13 +614,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
 
     const disTbody = document.getElementById('logistics-disruptors-tbody');
-    disTbody.innerHTML = ERPsimEngine.LOGISTICS_DISRUPTORS.map(d => `
-      <tr>
-        <td><strong style="color:#fbbf24;">${d.name}</strong></td>
-        <td style="font-family:var(--font-sans);">${d.summary}</td>
-        <td style="font-family:var(--font-sans);color:#34d399;"><strong>Đối sách:</strong> ${d.counterStrategy}</td>
-      </tr>
-    `).join('');
+    disTbody.innerHTML = ERPsimEngine.LOGISTICS_DISRUPTORS.map(d => {
+      const isAct = Boolean(activeFlags[d.id]);
+      return `
+        <tr class="${isAct ? 'active-tier' : ''}">
+          <td><strong style="color:#fbbf24;">${d.name} ${isAct ? '◀ ĐANG BẬT' : ''}</strong></td>
+          <td style="font-family:var(--font-sans);">${d.summary}</td>
+          <td style="font-family:var(--font-sans);color:#34d399;"><strong>Đối sách:</strong> ${d.counterStrategy}</td>
+        </tr>
+      `;
+    }).join('');
   }
 
   logInputs.forEach(id => {

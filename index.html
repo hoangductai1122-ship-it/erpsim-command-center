@@ -126,17 +126,17 @@
 
           <div class="stat-box" style="border-left: 3px solid #f59e0b;">
             <div class="s-label" style="color:#fbbf24; font-weight:700; margin-bottom:0.6rem;">BẬT / TẮT 8 SỰ KIỆN XÚC XẮC NGẪU NHIÊN (CUMULATIVE DISRUPTORS)</div>
-            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 0.55rem;">
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 0.45rem;">
               <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
-                <input type="checkbox" id="dis-1-cold" /> <strong>1. Cold Spell</strong> (+5kg CO2/unit)
+                <input type="checkbox" id="dis-1-cold" /> <strong>1. Cold Spell</strong> (+5kg CO₂/unit)
               </label>
-              <select id="dis-1-combo" class="form-control" style="padding:0.25rem 0.4rem; font-size:0.76rem;">
-                <option value="T01_T02">Xúc xắc 1: Milk (T01) & Cream (T02)</option>
-                <option value="T01_T03">Xúc xắc 2: Milk (T01) & Yoghurt (T03)</option>
-                <option value="T01_T05">Xúc xắc 3: Milk (T01) & Butter (T05)</option>
-                <option value="T02_T03">Xúc xắc 4: Cream (T02) & Yoghurt (T03)</option>
-                <option value="T02_T05">Xúc xắc 5: Cream (T02) & Butter (T05)</option>
-                <option value="T03_T05">Xúc xắc 6: Yoghurt (T03) & Butter (T05)</option>
+              <select id="dis-1-combo" class="form-control" style="padding:0.22rem 0.4rem; font-size:0.75rem;">
+                <option value="T01_T02">Xúc xắc 1: Milk (T01) &amp; Cream (T02)</option>
+                <option value="T01_T03">Xúc xắc 2: Milk (T01) &amp; Yoghurt (T03)</option>
+                <option value="T01_T05">Xúc xắc 3: Milk (T01) &amp; Butter (T05)</option>
+                <option value="T02_T03">Xúc xắc 4: Cream (T02) &amp; Yoghurt (T03)</option>
+                <option value="T02_T05">Xúc xắc 5: Cream (T02) &amp; Butter (T05)</option>
+                <option value="T03_T05">Xúc xắc 6: Yoghurt (T03) &amp; Butter (T05)</option>
               </select>
 
               <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
@@ -149,13 +149,36 @@
               <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
                 <input type="checkbox" id="dis-3-supplier" /> <strong>3. Supplier Disruption</strong>
               </label>
-              <select id="dis-3-vendor" class="form-control" style="padding:0.25rem 0.4rem; font-size:0.76rem;">
+              <select id="dis-3-vendor" class="form-control" style="padding:0.22rem 0.4rem; font-size:0.75rem;">
                 <option value="V04">Xúc xắc 1: V04 bị phạt (+2.5kg/unit, +200kg/PO)</option>
                 <option value="V08">Xúc xắc 2: V08 bị phạt (+2.5kg/unit, +200kg/PO)</option>
               </select>
+
+              <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="checkbox" id="dis-5-glitch" /> <strong>5. System Glitch</strong> (Khóa báo cáo)
+              </label>
+              <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="checkbox" id="dis-6-breach" /> <strong>6. Data Breach</strong> (Lộ OData đối thủ)
+              </label>
+
+              <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="checkbox" id="dis-7-flood" /> <strong>7. Flash Flood</strong> (Lũ quét kho)
+              </label>
+              <select id="dis-7-warehouse" class="form-control" style="padding:0.22rem 0.4rem; font-size:0.75rem;">
+                <option value="03">Xúc xắc 1: Kho tổng Central (03)</option>
+                <option value="03N">Xúc xắc 2: Kho vùng North (03N)</option>
+                <option value="03S">Xúc xắc 3: Kho vùng South (03S)</option>
+                <option value="03W">Xúc xắc 4: Kho vùng West (03W)</option>
+              </select>
+
+              <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.4rem; cursor:pointer; grid-column: span 2;">
+                <input type="checkbox" id="dis-8-ai" /> <strong>8. AI Innovation</strong> (Mở khóa T-code AI ZRPA hỗ trợ MD61 &amp; VK32)
+              </label>
             </div>
           </div>
         </div>
+
+        <div id="active-disruptor-alerts" class="alert-card" style="display:none; margin-bottom: 1rem;"></div>
 
         <!-- KPI Summary Strip for Logistics Preset 3 -->
         <div class="stat-grid">
@@ -235,23 +258,28 @@
             <div class="panel-title">
               Nhập Chỉ Số Tài Chính <span class="badge-tcode">F.01</span> <span class="badge-tcode">ZFF7B</span>
             </div>
-            <button class="btn btn-outline" id="btn-load-endgame-demo" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
-              Mẫu Round 3
-            </button>
+            <div style="display:flex; gap:0.4rem;">
+              <button class="btn btn-outline" id="btn-load-start-demo" style="padding: 0.3rem 0.55rem; font-size: 0.72rem;">
+                Khai Cuộc (AAA+)
+              </button>
+              <button class="btn btn-outline" id="btn-load-endgame-demo" style="padding: 0.3rem 0.55rem; font-size: 0.72rem;">
+                Mẫu Cuối Trận
+              </button>
+            </div>
           </div>
 
           <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
             <div class="form-group">
               <label>Lợi nhuận hiện tại (€)</label>
-              <input type="number" id="val-profit" class="form-control" value="1850000" step="50000" />
+              <input type="number" id="val-profit" class="form-control" value="450000" step="50000" />
             </div>
             <div class="form-group">
               <label>Số dư TK 478000 (Lean €)</label>
-              <input type="number" id="val-setup-inv" class="form-control" value="500000" step="50000" />
+              <input type="number" id="val-setup-inv" class="form-control" value="250000" step="50000" />
             </div>
             <div class="form-group">
               <label>Số ngày đã chạy (Elapsed)</label>
-              <input type="number" id="val-elapsed" class="form-control" value="42" min="1" max="120" />
+              <input type="number" id="val-elapsed" class="form-control" value="10" min="1" max="120" />
             </div>
             <div class="form-group">
               <label>Tổng số Round</label>
@@ -269,29 +297,29 @@
 
           <hr style="border: 0; border-top: 1px solid var(--border); margin: 1rem 0;" />
           <div style="font-size: 0.82rem; font-weight: 700; margin-bottom: 0.65rem; color: #60a5fa;">
-            Bảng Cân Đối Kế Toán — Tính Debt Loading & Credit Rating
+            Bảng Cân Đối Kế Toán — Tính Debt Loading &amp; Credit Rating
           </div>
 
           <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
             <div class="form-group">
               <label>Tiền mặt (Cash €)</label>
-              <input type="number" id="val-cash" class="form-control" value="950000" step="50000" />
+              <input type="number" id="val-cash" class="form-control" value="1250000" step="50000" />
             </div>
             <div class="form-group">
               <label>Phải thu KH (AR €)</label>
-              <input type="number" id="val-ar" class="form-control" value="1450000" step="50000" />
+              <input type="number" id="val-ar" class="form-control" value="850000" step="50000" />
             </div>
             <div class="form-group">
               <label>Nợ Vay NH (Bank Loans €)</label>
-              <input type="number" id="val-loans" class="form-control" value="3800000" step="100000" />
+              <input type="number" id="val-loans" class="form-control" value="1200000" step="100000" />
             </div>
             <div class="form-group">
               <label>Phải trả NCC (AP €)</label>
-              <input type="number" id="val-ap" class="form-control" value="950000" step="50000" />
+              <input type="number" id="val-ap" class="form-control" value="650000" step="50000" />
             </div>
             <div class="form-group" style="grid-column: span 2;">
               <label>Giá trị Tồn kho Thành phẩm + NVL (ZMB52 € - Không tính vào Debt Loading!)</label>
-              <input type="number" id="val-inventory" class="form-control" value="1600000" step="50000" />
+              <input type="number" id="val-inventory" class="form-control" value="950000" step="50000" />
             </div>
           </div>
         </div>
@@ -371,10 +399,10 @@
         <div class="panel-header">
           <div>
             <div class="panel-title">
-              Bộ Giải Ngược Độ Co Giãn Giá ($\hat{\epsilon}_{j,c}$) & Tối Ưu Hóa Bảng Giá <span class="badge-tcode">VK32</span> <span class="badge-tcode amber">ZMARKET</span> <span class="badge-tcode emerald">ZVC2</span>
+              Bộ Giải Ngược Độ Co Giãn Giá (ε̂<sub>eff</sub>) &amp; Tối Ưu Hóa Bảng Giá <span class="badge-tcode">VK32</span> <span class="badge-tcode amber">ZMARKET</span> <span class="badge-tcode emerald">ZVC2</span>
             </div>
             <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">
-              Nhập hoặc chỉnh sửa Giá vốn (ZCK11), Giá kỳ trước, Sản lượng bán, Giá trung bình thị trường (ZMARKET) và Tồn kho (ZMB52). Hệ thống tự động giải phương trình Amoroso-Robinson & Multinomial Logit để tìm mức giá tối đa hóa lợi nhuận ròng cho từng kênh DC10, DC12, DC14.
+              Nhập hoặc chỉnh sửa Giá vốn (ZCK11), Giá kỳ trước, Sản lượng bán, Giá trung bình thị trường (ZMARKET) và Tồn kho (ZMB52). Hệ thống tự động giải phương trình Amoroso-Robinson &amp; Multinomial Logit để tìm mức giá tối đa hóa lợi nhuận ròng cho từng kênh DC10, DC12, DC14.
             </p>
           </div>
           <div style="display: flex; gap: 0.5rem;">
@@ -450,10 +478,10 @@
         <div class="panel-header">
           <div>
             <div class="panel-title">
-              Ánh Xạ Ngược Ma Trận Thị Hiếu Vùng ($\Theta_{j,r}$) & Phân Bổ Quảng Cáo Chống Tự Ăn Mòn <span class="badge-tcode">ZADS</span> <span class="badge-tcode emerald">ZVC2</span>
+              Ánh Xạ Ngược Ma Trận Thị Hiếu Vùng (Θ) &amp; Phân Bổ Quảng Cáo Chống Tự Ăn Mòn <span class="badge-tcode">ZADS</span> <span class="badge-tcode emerald">ZVC2</span>
             </div>
             <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">
-              Hệ thống tự động khử nhiễu quảng cáo cũ để tìm ra <strong>Chỉ số Thị hiếu Tự nhiên ($\Theta_{j,r}$)</strong> của từng vùng (North, South, West) và chỉ định đúng <strong>Top 1–2 SKU chủ lực mỗi vùng</strong> để bơm tiền trong ZADS, cắt bỏ các mã gây tự pha loãng (Cannibalization).
+              Hệ thống tự động khử nhiễu quảng cáo cũ để tìm ra <strong>Chỉ số Thị hiếu Tự nhiên (Θ)</strong> của từng vùng (North, South, West) và chỉ định đúng <strong>Top 1–2 SKU chủ lực mỗi vùng</strong> để bơm tiền trong ZADS, cắt bỏ các mã gây tự pha loãng (Cannibalization).
             </p>
           </div>
           <div style="display: flex; align-items: center; gap: 0.65rem;">
@@ -468,14 +496,14 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>Mã SKU & Hương Vị</th>
+                <th>Mã SKU &amp; Hương Vị</th>
                 <th>Lãi Gộp /Hộp (€)</th>
                 <th>SL Bán North</th>
                 <th>SL Bán South</th>
                 <th>SL Bán West</th>
-                <th>Chỉ Số Thị Hiếu $\Theta_{\text{North}}$</th>
-                <th>Chỉ Số Thị Hiếu $\Theta_{\text{South}}$</th>
-                <th>Chỉ Số Thị Hiếu $\Theta_{\text{West}}$</th>
+                <th>Chỉ Số Thị Hiếu Θ (North)</th>
+                <th>Chỉ Số Thị Hiếu Θ (South)</th>
+                <th>Chỉ Số Thị Hiếu Θ (West)</th>
                 <th>Đề Xuất ZADS NORTH (€)</th>
                 <th>Đề Xuất ZADS SOUTH (€)</th>
                 <th>Đề Xuất ZADS WEST (€)</th>
@@ -570,9 +598,9 @@
         <div class="panel">
           <div class="panel-header">
             <div class="panel-title">
-              Thuật Toán Thuế Carbon & Phát Thải $CO_2e$ (Bản S/4HANA Sustainability)
+              Thuật Toán Thuế Carbon &amp; Phát Thải CO₂e (Bản S/4HANA Sustainability)
             </div>
-            <span class="badge-tcode emerald">Green Logistics & Production</span>
+            <span class="badge-tcode emerald">Green Logistics &amp; Production</span>
           </div>
 
           <div class="formula-box">
@@ -597,16 +625,16 @@
               <input type="number" id="co2-deliveries" class="form-control" value="24" step="2" />
             </div>
             <div class="form-group" style="grid-column: span 2;">
-              <label>Thuế suất Carbon (€ / kg CO2e - Mặc định 0.30 €)</label>
+              <label>Thuế suất Carbon (€ / kg CO₂e - Mặc định 0.30 €)</label>
               <input type="number" id="co2-tax-rate" class="form-control" value="0.30" step="0.05" />
             </div>
           </div>
 
           <div class="stat-grid" style="margin-top: 1rem;">
             <div class="stat-box">
-              <div class="s-label">TỔNG PHÁT THẢI CO2e / NGÀY</div>
+              <div class="s-label">TỔNG PHÁT THẢI CO₂e / NGÀY</div>
               <div class="s-value" id="res-co2-total">0 kg</div>
-              <div class="s-sub" id="res-co2-breakdown">SX: 0kg | Setup: 0kg | Kho & Giao: 0kg</div>
+              <div class="s-sub" id="res-co2-breakdown">SX: 0kg | Setup: 0kg | Kho &amp; Giao: 0kg</div>
             </div>
             <div class="stat-box">
               <div class="s-label">THUẾ CARBON PHẢI NỘP / NGÀY</div>
@@ -616,10 +644,10 @@
           </div>
 
           <div class="alert-card">
-            <strong>Chiến thuật Tối ưu hóa Carbon & Chi phí Sản xuất:</strong>
+            <strong>Chiến thuật Tối ưu hóa Carbon &amp; Chi phí Sản xuất:</strong>
             <ul style="margin-left: 1.1rem; margin-top: 0.4rem; font-size: 0.82rem;">
-              <li><strong>Gom lô sản xuất lớn (Lot Size $\ge 18,000 - 24,000$ hộp):</strong> Nếu 2 lệnh sản xuất liên tiếp cùng 1 mã SKU, thuật toán SAP tính <code>Setup Time = 0 giờ</code> và <code>CO2_Setup = 0 kg</code>.</li>
-              <li><strong>Không để đứt nguyên vật liệu bao bì (Box & Bag):</strong> Thiếu 1 túi nilon hoặc vỏ hộp sẽ làm treo toàn bộ dây chuyền sản xuất trong khi chi phí cố định và khấu hao vẫn trừ đều mỗi ngày.</li>
+              <li><strong>Gom lô sản xuất lớn (Lot Size ≥ 18,000 – 24,000 hộp):</strong> Nếu 2 lệnh sản xuất liên tiếp cùng 1 mã SKU, thuật toán SAP tính <code>Setup Time = 0 giờ</code> và <code>CO2_Setup = 0 kg</code>.</li>
+              <li><strong>Không để đứt nguyên vật liệu bao bì (Box &amp; Bag):</strong> Thiếu 1 túi nilon hoặc vỏ hộp sẽ làm treo toàn bộ dây chuyền sản xuất trong khi chi phí cố định và khấu hao vẫn trừ đều mỗi ngày.</li>
             </ul>
           </div>
         </div>
@@ -717,7 +745,7 @@
           <div class="stat-box" style="border-top: 3px solid #3b82f6;">
             <div class="s-label">BƯỚC 1: LẬP DỰ BÁO (PIR)</div>
             <div class="s-value" style="font-size:1.05rem;">MD61</div>
-            <div class="s-sub">Chọn <code>Product group</code> = <strong>$$-F</strong>, Plant = <strong>$$</strong> $\to$ Nhập số lượng hộp muốn SX (VD: 24,000) $\to$ Bấm <strong>Save (Ctrl+S)</strong>.</div>
+            <div class="s-sub">Chọn <code>Product group</code> = <strong>$$-F</strong>, Plant = <strong>$$</strong> &rarr; Nhập số lượng hộp muốn SX (VD: 24,000) &rarr; Bấm <strong>Save (Ctrl+S)</strong>.</div>
           </div>
           <div class="stat-box" style="border-top: 3px solid #06b6d4;">
             <div class="s-label">BƯỚC 2: CHẠY TÍNH TOÁN MRP</div>
@@ -727,16 +755,16 @@
           <div class="stat-box" style="border-top: 3px solid #10b981;">
             <div class="s-label">BƯỚC 3: MUA NGUYÊN VẬT LIỆU</div>
             <div class="s-value" style="font-size:1.05rem;">ME59N</div>
-            <div class="s-sub">Nhập Purch.Org = <strong>$$</strong>, Plant = <strong>$$</strong> $\to$ <strong>BỎ TÍCH ô Test Run</strong> $\to$ Bấm <strong>Execute (F8)</strong>. Chờ 1–5 ngày hàng tự về kho.</div>
+            <div class="s-sub">Nhập Purch.Org = <strong>$$</strong>, Plant = <strong>$$</strong> &rarr; <strong>BỎ TÍCH ô Test Run</strong> &rarr; Bấm <strong>Execute (F8)</strong>. Chờ 1–5 ngày hàng tự về kho.</div>
           </div>
           <div class="stat-box" style="border-top: 3px solid #f59e0b;">
             <div class="s-label">BƯỚC 4: ĐẨY LỆNH XUỐNG XƯỞNG</div>
             <div class="s-value" style="font-size:1.05rem;">CO41</div>
-            <div class="s-sub">Nhập Plant = <strong>$$</strong> $\to$ Bấm <strong>F8</strong> $\to$ Tích chọn các lô muốn sản xuất $\to$ Bấm nút <strong>Collective Conversion</strong>.</div>
+            <div class="s-sub">Nhập Plant = <strong>$$</strong> &rarr; Bấm <strong>F8</strong> &rarr; Tích chọn các lô muốn sản xuất &rarr; Bấm nút <strong>Collective Conversion</strong>.</div>
           </div>
           <div class="stat-box" style="border-top: 3px solid #f43f5e;">
-            <div class="s-label">BƯỚC 5: ĐỊNH GIÁ & QUẢNG CÁO</div>
-            <div class="s-value" style="font-size:1.05rem;">VK32 & ZADS</div>
+            <div class="s-label">BƯỚC 5: ĐỊNH GIÁ &amp; QUẢNG CÁO</div>
+            <div class="s-value" style="font-size:1.05rem;">VK32 &amp; ZADS</div>
             <div class="s-sub">Vào <strong>VK32</strong> cập nhật giá bán cho DC10 (1kg), DC12 (cả 2), DC14 (500g). Vào <strong>ZADS</strong> chi quảng cáo theo Vùng rồi bấm <strong>Save</strong>.</div>
           </div>
         </div>
@@ -748,8 +776,8 @@
                 <th>Nhóm Chức Năng</th>
                 <th>T-Code (SAP GUI)</th>
                 <th>Tên Ứng Dụng (SAP Fiori Tile)</th>
-                <th>Các Nút Bấm Cụ Thể & Thông Số Bắt Buộc</th>
-                <th>Lỗi Thường Gặp & Lưu Ý Sống Còn</th>
+                <th>Các Nút Bấm Cụ Thể &amp; Thông Số Bắt Buộc</th>
+                <th>Lỗi Thường Gặp &amp; Lưu Ý Sống Còn</th>
               </tr>
             </thead>
             <tbody>
@@ -757,56 +785,56 @@
                 <td>Hoạch định</td>
                 <td><span class="badge-tcode">MD61</span></td>
                 <td>Create Planned Independent Requirements</td>
-                <td>Chọn tròn <code>Product group</code> (nhập <code>AA-F</code>), Plant <code>AA</code> $\to$ <code>Enter</code> $\to$ Nhập số lượng vào cột kỳ hiện tại $\to$ <code>Ctrl+S (Save)</code></td>
+                <td>Chọn tròn <code>Product group</code> (nhập <code>AA-F</code>), Plant <code>AA</code> &rarr; <code>Enter</code> &rarr; Nhập số lượng vào cột kỳ hiện tại &rarr; <code>Ctrl+S (Save)</code></td>
                 <td>Nếu chỉ nhập số mà quên bấm <code>Ctrl+S</code> hoặc chưa chạy <code>MD01</code> ngay sau đó thì số dự báo vô tác dụng.</td>
               </tr>
               <tr>
                 <td>Hoạch định</td>
                 <td><span class="badge-tcode">MD01</span></td>
                 <td>MRP Run / Execute MRP</td>
-                <td>Plant: <code>AA</code> | Key: <code>NEUPL</code> | Create Purchase Req: <code>1</code> | Schedule Lines: <code>3</code> | MRP List: <code>1</code> | Planning Mode: <code>3</code> | Scheduling: <code>1</code> $\to$ <code>Enter 2 lần</code></td>
+                <td>Plant: <code>AA</code> | Key: <code>NEUPL</code> | Create Purchase Req: <code>1</code> | Schedule Lines: <code>3</code> | MRP List: <code>1</code> | Planning Mode: <code>3</code> | Scheduling: <code>1</code> &rarr; <code>Enter 2 lần</code></td>
                 <td>Nếu để mặc định <code>Create Purchase Req = 2</code>, qua <code>ME59N</code> sẽ không mua được nguyên vật liệu nào! Phải đổi sang số <strong>1</strong>.</td>
               </tr>
               <tr>
                 <td>Mua hàng</td>
                 <td><span class="badge-tcode emerald">ME59N</span></td>
                 <td>Create Purchase Orders</td>
-                <td>Purch. Org: <code>AA</code> | Plant: <code>AA</code> | <strong>Bỏ dấu tích <code>Test Run</code></strong> $\to$ Bấm nút đồng hồ <code>Execute (F8)</code></td>
+                <td>Purch. Org: <code>AA</code> | Plant: <code>AA</code> | <strong>Bỏ dấu tích <code>Test Run</code></strong> &rarr; Bấm nút đồng hồ <code>Execute (F8)</code></td>
                 <td>Quên bỏ dấu tích <code>Test Run</code> là lỗi phổ biến nhất khiến nhà máy hết sạch nguyên vật liệu sau 3 ngày!</td>
               </tr>
               <tr>
                 <td>Sản xuất</td>
                 <td><span class="badge-tcode amber">CO41</span></td>
                 <td>Convert Planned Orders</td>
-                <td>Planning Plant: <code>AA</code> $\to$ <code>Execute (F8)</code> $\to$ Tích chọn dòng lô hàng $\to$ Bấm nút <code>Convert</code> (Bánh răng)</td>
+                <td>Planning Plant: <code>AA</code> &rarr; <code>Execute (F8)</code> &rarr; Tích chọn dòng lô hàng &rarr; Bấm nút <code>Convert</code> (Bánh răng)</td>
                 <td>Xếp 2 lô cùng mã SKU chạy nối đuôi nhau sẽ được <strong>miễn 100% Setup Time (0 giờ)</strong>!</td>
               </tr>
               <tr>
                 <td>Sản xuất</td>
                 <td><span class="badge-tcode">ZCS02</span></td>
                 <td>Change Bill of Material (BOM)</td>
-                <td>Material: <code>$$-F01..F16</code> | Plant: <code>$$</code> | BOM Usage: <code>1</code> $\to$ <code>Enter</code> $\to$ Sửa định mức kg $\to$ <code>Ctrl+S</code></td>
-                <td>Hệ thống khóa không cho sửa BOM nếu mã đó đang còn tồn kho thành phẩm (<code>ZMB52 > 0</code>). Tổng trọng lượng phải đúng <code>0.5kg</code> hoặc <code>1.0kg</code>.</td>
+                <td>Material: <code>$$-F01..F16</code> | Plant: <code>$$</code> | BOM Usage: <code>1</code> &rarr; <code>Enter</code> &rarr; Sửa định mức kg &rarr; <code>Ctrl+S</code></td>
+                <td>Hệ thống khóa không cho sửa BOM nếu mã đó đang còn tồn kho thành phẩm (<code>ZMB52 &gt; 0</code>). Tổng trọng lượng phải đúng <code>0.5kg</code> hoặc <code>1.0kg</code>.</td>
               </tr>
               <tr>
                 <td>Bán hàng</td>
                 <td><span class="badge-tcode emerald">VK32</span></td>
                 <td>Change Price List</td>
-                <td>Mở <code>Prices</code> $\to$双击 <code>Price List Price</code> $\to$ <code>Execute (F8)</code> $\to$ Sửa cột <code>Amount</code> theo kênh 10, 12, 14 $\to$ <code>Ctrl+S</code></td>
+                <td>Mở <code>Prices</code> &rarr; Nhấp đúp <code>Price List Price</code> &rarr; <code>Execute (F8)</code> &rarr; Sửa cột <code>Amount</code> theo kênh 10, 12, 14 &rarr; <code>Ctrl+S</code></td>
                 <td>DC10 chỉ mua hộp <code>1kg</code>; DC14 chỉ mua hộp <code>500g</code>; DC12 mua cả hai. Sửa xong phải thoát <code>F3</code> để không khóa màn hình của đồng đội.</td>
               </tr>
               <tr>
                 <td>Marketing</td>
                 <td><span class="badge-tcode amber">ZADS</span></td>
                 <td>Marketing Expense Planning</td>
-                <td>Nhập số tiền (€) vào ô giao giữa Mã SKU và Vùng (<code>North</code> / <code>South</code> / <code>West</code>) $\to$ Bấm <code>Save / Post</code></td>
+                <td>Nhập số tiền (€) vào ô giao giữa Mã SKU và Vùng (<code>North</code> / <code>South</code> / <code>West</code>) &rarr; Bấm <code>Save / Post</code></td>
                 <td>Chi phí trong <code>ZADS</code> tự động trừ lặp lại <strong>MỖI NGÀY</strong>! Phải xóa về <code>0</code> ở 3–4 ngày cuối của Round cuối cùng.</td>
               </tr>
               <tr>
                 <td>Tài chính</td>
                 <td><span class="badge-tcode">FB50</span></td>
                 <td>Post General Journal Entries</td>
-                <td>Dòng 1: G/L <code>478000</code> (Debit - Nợ) | Dòng 2: G/L <code>113100</code> (Credit - Có) | Nhập số tiền (VD: <code>250000</code>) & Cost Center $\to$ <code>Post (Ctrl+S)</code></td>
+                <td>Dòng 1: G/L <code>478000</code> (Debit - Nợ) | Dòng 2: G/L <code>113100</code> (Credit - Có) | Nhập số tiền (VD: <code>250000</code>) &amp; Cost Center &rarr; <code>Post (Ctrl+S)</code></td>
                 <td>Giảm Setup Time từ 8h xuống 5h (€250k) hoặc 4h (€500k). Tiền đầu tư vào TK <code>478000</code> được cộng hoàn lại trong công thức Company Valuation!</td>
               </tr>
               <tr>
@@ -818,10 +846,10 @@
               </tr>
               <tr>
                 <td>Báo cáo</td>
-                <td><span class="badge-tcode">ZVC2</span> & <span class="badge-tcode">ZMARKET</span></td>
-                <td>Sales Summary & Market Report</td>
-                <td><code>ZVC2</code>: Xem lượng bán đội mình theo Vùng & Kênh. <code>ZMARKET</code>: Xem giá bán trung bình của toàn thị trường.</td>
-                <td>Copy dữ liệu từ 2 bảng này dán vào <strong>Tab 2, Tab 3, Tab 5</strong> của công cụ này để tìm ngay giá bán tối ưu $P^*$!</td>
+                <td><span class="badge-tcode">ZVC2</span> &amp; <span class="badge-tcode">ZMARKET</span></td>
+                <td>Sales Summary &amp; Market Report</td>
+                <td><code>ZVC2</code>: Xem lượng bán đội mình theo Vùng &amp; Kênh. <code>ZMARKET</code>: Xem giá bán trung bình của toàn thị trường.</td>
+                <td>Copy dữ liệu từ 2 bảng này dán vào <strong>Tab 2, Tab 3, Tab 5</strong> của công cụ này để tìm ngay giá bán tối ưu <strong>P*</strong>!</td>
               </tr>
             </tbody>
           </table>

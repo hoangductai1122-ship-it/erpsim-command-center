@@ -602,7 +602,7 @@ const ERPsimEngine = (() => {
       code: 'DATA_BREACH',
       name: 'Event 6: Data Breach (Rò Rỉ Dữ Liệu OData Toàn Thị Trường)',
       summary: 'Tất cả các đội đều xem được dữ liệu OData của nhau (giá bán, tồn kho, nhà cung cấp, doanh số của mọi đối thủ).',
-      counterStrategy: 'Dùng OData quét ngay xem đối thủ đang đứt hàng (Stockout = 0) ở mã nào među T01..T06 tại vùng nào (03N, 03S, 03W) -> Đẩy hàng vào vùng đó qua ZMB1B và tăng giá VK32 +12%!'
+      counterStrategy: 'Dùng OData quét ngay xem đối thủ đang đứt hàng (Stockout = 0) ở mặt hàng nào trong 6 mã (T01..T06) tại vùng nào (03N, 03S, 03W) → Đẩy hàng vào vùng đó qua ZMB1B và tăng giá VK32 +12%!'
     },
     {
       id: 7,

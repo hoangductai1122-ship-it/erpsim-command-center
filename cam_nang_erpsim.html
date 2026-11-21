@@ -1243,7 +1243,7 @@
           <span class="tag-pill amber">Biên lợi nhuận siêu ngạch +25%</span>
         </div>
         <p style="font-size:0.88rem; margin-bottom:0.5rem;">
-          <strong>Cơ chế ABAP bên dưới:</strong> Bot khách hàng tại mỗi vùng (<code>03N, 03S, 03W</code>) chỉ tính Giá trung bình thị trường dựa trên <strong>các đội ĐANG CÓ TỒN KHO &gt; 0 tại đúng kho vùng đó</strong>. Nếu các đối thủ đứt hàng tại vùng đó (chỉ còn đội bạn có hàng: $N_{\text{avail}} = 1$), giá của bạn trở thành giá chuẩn của cả vùng và độ nhạy cảm giá giảm mạnh cho đến tận ngưỡng Giá trần tuyệt đối (Choke Price).
+          <strong>Cơ chế ABAP bên dưới:</strong> Bot khách hàng tại mỗi vùng (<code>03N, 03S, 03W</code>) chỉ tính Giá trung bình thị trường dựa trên <strong>các đội ĐANG CÓ TỒN KHO &gt; 0 tại đúng kho vùng đó</strong>. Nếu các đối thủ đứt hàng tại vùng đó (chỉ còn đội bạn có hàng: <code>N<sub>avail</sub> = 1</code>), giá của bạn trở thành giá chuẩn của cả vùng và độ nhạy cảm giá giảm mạnh cho đến tận ngưỡng Giá trần tuyệt đối (Choke Price).
         </p>
         <p style="font-size:0.88rem; color:#38bdf8;">
           <strong>Cách kích hoạt:</strong> Vào <strong>Ngày 3 – Ngày 5 của Round 1</strong> (khi các đội mua từ V08 bị trễ hàng 4 ngày) hoặc ngay sau <strong>Event 7: Flash Flood</strong>, đội bạn dùng <code>V04</code> (giao 1–2 ngày) và <span class="tcode">ZMB1B</span> bơm hàng lấp vào vùng bị trống đầu tiên, đồng thời nâng giá <span class="tcode">VK32</span> thêm <strong>+12% đến +18%</strong> trong 2 ngày độc quyền!

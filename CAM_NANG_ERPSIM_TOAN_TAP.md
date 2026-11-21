@@ -86,7 +86,7 @@ Toàn bộ các khâu còn lại bắt buộc đội bạn phải bấm nút the
 #### 5. `ZCO11` / `COOIS` — Production Schedule / Production Order Information (Theo Dõi Tiến Độ Dây Chuyền)
 * **Tên trên SAP Fiori**: *Production Schedule*.
 * **Chức năng**: Xem nhà máy đang chạy mã nào, còn bao nhiêu hộp nữa thì xong lô hiện tại, và thứ tự các lô đang xếp hàng chờ sản xuất.
-* **Ý nghĩa cảnh báo**: Nếu bạn thấy lệnh sản xuất đứng yên không tăng số lượng `Confirmed Quantity`,99% là do **kho đã hết 1 loại nguyên vật liệu nào đó** (thường là hết `Bag` - túi hoặc `Box` - hộp giấy, kiểm tra ngay trong `ZMB52`).
+* **Ý nghĩa cảnh báo**: Nếu bạn thấy lệnh sản xuất đứng yên không tăng số lượng `Confirmed Quantity`, 99% là do **kho đã hết 1 loại nguyên vật liệu nào đó** (thường là hết `Bag` - túi hoặc `Box` - hộp giấy, kiểm tra ngay trong `ZMB52`).
 
 ---
 
