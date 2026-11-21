@@ -1,9 +1,10 @@
 /**
  * ERPsim Reverse-Engineering & Mathematical Optimization Engine
- * Based on HEC Montréal ERPsim (Jacques Robert & Pierre-Majorique Léger)
- * Covers: Company Valuation, 21-Tier Credit Rating, Multinomial Logit (MNL) Demand Reverse-Engineering,
- * Amoroso-Robinson / Lerner Optimal Pricing (VK32), Regional Preference Deconvolution (ZVC2),
- * Concave Marketing Allocation (ZADS), Lean Manufacturing Setup Time (478000), & Carbon Penalty.
+ * Dedicated 100% to: ERPsim Logistics Sustainability Game (Preset 3 - Dairy) & 8 Random Disruptors
+ * Based on Official HEC Montréal Documents:
+ * - Logistics Sustainability Game (Preset 3) Job Aid
+ * - Logistics Sustainability Disruptors Guide (Revision 2.0)
+ * - Participant's Guide: Logistics Game (2024-2025 Edition)
  */
 
 const ERPsimEngine = (() => {
@@ -32,70 +33,354 @@ const ERPsimEngine = (() => {
     { minDebtLoading: -Infinity, rating: 'C',    riskRate: 0.1500, tierIndex: 21, color: '#450a0a' }
   ];
 
-  // 2. DISTRIBUTION CHANNEL BASELINE PARAMETERS
-  const CHANNELS = {
-    DC10: {
-      code: 'DC10',
-      name: 'DC10 - Hypermarkets (Đại siêu thị)',
-      stores: 12,
-      weeklyPotentialPerTeam: 90000,
-      allowedSize: '1kg',
-      skusPerOrder: 3,
-      baseElasticity: 5.8,      // Very high price sensitivity
-      marketingAlpha: 0.12,     // Low marketing sensitivity
-      dampingLambda: 0.06,      // How much marketing dampens price elasticity
-      paymentDaysMin: 20,
-      paymentDaysMax: 20,
-      priceCeilingMultiplier: 1.25
-    },
-    DC12: {
-      code: 'DC12',
-      name: 'DC12 - Grocery Chains (Chuỗi siêu thị)',
-      stores: 59,
-      weeklyPotentialPerTeam: 360000,
-      allowedSize: 'ALL',
-      skusPerOrder: 4,
-      baseElasticity: 3.6,      // Moderate-high price sensitivity
-      marketingAlpha: 0.35,     // High marketing sensitivity
-      dampingLambda: 0.14,
-      paymentDaysMin: 10,
-      paymentDaysMax: 20,
-      priceCeilingMultiplier: 1.38
-    },
-    DC14: {
-      code: 'DC14',
-      name: 'DC14 - Independent Grocers (Tiện lợi)',
-      stores: 123,
-      weeklyPotentialPerTeam: 135000,
-      allowedSize: '500g',
-      skusPerOrder: 1.5,
-      baseElasticity: 2.3,      // Low price sensitivity (highest margins)
-      marketingAlpha: 0.52,     // Very high local marketing sensitivity
-      dampingLambda: 0.22,
-      paymentDaysMin: 1,
-      paymentDaysMax: 20,
-      priceCeilingMultiplier: 1.55
-    }
-  };
+  // 2. OFFICIAL 6 DAIRY PRODUCTS IN LOGISTICS SUSTAINABILITY (PRESET 3)
+  const LOGISTICS_PRESET3_SKUS = [
+    { code: 'T01', name: 'Milk ($$-T01)',      shortName: 'Milk',      initialStock: 950, costV04: 22.95, costV08: 24.10, initialPrice: 25.25, elasticity: 3.15, defaultTarget: 1100 },
+    { code: 'T02', name: 'Cream ($$-T02)',     shortName: 'Cream',     initialStock: 300, costV04: 72.07, costV08: 75.67, initialPrice: 79.78, elasticity: 2.55, defaultTarget: 450  },
+    { code: 'T03', name: 'Yoghurt ($$-T03)',   shortName: 'Yoghurt',   initialStock: 700, costV04: 25.85, costV08: 27.14, initialPrice: 28.43, elasticity: 3.05, defaultTarget: 850  },
+    { code: 'T04', name: 'Cheese ($$-T04)',    shortName: 'Cheese',    initialStock: 350, costV04: 82.68, costV08: 86.81, initialPrice: 90.95, elasticity: 2.45, defaultTarget: 550  },
+    { code: 'T05', name: 'Butter ($$-T05)',    shortName: 'Butter',    initialStock: 400, costV04: 59.88, costV08: 62.87, initialPrice: 65.87, elasticity: 2.75, defaultTarget: 550  },
+    { code: 'T06', name: 'Ice Cream ($$-T06)', shortName: 'Ice Cream', initialStock: 300, costV04: 43.15, costV08: 45.31, initialPrice: 47.47, elasticity: 2.85, defaultTarget: 450  }
+  ];
 
-  // 3. STANDARD 12 MUESLI SKUs IN ERPSIM MANUFACTURING
-  const DEFAULT_SKUS = [
-    { code: 'F01', name: '500g Original Muesli',   size: '500g', weightKg: 0.5, flavor: 'Original',   baseCogs: 1.38, refPrice: 2.70 },
-    { code: 'F02', name: '500g Nut Muesli',        size: '500g', weightKg: 0.5, flavor: 'Nut',        baseCogs: 1.72, refPrice: 3.20 },
-    { code: 'F03', name: '500g Blueberry Muesli',  size: '500g', weightKg: 0.5, flavor: 'Blueberry',  baseCogs: 1.85, refPrice: 3.45 },
-    { code: 'F04', name: '500g Strawberry Muesli', size: '500g', weightKg: 0.5, flavor: 'Strawberry', baseCogs: 1.82, refPrice: 3.40 },
-    { code: 'F05', name: '500g Raisin Muesli',     size: '500g', weightKg: 0.5, flavor: 'Raisin',     baseCogs: 1.58, refPrice: 2.95 },
-    { code: 'F06', name: '500g Mixed Fruit Muesli',size: '500g', weightKg: 0.5, flavor: 'Mixed',      baseCogs: 1.79, refPrice: 3.35 },
-    { code: 'F11', name: '1kg Original Muesli',    size: '1kg',  weightKg: 1.0, flavor: 'Original',   baseCogs: 2.52, refPrice: 4.65 },
-    { code: 'F12', name: '1kg Nut Muesli',         size: '1kg',  weightKg: 1.0, flavor: 'Nut',        baseCogs: 3.18, refPrice: 5.50 },
-    { code: 'F13', name: '1kg Blueberry Muesli',   size: '1kg',  weightKg: 1.0, flavor: 'Blueberry',  baseCogs: 3.45, refPrice: 5.90 },
-    { code: 'F14', name: '1kg Strawberry Muesli',  size: '1kg',  weightKg: 1.0, flavor: 'Strawberry', baseCogs: 3.38, refPrice: 5.80 },
-    { code: 'F15', name: '1kg Raisin Muesli',      size: '1kg',  weightKg: 1.0, flavor: 'Raisin',     baseCogs: 2.90, refPrice: 5.10 },
-    { code: 'F16', name: '1kg Mixed Fruit Muesli', size: '1kg',  weightKg: 1.0, flavor: 'Mixed',      baseCogs: 3.32, refPrice: 5.70 }
+  // 3. OFFICIAL 8 RANDOM DISRUPTORS IN LOGISTICS SUSTAINABILITY (PRESET 3)
+  const LOGISTICS_DISRUPTORS = [
+    {
+      id: 1,
+      code: 'COLD_SPELL',
+      name: 'Event 1: Cold Spell (Đợt Giá Rét)',
+      summary: '+5.0 kg CO₂e/unit cho 2 sản phẩm bị ảnh hưởng (cả V04 & V08); Giảm phạt Carbon vượt kho -300 kg/container (từ 500 còn 200 kg); Giảm Carbon năng lượng -25 kg/ngày.',
+      counterStrategy: 'Tăng giá bán (VK32 - Kênh 16) của 2 sản phẩm bị cộng +5kg CO₂e theo bảng giá tối ưu bên trên. Tận dụng phí phạt Carbon vượt kho giảm 60% để gom lô PO lớn hơn.'
+    },
+    {
+      id: 2,
+      code: 'CARBON_DECREE',
+      name: 'Event 2: Carbon Decree (Sắc Lệnh Tăng Thuế Carbon)',
+      summary: 'Thuế Carbon tăng vọt thêm +€0.20 / kg CO₂e; Phát thải năng lượng mua ngoài giảm -50 kg/ngày (còn 50 kg/ngày).',
+      counterStrategy: 'BẮT BUỘC tắt bán trực tiếp từ Kho tổng 03 (ZMB1B: Bỏ tích Sales from Sloc 3 / Use 03) vì 300kg CO₂e/đơn lúc này tốn cực nhiều thuế! Gom đơn PO lớn và giảm tần suất chuyển kho.'
+    },
+    {
+      id: 3,
+      code: 'SUPPLIER_DISRUPTION',
+      name: 'Event 3: Supplier Disruption (Đứt Gãy Chuỗi Cung Ứng NCC)',
+      summary: 'Nhà cung cấp bị dính xúc xắc (V04 hoặc V08) bị phạt thêm +2.50 kg CO₂e/unit và +200 kg CO₂e/PO.',
+      counterStrategy: 'Nếu V04 bị dính và Thuế Carbon cao (≥ €0.40/kg), kiểm tra cột CHỌN NCC (ZME12) bên trên để chuyển các mã chênh lệch giá thấp (như Milk T01, Yoghurt T03) sang V08.'
+    },
+    {
+      id: 4,
+      code: 'HUB_GRIDLOCK',
+      name: 'Event 4: Hub Gridlock (Tắc Nghẽn Kho Tổng 03)',
+      summary: 'Bán trực tiếp từ Kho tổng 03 bị cộng thêm +300 kg CO₂e/Sales Order (tổng 600 kg/đơn!). Chuyển kho nội bộ (ZMB1B) bị cộng +100 kg CO₂e/transfer (tổng 150 kg). Mua hàng PO bị cộng +100 kg CO₂e/PO.',
+      counterStrategy: 'TUYỆT ĐỐI KHÔNG bán trực tiếp từ Kho tổng 03 (Bỏ tích Sales from Sloc 3 trong ZMB1B). Giãn tần suất chuyển kho ZMB1B ra 3–4 ngày/lần với số lượng lớn mỗi lần chuyển.'
+    },
+    {
+      id: 5,
+      code: 'SYSTEM_GLITCH',
+      name: 'Event 5: System Glitch (Lỗi Hệ Thống Khóa Báo Cáo)',
+      summary: 'Khóa ngẫu nhiên các nhóm báo cáo (Inventory ZMB52, Sales ZVC2/ZVA05, hoặc Procurement ZME2N). Mở khóa trong ZITM tốn €5,000 / báo cáo.',
+      counterStrategy: 'KHÔNG CẦN TỐN €5,000 mua lại báo cáo nếu bạn đang dùng cổng OData (ZODATA / SAC / Excel OData Feed) hoặc chỉ mua duy nhất ZMB52 (€5,000 là rất nhỏ so với doanh thu €72,000/ngày).'
+    },
+    {
+      id: 6,
+      code: 'DATA_BREACH',
+      name: 'Event 6: Data Breach (Rò Rỉ Dữ Liệu OData Toàn Thị Trường)',
+      summary: 'Tất cả các đội đều xem được dữ liệu OData của nhau (giá bán, tồn kho, nhà cung cấp, doanh số của mọi đối thủ).',
+      counterStrategy: 'Dùng OData quét ngay xem đối thủ đang đứt hàng (Stockout = 0) ở mặt hàng nào trong 6 mã (T01..T06) tại vùng nào (03N, 03S, 03W) → Đẩy hàng vào vùng đó qua ZMB1B và tăng giá VK32 +12%!'
+    },
+    {
+      id: 7,
+      code: 'FLASH_FLOOD',
+      name: 'Event 7: Flash Flood (Lũ Quét Mất Trắng 1 Kho)',
+      summary: 'Xóa sổ 100% tồn kho tại 1 kho ngẫu nhiên: Central (03), North (03N), South (03S), hoặc West (03W).',
+      counterStrategy: 'Nếu mất kho vùng (VD: 03N): Vào ZMB1B đẩy hàng khẩn cấp từ 03 sang. Nếu mất kho tổng (03): Chạy ngay MD61 → MD01 → ZME12 chọn V04 (Lead time chỉ 1–2 ngày!) → ME59N để cấp tốc bù hàng!'
+    },
+    {
+      id: 8,
+      code: 'AI_INNOVATION',
+      name: 'Event 8: AI Innovation (Mở Khóa Công Cụ AI ZRPA)',
+      summary: 'Mở khóa T-code ZRPA (AI Requirements Planning cho MD61 & AI Price Management cho VK32).',
+      counterStrategy: 'Có thể dùng ZRPA để tự động gợi ý lượng đặt hàng MD61 nhanh, NHƯNG phải kiểm tra lại giá VK32 bằng Bộ Giải Ngược của chúng ta vì AI mặc định trong game đặt biên lợi nhuận khá bảo thủ.'
+    }
   ];
 
   /**
-   * 1. CREDIT RATING & COMPANY VALUATION ENGINE
+   * 1. LOGISTICS SUSTAINABILITY (PRESET 3) & 8 DISRUPTORS MAIN SOLVER
+   */
+  function solveLogisticsSustainabilityPreset3(params) {
+    const {
+      baseCarbonTax = 0.10, // Preset 3 starts at €0.10/kg (+€0.05 per round)
+      orderLotSizePerPo = 1800,
+      totalWarehouseUnits = 3600,
+      coldSpellActive = false,
+      coldSpellCombo = 'T01_T02', // 1:T01+T02, 2:T01+T03, 3:T01+T05, 4:T02+T03, 5:T02+T05, 6:T03+T05
+      carbonDecreeActive = false,
+      supplierDisruptionActive = false,
+      impactedSupplier = 'V04',
+      hubGridlockActive = false,
+      directSalesOrdersPerDay = 0,
+      regionalSalesOrdersPerDay = 32,
+      transfersPerDay = 3,
+      skuInventoryState = {}
+    } = params;
+
+    const effectiveCarbonTax = baseCarbonTax + (carbonDecreeActive ? 0.20 : 0);
+    const coldSpellSkus = coldSpellCombo.split('_');
+
+    let totalMd61TargetUnits = 0;
+    let totalPoCashNeeded = 0;
+    let totalNewOrderUnits = 0;
+
+    const skuAnalysis = LOGISTICS_PRESET3_SKUS.map(sku => {
+      const isColdHit = coldSpellActive && coldSpellSkus.includes(sku.code);
+      const coldExtraUnitCo2 = isColdHit ? 5.0 : 0.0;
+
+      // Preset 3 V04 parameters: 1.2 kg/unit, 100 kg/PO, €1,000/PO
+      const v04UnitCo2 = 1.2 + coldExtraUnitCo2 + (supplierDisruptionActive && impactedSupplier === 'V04' ? 2.50 : 0);
+      const v04PoCo2 = 100 + (supplierDisruptionActive && impactedSupplier === 'V04' ? 200 : 0) + (hubGridlockActive ? 100 : 0);
+      const v04PoFixedFee = 1000;
+
+      // Preset 3 V08 parameters: 0.8 kg/unit, 400 kg/PO, €600/PO
+      const v08UnitCo2 = 0.8 + coldExtraUnitCo2 + (supplierDisruptionActive && impactedSupplier === 'V08' ? 2.50 : 0);
+      const v08PoCo2 = 400 + (supplierDisruptionActive && impactedSupplier === 'V08' ? 200 : 0) + (hubGridlockActive ? 100 : 0);
+      const v08PoFixedFee = 600;
+
+      const safeLot = Math.max(50, orderLotSizePerPo);
+      const v04LandedUnitCost = sku.costV04 + (v04UnitCo2 * effectiveCarbonTax) + (v04PoFixedFee + v04PoCo2 * effectiveCarbonTax) / safeLot;
+      const v08LandedUnitCost = sku.costV08 + (v08UnitCo2 * effectiveCarbonTax) + (v08PoFixedFee + v08PoCo2 * effectiveCarbonTax) / safeLot;
+
+      const recommendedVendor = v04LandedUnitCost <= v08LandedUnitCost ? 'V04' : 'V08';
+      const minLandedCost = Math.min(v04LandedUnitCost, v08LandedUnitCost);
+      const savingsPerUnit = Math.abs(v08LandedUnitCost - v04LandedUnitCost);
+
+      // Break-even Lot Size Q* where TC_V04(Q*) == TC_V08(Q*)
+      const unitVarDiff = (sku.costV08 + v08UnitCo2 * effectiveCarbonTax) - (sku.costV04 + v04UnitCo2 * effectiveCarbonTax);
+      const fixedPoDiff = (v04PoFixedFee + v04PoCo2 * effectiveCarbonTax) - (v08PoFixedFee + v08PoCo2 * effectiveCarbonTax);
+      const breakEvenLotSize = unitVarDiff > 0 ? Math.max(0, Math.round(fixedPoDiff / unitVarDiff)) : Infinity;
+
+      // Optimal Retail Price on DC 16 (Retail Stores)
+      const regionalOrderCo2CostPerUnit = (75 * effectiveCarbonTax) / 25;
+      const fullEffectiveMarginalCost = minLandedCost + regionalOrderCo2CostPerUnit;
+      const optimalPriceDC16 = fullEffectiveMarginalCost * (sku.elasticity / (sku.elasticity - 1));
+      const recommendedPriceDC16 = Number(Math.min(sku.initialPrice * 1.32, Math.max(fullEffectiveMarginalCost * 1.12, optimalPriceDC16 * 0.65 + sku.initialPrice * 0.42)).toFixed(2));
+      const netProfitPerUnit = Number((recommendedPriceDC16 - fullEffectiveMarginalCost).toFixed(2));
+
+      // MD61 Target Inventory Formula (Participant's Guide Page 16 & 32):
+      // Requisition = MD61_Target - (Current_Inventory_ZMB52 + Open_PO_ZME2N)
+      const st = skuInventoryState[sku.code] || {};
+      const currentStockAndOpenPo = st.currentStockAndOpenPo !== undefined ? st.currentStockAndOpenPo : Math.round(sku.initialStock * 0.5);
+      const desiredOrderQty = st.desiredOrderQty !== undefined ? st.desiredOrderQty : Math.round(sku.defaultTarget - currentStockAndOpenPo);
+      const md61TargetToEnter = Math.max(0, currentStockAndOpenPo + Math.max(0, desiredOrderQty));
+
+      totalMd61TargetUnits += md61TargetToEnter;
+      totalNewOrderUnits += Math.max(0, desiredOrderQty);
+      const chosenUnitPrice = recommendedVendor === 'V04' ? sku.costV04 : sku.costV08;
+      totalPoCashNeeded += Math.max(0, desiredOrderQty) * chosenUnitPrice;
+
+      // Regional ZVA05 Split (Area: NO, SO, WE) -> ZMB1B allocation
+      const sNO = st.salesNO !== undefined ? st.salesNO : 100;
+      const sSO = st.salesSO !== undefined ? st.salesSO : 100;
+      const sWE = st.salesWE !== undefined ? st.salesWE : 100;
+      const totRegSales = Math.max(1, sNO + sSO + sWE);
+      const shareNO = sNO / totRegSales;
+      const shareSO = sSO / totRegSales;
+      const shareWE = sWE / totRegSales;
+
+      const zmb1bTargetNO = Math.round(md61TargetToEnter * shareNO);
+      const zmb1bTargetSO = Math.round(md61TargetToEnter * shareSO);
+      const zmb1bTargetWE = Math.max(0, md61TargetToEnter - zmb1bTargetNO - zmb1bTargetSO);
+
+      return {
+        ...sku,
+        isColdHit,
+        v04UnitCo2: Number(v04UnitCo2.toFixed(2)),
+        v08UnitCo2: Number(v08UnitCo2.toFixed(2)),
+        v04LandedUnitCost: Number(v04LandedUnitCost.toFixed(2)),
+        v08LandedUnitCost: Number(v08LandedUnitCost.toFixed(2)),
+        minLandedCost: Number(minLandedCost.toFixed(2)),
+        recommendedVendor,
+        savingsPerUnit: Number(savingsPerUnit.toFixed(2)),
+        breakEvenLotSize,
+        recommendedPriceDC16,
+        netProfitPerUnit,
+        currentStockAndOpenPo,
+        desiredOrderQty,
+        md61TargetToEnter,
+        salesNO: sNO,
+        salesSO: sSO,
+        salesWE: sWE,
+        shareNOPct: Number((shareNO * 100).toFixed(1)),
+        shareSOPct: Number((shareSO * 100).toFixed(1)),
+        shareWEPct: Number((shareWE * 100).toFixed(1)),
+        zmb1bTargetNO,
+        zmb1bTargetSO,
+        zmb1bTargetWE
+      };
+    });
+
+    if (totalNewOrderUnits > 0) {
+      totalPoCashNeeded += 1000;
+    }
+
+    const excessUnits = Math.max(0, totalWarehouseUnits - 4000);
+    const excessContainers = Math.ceil(excessUnits / 1000);
+    const overstockFeePerDay = excessContainers * 300;
+    const overstockCo2PerContainer = coldSpellActive ? 200 : 500;
+    const overstockCo2PerDay = excessContainers * overstockCo2PerContainer;
+
+    const energyCo2PerDay = Math.max(0, 100 - (coldSpellActive ? 25 : 0) - (carbonDecreeActive ? 50 : 0));
+    const otherOverheadCo2PerDay = 100;
+
+    const transferCo2Each = 50 + (hubGridlockActive ? 100 : 0);
+    const transferFeeEach = 100;
+    const directSalesCo2Each = 300 + (hubGridlockActive ? 300 : 0);
+    const directSalesFeeEach = 350;
+    const regionalSalesCo2Each = 75;
+
+    const dailyLogisticsCo2 =
+      overstockCo2PerDay +
+      energyCo2PerDay +
+      otherOverheadCo2PerDay +
+      (transfersPerDay * transferCo2Each) +
+      (directSalesOrdersPerDay * directSalesCo2Each) +
+      (regionalSalesOrdersPerDay * regionalSalesCo2Each);
+
+    const dailyCarbonTaxEur = dailyLogisticsCo2 * effectiveCarbonTax;
+    const dailyTransportAndStorageFeesEur =
+      overstockFeePerDay +
+      (transfersPerDay * transferFeeEach) +
+      (directSalesOrdersPerDay * directSalesFeeEach);
+
+    const lossPerDirectSaleOrder = directSalesFeeEach + (directSalesCo2Each - regionalSalesCo2Each) * effectiveCarbonTax;
+
+    return {
+      effectiveCarbonTax: Number(effectiveCarbonTax.toFixed(2)),
+      skuAnalysis,
+      totalMd61TargetUnits,
+      totalNewOrderUnits,
+      totalPoCashNeeded: Math.round(totalPoCashNeeded),
+      excessUnits,
+      overstockFeePerDay,
+      overstockCo2PerDay,
+      dailyLogisticsCo2: Math.round(dailyLogisticsCo2),
+      dailyCarbonTaxEur: Math.round(dailyCarbonTaxEur),
+      dailyTransportAndStorageFeesEur: Math.round(dailyTransportAndStorageFeesEur),
+      lossPerDirectSaleOrder: Number(lossPerDirectSaleOrder.toFixed(2))
+    };
+  }
+
+  /**
+   * 2. DAIRY DC 16 EMPIRICAL PRICE ELASTICITY & VK32 OPTIMAL PRICING SOLVER
+   */
+  function solveDairyDc16Pricing(input) {
+    const {
+      skuCode = 'T01',
+      landedCogs = 24.75,
+      prevPrice = 27.50,
+      prevQty = 310,
+      currPrice = 28.40,
+      currQty = 275,
+      inventoryRemaining = 420
+    } = input;
+
+    const skuInfo = LOGISTICS_PRESET3_SKUS.find(s => s.code === skuCode) || LOGISTICS_PRESET3_SKUS[0];
+    const isStockout = inventoryRemaining <= 0;
+    const estimatedTrueCurrQty = isStockout ? Math.round(currQty * 1.28) : currQty;
+
+    // 1. Empirical Arc Price Elasticity
+    let empiricalElasticity = null;
+    const priceDiff = currPrice - prevPrice;
+    if (Math.abs(priceDiff) >= 0.15 && prevQty > 0 && estimatedTrueCurrQty > 0) {
+      const pctQtyChange = (estimatedTrueCurrQty - prevQty) / ((prevQty + estimatedTrueCurrQty) / 2);
+      const pctPriceChange = priceDiff / ((prevPrice + currPrice) / 2);
+      const rawElasticity = -(pctQtyChange / pctPriceChange);
+      if (rawElasticity > 0.6 && rawElasticity < 15) {
+        empiricalElasticity = rawElasticity;
+      }
+    }
+
+    // 2. Blend with Dairy SKU structural elasticity on DC 16
+    const relativePriceRatio = currPrice / Math.max(1, skuInfo.initialPrice * 1.12);
+    const modelElasticity = skuInfo.elasticity * Math.pow(relativePriceRatio, 1.1);
+    const effectiveElasticity = (empiricalElasticity !== null && !isStockout)
+      ? (0.55 * empiricalElasticity + 0.45 * modelElasticity)
+      : modelElasticity;
+
+    const clampedElasticity = Math.max(1.30, Math.min(10.0, effectiveElasticity));
+
+    // 3. Amoroso-Robinson / Lerner Optimal Price & MNL Best-Response Search
+    const lernerOptimalPrice = landedCogs * (clampedElasticity / (clampedElasticity - 1));
+    const priceCeiling = skuInfo.initialPrice * 1.35;
+
+    let bestPrice = currPrice;
+    let maxExpectedProfit = -Infinity;
+    let expectedQtyAtOptimal = estimatedTrueCurrQty;
+
+    const beta = clampedElasticity / Math.max(1, currPrice);
+    const refPrice = skuInfo.initialPrice * 1.14;
+    const currentShareProxy = Math.exp(-beta * (currPrice - refPrice));
+
+    for (let p = Math.max(landedCogs * 1.05, skuInfo.initialPrice * 0.90); p <= priceCeiling; p += 0.10) {
+      const ceilingPenalty = p > skuInfo.initialPrice * 1.22
+        ? Math.exp(-2.2 * Math.pow((p - skuInfo.initialPrice * 1.22) / (priceCeiling - skuInfo.initialPrice * 1.22 + 0.05), 2))
+        : 1.0;
+      const relAttractiveness = Math.exp(-beta * (p - refPrice)) * ceilingPenalty;
+      const predictedQty = estimatedTrueCurrQty * (relAttractiveness / Math.max(1e-6, currentShareProxy));
+      const cappedQty = Math.min(predictedQty, estimatedTrueCurrQty * 2.2 + 120);
+      const profit = (p - landedCogs) * cappedQty;
+
+      if (profit > maxExpectedProfit) {
+        maxExpectedProfit = profit;
+        bestPrice = p;
+        expectedQtyAtOptimal = Math.round(cappedQty);
+      }
+    }
+
+    let recommendedPrice = 0.65 * bestPrice + 0.35 * Math.min(priceCeiling, lernerOptimalPrice);
+    if (isStockout) {
+      recommendedPrice = Math.max(recommendedPrice, currPrice * 1.07);
+    }
+    recommendedPrice = Math.min(priceCeiling, Math.max(landedCogs * 1.06, Number(recommendedPrice.toFixed(2))));
+
+    const currentDailyProfit = (currPrice - landedCogs) * currQty;
+    const projectedOptimalProfit = (recommendedPrice - landedCogs) * expectedQtyAtOptimal;
+    const profitGainPerDay = Math.max(0, projectedOptimalProfit - currentDailyProfit);
+    const unitMargin = recommendedPrice - landedCogs;
+    const marginPct = (unitMargin / recommendedPrice) * 100;
+
+    let actionTag = 'GIỮ GIÁ';
+    let actionColor = '#3b82f6';
+    if (recommendedPrice - currPrice >= 0.35) {
+      actionTag = isStockout ? 'TĂNG GIÁ MẠNH (CHỐNG ĐỨT HÀNG)' : 'TĂNG GIÁ TỐI ƯU BIÊN LÃI';
+      actionColor = '#10b981';
+    } else if (currPrice - recommendedPrice >= 0.35) {
+      actionTag = 'GIẢM GIÁ XẢ TỒN KHO';
+      actionColor = '#f59e0b';
+    }
+
+    return {
+      skuCode,
+      skuName: skuInfo.name,
+      landedCogs: Number(landedCogs.toFixed(2)),
+      currPrice,
+      currQty,
+      isStockout,
+      effectiveElasticity: Number(clampedElasticity.toFixed(2)),
+      priceCeiling: Number(priceCeiling.toFixed(2)),
+      recommendedPrice,
+      priceDelta: Number((recommendedPrice - currPrice).toFixed(2)),
+      expectedQtyAtOptimal,
+      unitMargin: Number(unitMargin.toFixed(2)),
+      marginPct: Number(marginPct.toFixed(1)),
+      currentDailyProfit: Math.round(currentDailyProfit),
+      projectedOptimalProfit: Math.round(projectedOptimalProfit),
+      profitGainPerDay: Math.round(profitGainPerDay),
+      actionTag,
+      actionColor
+    };
+  }
+
+  /**
+   * 3. CREDIT RATING & COMPANY VALUATION ENGINE (LOGISTICS GAME)
    */
   function lookupCreditRating(debtLoading) {
     for (let i = 0; i < CREDIT_RATING_TABLE.length; i++) {
@@ -118,49 +403,36 @@ const ERPsimEngine = (() => {
   function calculateCompanyValuation(params) {
     const {
       currentProfit = 0,
-      setupInvestment478000 = 0,
-      elapsedSteps = 20,
-      totalRounds = 3,
-      stepsPerRound = 20,
+      elapsedSteps = 10,
+      totalRounds = 4,
+      stepsPerRound = 10,
       marketRiskRate = 0.07,
-      cash = 0,
-      accountsReceivable = 0,
+      cash = 250000,
+      accountsReceivable = 180000,
       bankLoans = 0,
-      accountsPayable = 0,
-      inventoryValue = 0
+      accountsPayable = 150000,
+      inventoryValue = 135000
     } = params;
 
     const totalGameSteps = Math.max(1, totalRounds * stepsPerRound);
     const safeElapsed = Math.max(1, elapsedSteps);
 
-    // Debt Loading = (Cash + AR) - (|Loans| + |AP|)
     const debtLoading = (cash + accountsReceivable) - (Math.abs(bankLoans) + Math.abs(accountsPayable));
     const creditInfo = lookupCreditRating(debtLoading);
     const discountRate = marketRiskRate + creditInfo.riskRate;
 
-    // Official ERPsim Annualized Profit + Setup Investment Refund Formula
-    const operatingProfitExSetup = currentProfit - setupInvestment478000;
-    const projectedFullGameOperatingProfit = (operatingProfitExSetup / safeElapsed) * totalGameSteps;
-    const numerator = projectedFullGameOperatingProfit + setupInvestment478000;
-    const companyValuation = numerator / discountRate;
+    const projectedFullGameProfit = (currentProfit / safeElapsed) * totalGameSteps;
+    const companyValuation = projectedFullGameProfit / discountRate;
 
-    // What if we reached AAA+ (Debt Loading >= 0)?
     const aaaDiscountRate = marketRiskRate + 0.03;
-    const potentialAAAValuation = numerator / aaaDiscountRate;
+    const potentialAAAValuation = projectedFullGameProfit / aaaDiscountRate;
     const valuationLostToCreditRisk = potentialAAAValuation - companyValuation;
 
-    // What if we reached the very next tier?
     let nextTierValuationGain = 0;
     if (creditInfo.nextBetter) {
       const nextDiscount = marketRiskRate + creditInfo.nextBetter.riskRate;
-      nextTierValuationGain = (numerator / nextDiscount) - companyValuation;
+      nextTierValuationGain = (projectedFullGameProfit / nextDiscount) - companyValuation;
     }
-
-    // End-Game Inventory Liquidation Simulation (converting 70% of inventory into Cash/AR at 95% price margin)
-    const liquidatedCashGain = inventoryValue * 0.75;
-    const newDebtLoadingAfterLiquidation = debtLoading + liquidatedCashGain;
-    const postLiquidationCredit = lookupCreditRating(newDebtLoadingAfterLiquidation);
-    const postLiquidationValuation = numerator / (marketRiskRate + postLiquidationCredit.riskRate);
 
     return {
       debtLoading,
@@ -168,639 +440,26 @@ const ERPsimEngine = (() => {
       marketRiskRate,
       discountRate,
       valuationMultiplier: 1 / discountRate,
-      operatingProfitExSetup,
-      projectedFullGameOperatingProfit,
-      numerator,
+      projectedFullGameProfit,
+      numerator: projectedFullGameProfit,
       companyValuation,
       potentialAAAValuation,
       valuationLostToCreditRisk,
       nextTierValuationGain,
       amountNeededForAAA: Math.max(0, 0 - debtLoading),
-      endGameSimulation: {
-        liquidatedCashGain,
-        newDebtLoadingAfterLiquidation,
-        newRating: postLiquidationCredit.rating,
-        newRiskRate: postLiquidationCredit.riskRate,
-        postLiquidationValuation,
-        valuationJump: postLiquidationValuation - companyValuation
-      }
+      cashBuffer: cash,
+      inventoryValue
     };
   }
 
   /**
-   * 2. LEAN MANUFACTURING (ACCOUNT 478000) & CAPACITY (ACCOUNT 11000) ENGINE
-   */
-  function calculateSetupAndProduction(params) {
-    const {
-      account478000 = 0,
-      account11000ExtraUnits = 0,
-      baseCapacity = 24000,
-      productivityPct = 75,
-      activeSkus = 4,
-      lotSize = 18000,
-      avgMarginPerBox = 1.65,
-      remainingDays = 40
-    } = params;
-
-    // Official formula: Setup Time (hours) = 2 + (6 * 250000) / (250000 + Account478000)
-    const setupTimeHours = 2 + (6 * 250000) / (250000 + Math.max(0, account478000));
-    const initialSetupHours = 8.0;
-    const hoursSavedPerChangeover = initialSetupHours - setupTimeHours;
-
-    const totalNominalDailyCapacity = baseCapacity + account11000ExtraUnits;
-    const nominalHourlyRate = totalNominalDailyCapacity / 24;
-    const effectiveHourlyRate = nominalHourlyRate * (productivityPct / 100);
-
-    // Calculate batch cycle
-    const runHoursPerLot = lotSize / Math.max(1, effectiveHourlyRate);
-    const totalHoursPerLot = setupTimeHours + runHoursPerLot;
-    const changeoversPerDay = 24 / totalHoursPerLot;
-    const lostHoursPerDay = changeoversPerDay * setupTimeHours;
-    const productiveHoursPerDay = 24 - lostHoursPerDay;
-    const actualDailyOutput = productiveHoursPerDay * effectiveHourlyRate;
-    const capacityUtilizationPct = (productiveHoursPerDay / 24) * 100;
-
-    // Baseline comparison (at €0 investment = 8h setup)
-    const totalHoursPerLotAtZero = 8.0 + runHoursPerLot;
-    const changeoversAtZero = 24 / totalHoursPerLotAtZero;
-    const outputAtZero = (24 - changeoversAtZero * 8.0) * effectiveHourlyRate;
-    const extraBoxesPerDay = Math.max(0, actualDailyOutput - outputAtZero);
-    const extraProfitOverRemainingGame = extraBoxesPerDay * avgMarginPerBox * remainingDays;
-
-    // Generate Milestone Curve Table
-    const milestones = [0, 100000, 125000, 250000, 500000, 750000, 1000000, 1250000, 2000000].map(inv => {
-      const st = 2 + (1500000 / (250000 + inv));
-      const totLotH = st + runHoursPerLot;
-      const chgDay = 24 / totLotH;
-      const outDay = (24 - chgDay * st) * effectiveHourlyRate;
-      const gainBoxes = outDay - outputAtZero;
-      const grossProfitGain = gainBoxes * avgMarginPerBox * remainingDays;
-      return {
-        investment: inv,
-        setupHours: st,
-        pctDayLostPerSetup: (st / 24) * 100,
-        dailyOutputBoxes: Math.round(outDay),
-        extraBoxesPerDay: Math.round(gainBoxes),
-        projectedProfitGain: Math.round(grossProfitGain)
-      };
-    });
-
-    return {
-      setupTimeHours,
-      hoursSavedPerChangeover,
-      totalNominalDailyCapacity,
-      effectiveHourlyRate,
-      runHoursPerLot,
-      totalHoursPerLot,
-      changeoversPerDay,
-      lostHoursPerDay,
-      productiveHoursPerDay,
-      actualDailyOutput,
-      capacityUtilizationPct,
-      extraBoxesPerDay,
-      extraProfitOverRemainingGame,
-      milestones
-    };
-  }
-
-  /**
-   * 3. DEMAND & PRICING REVERSE-ENGINEERING SOLVER (VK32 / ZMARKET / ZVC2)
-   * Estimates Empirical Arc Elasticity, Marketing-Damped Elasticity, True Unconstrained Demand,
-   * and Solves for the Amoroso-Robinson / MNL Best-Response Profit-Maximizing Price P*
-   */
-  function reverseEngineerSkuChannel(input) {
-    const {
-      skuCode = 'F02',
-      channelCode = 'DC12',
-      cogs = 1.72,
-      prevPrice = 3.20,
-      prevQty = 2400,
-      currPrice = 3.45,
-      currQty = 2050,
-      marketAvgPrice = 3.35,
-      dailyMarketing = 1200,
-      inventoryRemaining = 1500, // From ZMB52: 0 indicates stockout truncation
-      activeTeamsCount = 6
-    } = input;
-
-    const channel = CHANNELS[channelCode] || CHANNELS.DC12;
-    const skuInfo = DEFAULT_SKUS.find(s => s.code === skuCode) || DEFAULT_SKUS[0];
-
-    // Check channel size compatibility
-    const isSizeCompatible =
-      channel.allowedSize === 'ALL' ||
-      (channel.allowedSize === '1kg' && skuInfo.size === '1kg') ||
-      (channel.allowedSize === '500g' && skuInfo.size === '500g');
-
-    if (!isSizeCompatible) {
-      return {
-        compatible: false,
-        reason: `Kênh ${channelCode} chỉ mua hộp ${channel.allowedSize} (Mã ${skuCode} là ${skuInfo.size}).`
-      };
-    }
-
-    // 1. Detect Stockout Truncation
-    const isStockout = inventoryRemaining <= 0;
-    // If stocked out, true demand is higher than observed currQty
-    const estimatedTrueCurrQty = isStockout ? Math.round(currQty * 1.28) : currQty;
-
-    // 2. Calculate Empirical Arc Price Elasticity if price changed by at least €0.02
-    let empiricalElasticity = null;
-    const priceDiff = currPrice - prevPrice;
-    if (Math.abs(priceDiff) >= 0.02 && prevQty > 0 && estimatedTrueCurrQty > 0) {
-      const pctQtyChange = (estimatedTrueCurrQty - prevQty) / ((prevQty + estimatedTrueCurrQty) / 2);
-      const pctPriceChange = priceDiff / ((prevPrice + currPrice) / 2);
-      const rawElasticity = -(pctQtyChange / pctPriceChange);
-      if (rawElasticity > 0.5 && rawElasticity < 20) {
-        empiricalElasticity = rawElasticity;
-      }
-    }
-
-    // 3. Theoretical Marketing-Damped Elasticity in ERPsim MNL Model:
-    // Effective Elasticity = BaseChannelElasticity / (1 + lambda * ln(1 + Marketing / 250)) * (currPrice / marketAvgPrice)
-    const marketingDampingFactor = 1 + channel.dampingLambda * Math.log(1 + Math.max(0, dailyMarketing) / 250);
-    const relativePriceRatio = currPrice / Math.max(0.5, marketAvgPrice);
-    const modelElasticity = (channel.baseElasticity / marketingDampingFactor) * Math.pow(relativePriceRatio, 1.15);
-
-    // Blend empirical elasticity (if valid and no stockout distortion) with structural MNL elasticity
-    const effectiveElasticity = (empiricalElasticity !== null && !isStockout)
-      ? (0.55 * empiricalElasticity + 0.45 * modelElasticity)
-      : modelElasticity;
-
-    // Clamp effective elasticity > 1.15 so Amoroso-Robinson has a finite positive optimum
-    const clampedElasticity = Math.max(1.22, Math.min(14.0, effectiveElasticity));
-
-    // 4. Amoroso-Robinson / Lerner Index Unconstrained Profit-Maximizing Price:
-    // P* = COGS * (e / (e - 1))
-    const lernerOptimalPrice = cogs * (clampedElasticity / (clampedElasticity - 1));
-
-    // 5. Competitive Best-Response & Reservation Ceiling Adjustment (Newton-Raphson on MNL Profit Function)
-    // In ERPsim, each channel has a choke price ceiling and competitive benchmark anchor
-    const priceCeiling = marketAvgPrice * channel.priceCeilingMultiplier;
-    const marketingLiftMultiplier = 1 + channel.marketingAlpha * Math.log(1 + Math.max(0, dailyMarketing) / 300);
-
-    // Search grid + local refinement around [COGS + 0.20, priceCeiling] to maximize expected profit E[pi(P)]
-    let bestPrice = currPrice;
-    let maxExpectedProfit = -Infinity;
-    let expectedQtyAtOptimal = estimatedTrueCurrQty;
-
-    // Calibrate baseline attractiveness constant K from current observed point (currPrice, estimatedTrueCurrQty)
-    const beta = clampedElasticity / Math.max(0.5, currPrice);
-    const currentShareProxy = Math.exp(-beta * (currPrice - marketAvgPrice));
-
-    for (let p = Math.max(cogs + 0.15, marketAvgPrice * 0.65); p <= priceCeiling; p += 0.01) {
-      // Penalty accelerates if p approaches priceCeiling
-      const ceilingPenalty = p > marketAvgPrice * 1.18
-        ? Math.exp(-2.5 * Math.pow((p - marketAvgPrice * 1.18) / (priceCeiling - marketAvgPrice * 1.18 + 0.01), 2))
-        : 1.0;
-
-      const relAttractiveness = Math.exp(-beta * (p - marketAvgPrice)) * ceilingPenalty;
-      // Logistic market share damper so demand doesn't explode infinitely at low prices
-      const predictedQty = estimatedTrueCurrQty * (relAttractiveness / Math.max(1e-6, currentShareProxy));
-      const cappedQty = Math.min(predictedQty, estimatedTrueCurrQty * 2.6 + 800);
-      const profit = (p - cogs) * cappedQty - (dailyMarketing / 3);
-
-      if (profit > maxExpectedProfit) {
-        maxExpectedProfit = profit;
-        bestPrice = p;
-        expectedQtyAtOptimal = Math.round(cappedQty);
-      }
-    }
-
-    // Blend Newton/MNL best response with Lerner optimal price and stockout surge pricing
-    let recommendedPrice = 0.65 * bestPrice + 0.35 * Math.min(priceCeiling, lernerOptimalPrice);
-    if (isStockout) {
-      // Stockout rule: Never leave money on the table when you stock out! Raise price by at least 6-10%
-      recommendedPrice = Math.max(recommendedPrice, currPrice * 1.07);
-    }
-    recommendedPrice = Math.min(priceCeiling, Math.max(cogs + 0.20, Number(recommendedPrice.toFixed(2))));
-
-    const currentDailyProfit = (currPrice - cogs) * currQty;
-    const projectedOptimalProfit = (recommendedPrice - cogs) * expectedQtyAtOptimal;
-    const profitGainPerDay = Math.max(0, projectedOptimalProfit - currentDailyProfit);
-    const unitMargin = recommendedPrice - cogs;
-    const marginPct = (unitMargin / recommendedPrice) * 100;
-
-    let actionTag = 'GIỮ GIÁ';
-    let actionColor = '#3b82f6';
-    if (recommendedPrice - currPrice >= 0.06) {
-      actionTag = isStockout ? 'TĂNG GIÁ MẠNH (CHỐNG ĐỨT HÀNG)' : 'TĂNG GIÁ TỐI ƯU BIÊN LN';
-      actionColor = '#10b981';
-    } else if (currPrice - recommendedPrice >= 0.06) {
-      actionTag = 'GIẢM GIÁ KÍCH CẦU (CẦU CO GIÃN CAO)';
-      actionColor = '#f59e0b';
-    }
-
-    return {
-      compatible: true,
-      skuCode,
-      skuName: skuInfo.name,
-      channelCode,
-      channelName: channel.name,
-      cogs,
-      currPrice,
-      currQty,
-      marketAvgPrice,
-      isStockout,
-      estimatedTrueCurrQty,
-      empiricalElasticity,
-      effectiveElasticity: Number(clampedElasticity.toFixed(2)),
-      marketingDampingFactor: Number(marketingDampingFactor.toFixed(2)),
-      marketingLiftMultiplier: Number(marketingLiftMultiplier.toFixed(2)),
-      lernerOptimalPrice: Number(lernerOptimalPrice.toFixed(2)),
-      priceCeiling: Number(priceCeiling.toFixed(2)),
-      recommendedPrice,
-      priceDelta: Number((recommendedPrice - currPrice).toFixed(2)),
-      expectedQtyAtOptimal,
-      unitMargin: Number(unitMargin.toFixed(2)),
-      marginPct: Number(marginPct.toFixed(1)),
-      currentDailyProfit: Math.round(currentDailyProfit),
-      projectedOptimalProfit: Math.round(projectedOptimalProfit),
-      profitGainPerDay: Math.round(profitGainPerDay),
-      actionTag,
-      actionColor
-    };
-  }
-
-  /**
-   * 4. REGIONAL PREFERENCE DECONVOLUTION & MARKETING (ZADS) OPTIMIZER
-   * Deconvolves observed regional sales (North, South, West) by removing price/ad distortion
-   * to reveal the hidden Regional Preference parameter Theta_{j,r} and computes exact optimal ZADS budget.
-   */
-  function reverseEngineerRegionalMarketing(regionalSalesMatrix, totalDailyBudget = 6000) {
-    // regionalSalesMatrix: array of { skuCode, flavor, unitMargin, salesNorth, salesSouth, salesWest, adsNorth, adsSouth, adsWest }
-    const regions = ['North', 'South', 'West'];
-    const regionTotals = { North: 0, South: 0, West: 0 };
-
-    // Step 1: Compute baseline organic volume (strip out logarithmic ad boost)
-    const deconvolvedRows = regionalSalesMatrix.map(row => {
-      const stripAdBoost = (qty, ads) => {
-        const adMultiplier = 1 + 0.35 * Math.log(1 + Math.max(0, ads) / 250);
-        return qty / adMultiplier;
-      };
-      const orgNorth = stripAdBoost(row.salesNorth || 0, row.adsNorth || 0);
-      const orgSouth = stripAdBoost(row.salesSouth || 0, row.adsSouth || 0);
-      const orgWest  = stripAdBoost(row.salesWest || 0, row.adsWest || 0);
-
-      regionTotals.North += orgNorth;
-      regionTotals.South += orgSouth;
-      regionTotals.West  += orgWest;
-
-      return { ...row, orgNorth, orgSouth, orgWest };
-    });
-
-    // Step 2: Compute Normalized Regional Preference Index Theta_{j,r} (1.00 = average, >1.25 = Strong Hot Preference)
-    const count = Math.max(1, deconvolvedRows.length);
-    const avgShare = 1 / count;
-
-    const analyzedRows = deconvolvedRows.map(row => {
-      const shareNorth = regionTotals.North > 0 ? row.orgNorth / regionTotals.North : avgShare;
-      const shareSouth = regionTotals.South > 0 ? row.orgSouth / regionTotals.South : avgShare;
-      const shareWest  = regionTotals.West  > 0 ? row.orgWest  / regionTotals.West  : avgShare;
-
-      const thetaNorth = shareNorth / avgShare;
-      const thetaSouth = shareSouth / avgShare;
-      const thetaWest  = shareWest  / avgShare;
-
-      return {
-        ...row,
-        shareNorthPct: Number((shareNorth * 100).toFixed(1)),
-        shareSouthPct: Number((shareSouth * 100).toFixed(1)),
-        shareWestPct:  Number((shareWest * 100).toFixed(1)),
-        thetaNorth: Number(thetaNorth.toFixed(2)),
-        thetaSouth: Number(thetaSouth.toFixed(2)),
-        thetaWest:  Number(thetaWest.toFixed(2))
-      };
-    });
-
-    // Step 3: Allocate ZADS Marketing Budget to avoid Intra-Regional Cannibalization!
-    // Rule: In each region, only fund the top 2 SKUs with highest (Theta_{j,r} * UnitMargin * BaseVolume)
-    // where Marginal Revenue of Advertising > 1.0
-    const recommendations = { North: {}, South: {}, West: {} };
-    const regionRankings = { North: [], South: [], West: [] };
-
-    regions.forEach(reg => {
-      const thetaKey = `theta${reg}`;
-      const orgKey = `org${reg}`;
-
-      const scored = analyzedRows.map(r => {
-        const responsiveness = r[thetaKey] * Math.max(0.5, r.unitMargin) * Math.sqrt(Math.max(100, r[orgKey]));
-        return { skuCode: r.skuCode, name: r.name, theta: r[thetaKey], orgQty: r[orgKey], unitMargin: r.unitMargin, responsiveness };
-      }).sort((a, b) => b.responsiveness - a.responsiveness);
-
-      regionRankings[reg] = scored;
-
-      // Pick Top 2 in each region to prevent dilution/cannibalization
-      const top1 = scored[0];
-      const top2 = scored[1];
-      const regionBudget = totalDailyBudget / 3;
-
-      scored.forEach((item, idx) => {
-        if (idx === 0 && item.theta >= 0.85) {
-          // Primary champion in this region gets ~65% of regional budget, capped by logarithmic ROI
-          const optimalAd = Math.min(2200, Math.round((regionBudget * 0.65) / 50) * 50);
-          recommendations[reg][item.skuCode] = { spend: optimalAd, role: 'CHỦ LỰC #1 (CHAMPION)', priority: 1 };
-        } else if (idx === 1 && item.theta >= 1.05) {
-          // Secondary strong match gets ~35% of regional budget
-          const optimalAd = Math.min(1400, Math.round((regionBudget * 0.35) / 50) * 50);
-          recommendations[reg][item.skuCode] = { spend: optimalAd, role: 'HỖ TRỢ #2 (CO-LEADER)', priority: 2 };
-        } else {
-          // Set to €0 to avoid intra-regional cannibalization
-          recommendations[reg][item.skuCode] = { spend: 0, role: 'CẮT (€0 - TRÁNH TỰ ĂN MÒN)', priority: 0 };
-        }
-      });
-    });
-
-    return {
-      analyzedRows,
-      recommendations,
-      regionRankings
-    };
-  }
-
-  /**
-   * 5. SUSTAINABILITY / CARBON FOOTPRINT (CO2e) CALCULATOR
-   */
-  function calculateCarbonFootprint(params) {
-    const {
-      dailyBoxesProduced = 20000,
-      dailySetupHours = 4,
-      averageInventoryBoxes = 35000,
-      dailyDeliveriesCount = 28,
-      carbonTaxRatePerKg = 0.30 // Default €0.30 / kg CO2e
-    } = params;
-
-    const prodCo2Kg = dailyBoxesProduced * 0.30;         // ~0.30 kg CO2e / box
-    const setupCo2Kg = dailySetupHours * 185;            // ~185 kg CO2e / setup hour
-    const storageCo2Kg = averageInventoryBoxes * 0.045;  // warehouse energy overhead
-    const transportCo2Kg = dailyDeliveriesCount * 95;    // delivery route footprint
-
-    const totalDailyCo2Kg = prodCo2Kg + setupCo2Kg + storageCo2Kg + transportCo2Kg;
-    const dailyCarbonTaxEur = totalDailyCo2Kg * carbonTaxRatePerKg;
-
-    return {
-      prodCo2Kg: Math.round(prodCo2Kg),
-      setupCo2Kg: Math.round(setupCo2Kg),
-      storageCo2Kg: Math.round(storageCo2Kg),
-      transportCo2Kg: Math.round(transportCo2Kg),
-      totalDailyCo2Kg: Math.round(totalDailyCo2Kg),
-      dailyCarbonTaxEur: Math.round(dailyCarbonTaxEur)
-    };
-  }
-
-  /**
-   * 6. LOGISTICS SUSTAINABILITY (PRESET 1, 2, 3 - DAIRY) & 8 RANDOM DISRUPTORS ENGINE
-   * Based directly on Official ERPsim Logistics Sustainability Preset 1/2/3 Job Aids,
-   * Participant's Guide 2024-2025 Edition (Nov 13, 2025) & Disruptors Guide Rev 2.0
-   */
-  const LOGISTICS_PRESET3_SKUS = [
-    { code: 'T01', name: 'Milk ($$-T01)',      initialStock: 950, costV04: 22.95, costV08: 24.10, initialPrice: 25.25, elasticity: 3.15, defaultTarget: 1100 },
-    { code: 'T02', name: 'Cream ($$-T02)',     initialStock: 300, costV04: 72.07, costV08: 75.67, initialPrice: 79.78, elasticity: 2.55, defaultTarget: 450  },
-    { code: 'T03', name: 'Yoghurt ($$-T03)',   initialStock: 700, costV04: 25.85, costV08: 27.14, initialPrice: 28.43, elasticity: 3.05, defaultTarget: 850  },
-    { code: 'T04', name: 'Cheese ($$-T04)',    initialStock: 350, costV04: 82.68, costV08: 86.81, initialPrice: 90.95, elasticity: 2.45, defaultTarget: 550  },
-    { code: 'T05', name: 'Butter ($$-T05)',    initialStock: 400, costV04: 59.88, costV08: 62.87, initialPrice: 65.87, elasticity: 2.75, defaultTarget: 550  },
-    { code: 'T06', name: 'Ice Cream ($$-T06)', initialStock: 300, costV04: 43.15, costV08: 45.31, initialPrice: 47.47, elasticity: 2.85, defaultTarget: 450  }
-  ];
-
-  const LOGISTICS_DISRUPTORS = [
-    {
-      id: 1,
-      code: 'COLD_SPELL',
-      name: 'Event 1: Cold Spell (Đợt Giá Rét)',
-      summary: '+5.0 kg CO2e/unit cho 2 sản phẩm bị ảnh hưởng (cả V04 & V08); Giảm phạt Carbon vượt kho -300 kg/container (còn 200 kg); Giảm Carbon năng lượng -25 kg/ngày.',
-      counterStrategy: 'Tăng giá bán (VK32) của 2 sản phẩm bị cộng +5kg CO2e thêm (5 × Thuế Carbon × 1.35). Tận dụng việc phí phạt vượt kho giảm 60% để gom lô PO lớn hơn.'
-    },
-    {
-      id: 2,
-      code: 'CARBON_DECREE',
-      name: 'Event 2: Carbon Decree (Sắc Lệnh Tăng Thuế Carbon)',
-      summary: 'Thuế Carbon tăng vọt thêm +€0.20 / kg CO2e; Phát thải năng lượng mua ngoài giảm -50 kg/ngày (còn 50 kg/ngày).',
-      counterStrategy: 'BẮT BUỘC tắt bán trực tiếp từ Kho tổng 03 (ZMB1B: Uncheck Use 03) vì 300kg CO2e/đơn lúc này tốn cực nhiều thuế! Gom đơn PO lớn và giảm tần suất chuyển kho.'
-    },
-    {
-      id: 3,
-      code: 'SUPPLIER_DISRUPTION',
-      name: 'Event 3: Supplier Disruption (Đứt Gãy Chuỗi Cung Ứng NCC)',
-      summary: 'Nhà cung cấp bị dính xúc xắc (V04 hoặc V08) bị phạt thêm +2.50 kg CO2e/unit và +200 kg CO2e/PO.',
-      counterStrategy: 'Nếu V04 bị dính và Thuế Carbon cao (≥ €0.35/kg), kiểm tra bảng so sánh ZME12 bên dưới để chuyển các mã chênh lệch giá thấp (như T01, T02, T03) sang V08.'
-    },
-    {
-      id: 4,
-      code: 'HUB_GRIDLOCK',
-      name: 'Event 4: Hub Gridlock (Tắc Nghẽn Kho Tổng 03)',
-      summary: 'Bán trực tiếp từ Kho tổng 03 bị cộng thêm +300 kg CO2e/Sales Order (tổng 600 kg/đơn!). Chuyển kho nội bộ (ZMB1B) bị cộng +100 kg CO2e/transfer (tổng 150 kg). Mua hàng PO bị cộng +100 kg CO2e/PO.',
-      counterStrategy: 'TUYỆT ĐỐI KHÔNG bán trực tiếp từ Kho tổng 03 (Uncheck Use 03 trong ZMB1B). Giãn tần suất chuyển kho ZMB1B ra 3–4 ngày/lần với số lượng lớn mỗi lần chuyển.'
-    },
-    {
-      id: 5,
-      code: 'SYSTEM_GLITCH',
-      name: 'Event 5: System Glitch (Lỗi Hệ Thống Khóa Báo Cáo)',
-      summary: 'Khóa ngẫu nhiên các nhóm báo cáo (Inventory ZMB52, Sales ZVC2/ZVA05, hoặc Procurement ZME2N). Mở khóa trong ZITM tốn €5,000 / báo cáo.',
-      counterStrategy: 'KHÔNG CẦN TỐN €5,000 mua lại báo cáo nếu bạn đang dùng cổng OData (ZODATA / SAC / PowerBI / Web Command Center) hoặc chỉ mua duy nhất ZMB52 (€5,000 là rất nhỏ so với doanh thu €72,000/ngày).'
-    },
-    {
-      id: 6,
-      code: 'DATA_BREACH',
-      name: 'Event 6: Data Breach (Rò Rỉ Dữ Liệu OData Toàn Thị Trường)',
-      summary: 'Tất cả các đội đều xem được dữ liệu OData của nhau (giá bán, tồn kho, nhà cung cấp, doanh số của mọi đối thủ).',
-      counterStrategy: 'Dùng OData quét ngay xem đối thủ đang đứt hàng (Stockout = 0) ở mặt hàng nào trong 6 mã (T01..T06) tại vùng nào (03N, 03S, 03W) → Đẩy hàng vào vùng đó qua ZMB1B và tăng giá VK32 +12%!'
-    },
-    {
-      id: 7,
-      code: 'FLASH_FLOOD',
-      name: 'Event 7: Flash Flood (Lũ Quét Mất Trắng 1 Kho)',
-      summary: 'Xóa sổ 100% tồn kho tại 1 kho ngẫu nhiên: Central (03), North (03N), South (03S), hoặc West (03W).',
-      counterStrategy: 'Nếu mất kho vùng (VD: 03N): Vào ZMB1B đẩy hàng khẩn cấp từ 03 sang. Nếu mất kho tổng (03): Chạy ngay MD61 -> MD01 -> ZME12 chọn V04 (Lead time chỉ 1-2 ngày!) -> ME59N để cấp tốc bù hàng!'
-    },
-    {
-      id: 8,
-      code: 'AI_INNOVATION',
-      name: 'Event 8: AI Innovation (Mở Khóa Công Cụ AI ZRPA)',
-      summary: 'Mở khóa T-code ZRPA (AI Requirements Planning cho MD61 & AI Price Management cho VK32).',
-      counterStrategy: 'Có thể dùng ZRPA để tự động gợi ý lượng đặt hàng MD61 nhanh, NHƯNG phải kiểm tra lại giá VK32 bằng Bộ Giải Ngược của chúng ta vì AI mặc định trong game đặt biên lợi nhuận khá bảo thủ.'
-    }
-  ];
-
-  function solveLogisticsSustainabilityPreset3(params) {
-    const {
-      presetMode = 'PRESET3', // 'PRESET1', 'PRESET2', 'PRESET3'
-      currentRound = 1,
-      baseCarbonTax = 0.10, // Preset 3 starts at 0.10 (+0.05/round); Preset 1 & 2 fixed at 0.15
-      orderLotSizePerPo = 600,
-      totalWarehouseUnits = 3600,
-      coldSpellActive = false,
-      coldSpellCombo = 'T01_T02', // 1:T01+T02, 2:T01+T03, 3:T01+T05, 4:T02+T03, 5:T02+T05, 6:T03+T05
-      carbonDecreeActive = false,
-      supplierDisruptionActive = false,
-      impactedSupplier = 'V04',
-      hubGridlockActive = false,
-      directSalesOrdersPerDay = 0,
-      regionalSalesOrdersPerDay = 32,
-      transfersPerDay = 3,
-      skuInventoryState = {} // Map of code -> { currentStockAndOpenPo, desiredOrderQty, salesNO, salesSO, salesWE }
-    } = params;
-
-    // 1. Effective Carbon Tax Rate (€/kg CO2e)
-    const effectiveCarbonTax = baseCarbonTax + (carbonDecreeActive ? 0.20 : 0);
-
-    // 2. Cold Spell affected SKUs
-    const coldSpellSkus = coldSpellCombo.split('_');
-
-    // Preset-specific base carbon parameters
-    const baseV04UnitCo2 = presetMode === 'PRESET1' ? 1.0 : 1.2;
-    const baseV08PoCo2 = presetMode === 'PRESET2' ? 200 : 400; // Preset 2 = 200 kg/PO, Preset 3 = 400 kg/PO
-
-    let totalMd61TargetUnits = 0;
-    let totalPoCashNeeded = 0;
-    let totalNewOrderUnits = 0;
-
-    // 3. Supplier comparison & MD61 Target Inventory Calculator for each of the 6 Dairy SKUs (T01..T06)
-    const skuAnalysis = LOGISTICS_PRESET3_SKUS.map(sku => {
-      const isColdHit = coldSpellActive && coldSpellSkus.includes(sku.code);
-      const coldExtraUnitCo2 = isColdHit ? 5.0 : 0.0;
-
-      // V04 unit & PO carbon
-      const v04UnitCo2 = baseV04UnitCo2 + coldExtraUnitCo2 + (supplierDisruptionActive && impactedSupplier === 'V04' ? 2.50 : 0);
-      const v04PoCo2 = 100 + (supplierDisruptionActive && impactedSupplier === 'V04' ? 200 : 0) + (hubGridlockActive ? 100 : 0);
-      const v04PoFixedFee = 1000;
-
-      // V08 unit & PO carbon
-      const v08UnitCo2 = 0.8 + coldExtraUnitCo2 + (supplierDisruptionActive && impactedSupplier === 'V08' ? 2.50 : 0);
-      const v08PoCo2 = baseV08PoCo2 + (supplierDisruptionActive && impactedSupplier === 'V08' ? 200 : 0) + (hubGridlockActive ? 100 : 0);
-      const v08PoFixedFee = 600;
-
-      // True Landed Cost per Unit at given orderLotSizePerPo
-      const safeLot = Math.max(50, orderLotSizePerPo);
-      const v04LandedUnitCost = sku.costV04 + (v04UnitCo2 * effectiveCarbonTax) + (v04PoFixedFee + v04PoCo2 * effectiveCarbonTax) / safeLot;
-      const v08LandedUnitCost = presetMode === 'PRESET1'
-        ? Infinity
-        : sku.costV08 + (v08UnitCo2 * effectiveCarbonTax) + (v08PoFixedFee + v08PoCo2 * effectiveCarbonTax) / safeLot;
-
-      const recommendedVendor = (presetMode === 'PRESET1' || v04LandedUnitCost <= v08LandedUnitCost) ? 'V04' : 'V08';
-      const minLandedCost = Math.min(v04LandedUnitCost, v08LandedUnitCost);
-      const savingsPerUnit = presetMode === 'PRESET1' ? 0 : Math.abs(v08LandedUnitCost - v04LandedUnitCost);
-
-      // Calculate Break-even Lot Size Q* where TC_V04(Q*) == TC_V08(Q*)
-      const unitVarDiff = (sku.costV08 + v08UnitCo2 * effectiveCarbonTax) - (sku.costV04 + v04UnitCo2 * effectiveCarbonTax);
-      const fixedPoDiff = (v04PoFixedFee + v04PoCo2 * effectiveCarbonTax) - (v08PoFixedFee + v08PoCo2 * effectiveCarbonTax);
-      const breakEvenLotSize = presetMode === 'PRESET1'
-        ? 0
-        : (unitVarDiff > 0 ? Math.max(0, Math.round(fixedPoDiff / unitVarDiff)) : Infinity);
-
-      // Optimal Retail Price on DC 16 (Retail Stores) using Amoroso-Robinson + Logistics Carbon pass-through
-      const regionalOrderCo2CostPerUnit = (75 * effectiveCarbonTax) / 25; // ~25 units per average customer order
-      const fullEffectiveMarginalCost = minLandedCost + regionalOrderCo2CostPerUnit;
-      const optimalPriceDC16 = fullEffectiveMarginalCost * (sku.elasticity / (sku.elasticity - 1));
-      const recommendedPriceDC16 = Number(Math.min(sku.initialPrice * 1.32, Math.max(fullEffectiveMarginalCost * 1.12, optimalPriceDC16 * 0.65 + sku.initialPrice * 0.42)).toFixed(2));
-      const netProfitPerUnit = Number((recommendedPriceDC16 - fullEffectiveMarginalCost).toFixed(2));
-
-      // MD61 Target Inventory Formula (Participant's Guide Page 16 & 32):
-      // MRP Requisition = MD61_Target - (Current_Inventory_ZMB52 + Open_PO_ZME2N)
-      // Therefore: MD61_Target_To_Type = Current_Stock_And_Open_PO + Desired_New_Order_Qty
-      const st = skuInventoryState[sku.code] || {};
-      const currentStockAndOpenPo = st.currentStockAndOpenPo !== undefined ? st.currentStockAndOpenPo : Math.round(sku.initialStock * 0.5);
-      const desiredOrderQty = st.desiredOrderQty !== undefined ? st.desiredOrderQty : Math.round(sku.defaultTarget - currentStockAndOpenPo);
-      const md61TargetToEnter = Math.max(0, currentStockAndOpenPo + Math.max(0, desiredOrderQty));
-
-      totalMd61TargetUnits += md61TargetToEnter;
-      totalNewOrderUnits += Math.max(0, desiredOrderQty);
-      const chosenUnitPrice = recommendedVendor === 'V04' ? sku.costV04 : sku.costV08;
-      totalPoCashNeeded += Math.max(0, desiredOrderQty) * chosenUnitPrice;
-
-      // Regional ZVA05 Split (Area: NO, SO, WE) -> ZMB1B allocation
-      const sNO = st.salesNO !== undefined ? st.salesNO : 100;
-      const sSO = st.salesSO !== undefined ? st.salesSO : 100;
-      const sWE = st.salesWE !== undefined ? st.salesWE : 100;
-      const totRegSales = Math.max(1, sNO + sSO + sWE);
-      const zmb1bTargetNO = Math.round(md61TargetToEnter * (sNO / totRegSales));
-      const zmb1bTargetSO = Math.round(md61TargetToEnter * (sSO / totRegSales));
-      const zmb1bTargetWE = Math.max(0, md61TargetToEnter - zmb1bTargetNO - zmb1bTargetSO);
-
-      return {
-        ...sku,
-        isColdHit,
-        v04UnitCo2: Number(v04UnitCo2.toFixed(2)),
-        v08UnitCo2: Number(v08UnitCo2.toFixed(2)),
-        v04LandedUnitCost: Number(v04LandedUnitCost.toFixed(2)),
-        v08LandedUnitCost: presetMode === 'PRESET1' ? null : Number(v08LandedUnitCost.toFixed(2)),
-        recommendedVendor,
-        savingsPerUnit: Number(savingsPerUnit.toFixed(2)),
-        breakEvenLotSize,
-        recommendedPriceDC16,
-        netProfitPerUnit,
-        currentStockAndOpenPo,
-        desiredOrderQty,
-        md61TargetToEnter,
-        zmb1bTargetNO,
-        zmb1bTargetSO,
-        zmb1bTargetWE
-      };
-    });
-
-    if (totalNewOrderUnits > 0) {
-      totalPoCashNeeded += 1000; // Add fixed PO shipping fee
-    }
-
-    // 4. Warehousing & Logistics Daily Carbon + Fee Summary
-    const excessUnits = Math.max(0, totalWarehouseUnits - 4000);
-    const excessContainers = Math.ceil(excessUnits / 1000);
-    const overstockFeePerDay = excessContainers * 300;
-    const overstockCo2PerContainer = coldSpellActive ? 200 : 500; // Cold Spell reduces from 500 to 200 kg/container
-    const overstockCo2PerDay = excessContainers * overstockCo2PerContainer;
-
-    const energyCo2PerDay = Math.max(0, 100 - (coldSpellActive ? 25 : 0) - (carbonDecreeActive ? 50 : 0));
-    const otherOverheadCo2PerDay = 100; // 500 kg per 5 days
-
-    const transferCo2Each = 50 + (hubGridlockActive ? 100 : 0);
-    const transferFeeEach = 100;
-    const directSalesCo2Each = 300 + (hubGridlockActive ? 300 : 0);
-    const directSalesFeeEach = 350;
-    const regionalSalesCo2Each = 75;
-
-    const dailyLogisticsCo2 =
-      overstockCo2PerDay +
-      energyCo2PerDay +
-      otherOverheadCo2PerDay +
-      (transfersPerDay * transferCo2Each) +
-      (directSalesOrdersPerDay * directSalesCo2Each) +
-      (regionalSalesOrdersPerDay * regionalSalesCo2Each);
-
-    const dailyCarbonTaxEur = dailyLogisticsCo2 * effectiveCarbonTax;
-    const dailyTransportAndStorageFeesEur =
-      overstockFeePerDay +
-      (transfersPerDay * transferFeeEach) +
-      (directSalesOrdersPerDay * directSalesFeeEach);
-
-    // How much money is wasted per Direct Sale order from Central Warehouse (03) vs Regional Warehouse (03N/03S/03W)
-    const lossPerDirectSaleOrder = directSalesFeeEach + (directSalesCo2Each - regionalSalesCo2Each) * effectiveCarbonTax;
-
-    return {
-      presetMode,
-      effectiveCarbonTax: Number(effectiveCarbonTax.toFixed(2)),
-      skuAnalysis,
-      totalMd61TargetUnits,
-      totalNewOrderUnits,
-      totalPoCashNeeded: Math.round(totalPoCashNeeded),
-      excessUnits,
-      overstockFeePerDay,
-      overstockCo2PerDay,
-      dailyLogisticsCo2: Math.round(dailyLogisticsCo2),
-      dailyCarbonTaxEur: Math.round(dailyCarbonTaxEur),
-      dailyTransportAndStorageFeesEur: Math.round(dailyTransportAndStorageFeesEur),
-      lossPerDirectSaleOrder: Number(lossPerDirectSaleOrder.toFixed(2))
-    };
-  }
-
-  /**
-   * 7. SAP ZVC2 / ZMARKET TSV & CSV PARSER
-   * Parses raw clipboard copy-paste from SAP GUI ALV Grids or Fiori tables
+   * 4. SAP ZVA05 / ZVC2 / ZMB52 TSV & CSV PARSER
    */
   function parseSapTableText(rawText) {
     if (!rawText || !rawText.trim()) return [];
     const lines = rawText.trim().split(/\r?\n/).filter(l => l.trim() && !l.trim().startsWith('---'));
     if (lines.length < 2) return [];
 
-    // Detect delimiter: Tab (\t), Pipe (|), Semicolon (;), or Comma (,)
     const headerLine = lines[0];
     let delimiter = '\t';
     if (headerLine.includes('|')) delimiter = '|';
@@ -826,17 +485,12 @@ const ERPsimEngine = (() => {
 
   return {
     CREDIT_RATING_TABLE,
-    CHANNELS,
-    DEFAULT_SKUS,
     LOGISTICS_PRESET3_SKUS,
     LOGISTICS_DISRUPTORS,
     lookupCreditRating,
     calculateCompanyValuation,
-    calculateSetupAndProduction,
-    reverseEngineerSkuChannel,
-    reverseEngineerRegionalMarketing,
-    calculateCarbonFootprint,
     solveLogisticsSustainabilityPreset3,
+    solveDairyDc16Pricing,
     parseSapTableText
   };
 })();

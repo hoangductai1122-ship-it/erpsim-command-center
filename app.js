@@ -1,9 +1,9 @@
 /**
- * UI Controller for ERPsim Reverse-Engineering Command Center
+ * UI Controller for ERPsim Logistics Sustainability (Preset 3) Command Center
+ * 100% Dedicated to Preset 3 Dairy (T01..T06, V04 vs V08, MD61 Target, ZMB1B, VK32 DC 16, & 8 Disruptors)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Format & Safe Number Parsing helpers
   const fmtEur = (n) => {
     const sign = n < 0 ? '-' : '';
     return sign + '€' + Math.round(Math.abs(n)).toLocaleString('en-US');
@@ -30,21 +30,336 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // =========================================================================
-  // MODULE 1: COMPANY VALUATION & 21-TIER CREDIT RATING
+  // SHARED STATE FOR THE 6 DAIRY PRODUCTS (T01..T06) IN PRESET 3
+  // =========================================================================
+  const skuInventoryState = {
+    T01: { currentStockAndOpenPo: 500, desiredOrderQty: 600, salesNO: 380, salesSO: 310, salesWE: 310 },
+    T02: { currentStockAndOpenPo: 150, desiredOrderQty: 300, salesNO: 110, salesSO: 140, salesWE: 100 },
+    T03: { currentStockAndOpenPo: 350, desiredOrderQty: 500, salesNO: 250, salesSO: 290, salesWE: 220 },
+    T04: { currentStockAndOpenPo: 180, desiredOrderQty: 420, salesNO: 190, salesSO: 130, salesWE: 150 },
+    T05: { currentStockAndOpenPo: 200, desiredOrderQty: 380, salesNO: 150, salesSO: 160, salesWE: 190 },
+    T06: { currentStockAndOpenPo: 150, desiredOrderQty: 300, salesNO: 120, salesSO: 170, salesWE: 130 }
+  };
+
+  let dairyPricingState = [
+    { skuCode: 'T01', landedCogs: 23.68, prevPrice: 25.25, prevQty: 360, currPrice: 28.10, currQty: 315, inventoryRemaining: 500 },
+    { skuCode: 'T02', landedCogs: 72.80, prevPrice: 79.78, prevQty: 120, currPrice: 87.50, currQty: 105, inventoryRemaining: 150 },
+    { skuCode: 'T03', landedCogs: 26.58, prevPrice: 28.43, prevQty: 270, currPrice: 31.80, currQty: 235, inventoryRemaining: 350 },
+    { skuCode: 'T04', landedCogs: 83.41, prevPrice: 90.95, prevQty: 140, currPrice: 102.50, currQty: 125, inventoryRemaining: 0   },
+    { skuCode: 'T05', landedCogs: 60.61, prevPrice: 65.87, prevQty: 155, currPrice: 73.80, currQty: 138, inventoryRemaining: 200 },
+    { skuCode: 'T06', landedCogs: 43.88, prevPrice: 47.47, prevQty: 125, currPrice: 53.20, currQty: 112, inventoryRemaining: 150 }
+  ];
+
+  // =========================================================================
+  // TAB 1: LOGISTICS SUSTAINABILITY (PRESET 3) & 8 DISRUPTORS SOLVER
+  // =========================================================================
+  const logInputs = [
+    'log-base-tax', 'log-po-lot', 'log-total-stock', 'log-transfers-day',
+    'log-reg-orders', 'log-dir-orders', 'dis-1-cold', 'dis-1-combo',
+    'dis-2-carbon', 'dis-3-supplier', 'dis-3-vendor', 'dis-4-gridlock',
+    'dis-5-glitch', 'dis-6-breach', 'dis-7-flood', 'dis-7-warehouse', 'dis-8-ai'
+  ];
+
+  function updateLogisticsPreset3Module() {
+    const coldActive = document.getElementById('dis-1-cold').checked;
+    const carbonActive = document.getElementById('dis-2-carbon').checked;
+    const supplierActive = document.getElementById('dis-3-supplier').checked;
+    const gridlockActive = document.getElementById('dis-4-gridlock').checked;
+    const glitchActive = document.getElementById('dis-5-glitch').checked;
+    const breachActive = document.getElementById('dis-6-breach').checked;
+    const floodActive = document.getElementById('dis-7-flood').checked;
+    const floodWh = document.getElementById('dis-7-warehouse').value;
+    const aiActive = document.getElementById('dis-8-ai').checked;
+
+    const res = ERPsimEngine.solveLogisticsSustainabilityPreset3({
+      baseCarbonTax: numVal('log-base-tax', 0.10),
+      orderLotSizePerPo: Math.max(50, numVal('log-po-lot', 1800)),
+      totalWarehouseUnits: numVal('log-total-stock', 3600),
+      transfersPerDay: numVal('log-transfers-day', 0),
+      regionalSalesOrdersPerDay: numVal('log-reg-orders', 0),
+      directSalesOrdersPerDay: numVal('log-dir-orders', 0),
+      coldSpellActive: coldActive,
+      coldSpellCombo: document.getElementById('dis-1-combo').value,
+      carbonDecreeActive: carbonActive,
+      supplierDisruptionActive: supplierActive,
+      impactedSupplier: document.getElementById('dis-3-vendor').value,
+      hubGridlockActive: gridlockActive,
+      skuInventoryState
+    });
+
+    // Update Top Telemetry Bar
+    document.getElementById('top-md61-cap').textContent = `${res.totalMd61TargetUnits.toLocaleString('en-US')} / 4,000 u`;
+    document.getElementById('top-md61-cap').style.color = res.totalMd61TargetUnits > 4000 ? '#fb7185' : '#60a5fa';
+    document.getElementById('top-carbon-tax').textContent = `€${fmtDec(res.effectiveCarbonTax, 2)} / kg CO₂e`;
+
+    // Update KPI cards
+    document.getElementById('log-eff-tax').textContent = `€${fmtDec(res.effectiveCarbonTax, 2)} / kg CO₂e`;
+    document.getElementById('log-overstock-fee').textContent = `${fmtEur(res.overstockFeePerDay)} / ngày`;
+    document.getElementById('log-overstock-fee').style.color = res.overstockFeePerDay > 0 ? '#f43f5e' : '#10b981';
+    document.getElementById('log-overstock-co2').textContent = `Vượt ${res.excessUnits.toLocaleString('en-US')} units (+${res.overstockCo2PerDay} kg CO₂e/ngày)`;
+    document.getElementById('log-daily-total-cost').textContent = `${fmtEur(res.dailyCarbonTaxEur + res.dailyTransportAndStorageFeesEur)} / ngày`;
+    document.getElementById('log-daily-co2-sub').textContent = `Phát thải vận hành: ${res.dailyLogisticsCo2.toLocaleString('en-US')} kg CO₂e/ngày (Thuế: ${fmtEur(res.dailyCarbonTaxEur)})`;
+    document.getElementById('log-direct-loss').textContent = `-€${fmtDec(res.lossPerDirectSaleOrder, 2)} / đơn`;
+
+    // Sync landed COGS into Tab 2 Dairy Pricing State
+    res.skuAnalysis.forEach(s => {
+      const pRow = dairyPricingState.find(r => r.skuCode === s.code);
+      if (pRow) {
+        pRow.landedCogs = s.minLandedCost;
+      }
+    });
+
+    // Active Disruptor Alert Banner
+    const activeFlags = {
+      1: coldActive,
+      2: carbonActive,
+      3: supplierActive,
+      4: gridlockActive,
+      5: glitchActive,
+      6: breachActive,
+      7: floodActive,
+      8: aiActive
+    };
+    const activeAlerts = [];
+    if (coldActive) activeAlerts.push(`<li><strong>[Event 1 - Cold Spell]:</strong> Đã tự động cộng +5.0 kg CO₂e/unit vào 2 sản phẩm bị ảnh hưởng và tính lại cột <strong>GIÁ TỐI ƯU VK32 (DC 16)</strong> bên dưới. Phạt Carbon vượt kho giảm còn 200 kg/container!</li>`);
+    if (carbonActive) activeAlerts.push(`<li><strong>[Event 2 - Carbon Decree]:</strong> Thuế suất Carbon đã cộng thêm +€0.20/kg (lên <strong>€${fmtDec(res.effectiveCarbonTax, 2)}/kg</strong>). Hãy cập nhật ngay giá VK32 mới theo bảng dưới!</li>`);
+    if (supplierActive) activeAlerts.push(`<li><strong>[Event 3 - Supplier Disruption (${document.getElementById('dis-3-vendor').value})]:</strong> Đã cộng +2.50 kg/unit &amp; +200 kg/PO vào ${document.getElementById('dis-3-vendor').value}. Kiểm tra cột <strong>CHỌN NCC (ZME12)</strong> bên dưới!</li>`);
+    if (gridlockActive) activeAlerts.push(`<li><strong>[Event 4 - Hub Gridlock]:</strong> Bán từ Kho tổng 03 hiện mất tới <strong>-€${fmtDec(res.lossPerDirectSaleOrder, 2)}/đơn</strong>! Bắt buộc bỏ tích <code>Sales from Sloc 3 / Use 03</code> và giãn chu kỳ <code>ZMB1B</code> ra 3–4 ngày/lần!</li>`);
+    if (glitchActive) activeAlerts.push(`<li><strong>[Event 5 - System Glitch]:</strong> Mở dữ liệu qua cổng <code>ZODATA</code> (miễn phí €0) hoặc vào <code>ZITM</code> chỉ mua lại duy nhất báo cáo <code>ZMB52</code> (€5,000).</li>`);
+    if (breachActive) activeAlerts.push(`<li><strong>[Event 6 - Data Breach]:</strong> Mở ngay bảng OData <code>Current_Inventory</code> soi xem đối thủ đang đứt hàng (Stock = 0) ở mặt hàng nào/vùng nào → Dùng <code>ZMB1B</code> đẩy hàng vào đó và tăng giá <code>VK32</code> +12%!</li>`);
+    if (floodActive) {
+      if (floodWh === '03') {
+        activeAlerts.push(`<li><strong>[Event 7 - Flash Flood trúng Kho Tổng 03]:</strong> 3 kho vùng (03N, 03S, 03W) vẫn còn hàng bán! Người 1 chạy ngay <code>MD61 → MD01 → ZME12 (V04) → ME59N</code> để 1–2 ngày sau hàng mới về lại kho 03!</li>`);
+      } else {
+        activeAlerts.push(`<li><strong>[Event 7 - Flash Flood trúng Kho Vùng ${floodWh}]:</strong> Người 2 vào ngay <code>ZMB1B</code> đẩy hàng từ Kho tổng 03 xuống cứu viện kho <strong>${floodWh}</strong>; Người 3 tăng giá <code>VK32</code> +12% vì các đối thủ cũng vừa mất trắng kho ${floodWh}!</li>`);
+      }
+    }
+    if (aiActive) activeAlerts.push(`<li><strong>[Event 8 - AI Innovation]:</strong> Đã mở khóa T-code <code>ZRPA</code> hỗ trợ điền nhanh <code>MD61</code>. Với giá bán <code>VK32</code>, hãy ưu tiên áp dụng cột <strong>GIÁ TỐI ƯU VK32 (DC 16)</strong> bên dưới!</li>`);
+
+    const alertBox = document.getElementById('active-disruptor-alerts');
+    if (activeAlerts.length > 0) {
+      alertBox.style.display = 'block';
+      alertBox.className = 'alert-card warning';
+      alertBox.innerHTML = `<strong>⚡ LỆNH PHẢN CÔNG KHẨN CẤP CHO SỰ KIỆN ĐANG DIỄN RA:</strong><ul style="margin-left:1.2rem;margin-top:0.35rem;font-size:0.82rem;">${activeAlerts.join('')}</ul>`;
+    } else {
+      alertBox.style.display = 'none';
+    }
+
+    // Render Tab 1 Main Table
+    const skuTbody = document.getElementById('logistics-sku-tbody');
+    skuTbody.innerHTML = res.skuAnalysis.map(s => {
+      const vColor = s.recommendedVendor === 'V04' ? '#10b981' : '#3b82f6';
+      const breakEvenStr = s.breakEvenLotSize === Infinity ? 'V08 luôn rẻ hơn' : `≥ ${s.breakEvenLotSize} u`;
+
+      return `
+        <tr>
+          <td>
+            <strong>${s.name}</strong>
+            ${s.isColdHit ? '<span class="badge-tcode rose">❄ Cold +5kg</span>' : ''}
+          </td>
+          <td>€${fmtDec(s.costV04, 2)} | €${fmtDec(s.costV08, 2)}</td>
+          <td>${fmtDec(s.v04UnitCo2, 1)}kg | ${fmtDec(s.v08UnitCo2, 1)}kg</td>
+          <td style="${s.recommendedVendor === 'V04' ? 'color:#34d399;font-weight:700;' : ''}">€${fmtDec(s.v04LandedUnitCost, 2)}</td>
+          <td style="${s.recommendedVendor === 'V08' ? 'color:#60a5fa;font-weight:700;' : ''}">€${fmtDec(s.v08LandedUnitCost, 2)}</td>
+          <td>
+            <span style="display:inline-block;padding:0.2rem 0.5rem;border-radius:4px;font-weight:800;background:${vColor}22;color:${vColor};border:1px solid ${vColor}66;">
+              ${s.recommendedVendor} (-€${fmtDec(s.savingsPerUnit, 2)})
+            </span>
+          </td>
+          <td>${breakEvenStr}</td>
+          <td>
+            <input type="number" class="table-input log-inv-inp" data-sku="${s.code}" data-field="currentStockAndOpenPo" value="${s.currentStockAndOpenPo}" step="50" style="width:72px;" />
+          </td>
+          <td>
+            <input type="number" class="table-input log-inv-inp" data-sku="${s.code}" data-field="desiredOrderQty" value="${s.desiredOrderQty}" step="50" style="width:72px;" />
+          </td>
+          <td style="background:rgba(59,130,246,0.22);color:#93c5fd;font-weight:900;font-size:0.95rem;text-align:center;">
+            ${s.md61TargetToEnter.toLocaleString('en-US')}
+          </td>
+          <td style="font-size:0.76rem;color:#cbd5e1;">
+            03N:<strong>${s.zmb1bTargetNO}</strong> | 03S:<strong>${s.zmb1bTargetSO}</strong> | 03W:<strong>${s.zmb1bTargetWE}</strong>
+          </td>
+          <td>€${fmtDec(s.initialPrice, 2)}</td>
+          <td style="background:rgba(16,185,129,0.16);color:#10b981;font-weight:800;font-size:0.95rem;">
+            €${fmtDec(s.recommendedPriceDC16, 2)}
+          </td>
+          <td style="color:#34d399;font-weight:700;">+€${fmtDec(s.netProfitPerUnit, 2)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    skuTbody.querySelectorAll('.log-inv-inp').forEach(inp => {
+      inp.addEventListener('change', (e) => {
+        const code = e.target.dataset.sku;
+        const field = e.target.dataset.field;
+        const val = Number(e.target.value);
+        if (skuInventoryState[code]) {
+          skuInventoryState[code][field] = Number.isFinite(val) ? Math.max(0, val) : 0;
+          updateLogisticsPreset3Module();
+        }
+      });
+    });
+
+    const capSummaryEl = document.getElementById('md61-cap-summary');
+    const overCap = res.totalMd61TargetUnits > 4000;
+    capSummaryEl.className = overCap ? 'alert-card danger' : 'alert-card';
+    capSummaryEl.innerHTML = `
+      <div>
+        <strong>📊 Kiểm Tra Trần Kho MD61 &amp; Quỹ Tiền Mặt Weizen Bank (Trang 10, 16, 32 Participant's Guide):</strong><br/>
+        • Tổng Mức Tồn Kho Mục Tiêu gõ vào <code>MD61</code>: <strong style="color:${overCap ? '#fb7185' : '#34d399'};font-size:0.95rem;">${res.totalMd61TargetUnits.toLocaleString('en-US')} / 4,000 units</strong>
+        (${overCap ? `⚠️ Đang vượt trần ${res.totalMd61TargetUnits - 4000} units → Sẽ bị phạt €300 + 500kg CO₂e/1,000u khi hàng về!` : '✅ Nằm trong trần 4,000 units miễn phí lưu kho!'})<br/>
+        • Tổng Lượng Đặt Mua Mới (PO Qty): <strong>${res.totalNewOrderUnits.toLocaleString('en-US')} units</strong> &rarr; Cần chuẩn bị Tiền mặt thanh toán (sau 5 ngày với V04): <strong style="color:#fbbf24;">${fmtEur(res.totalPoCashNeeded)}</strong>
+        <em>(Khởi điểm công ty chỉ có €250,000 Cash; tuyệt đối không đặt PO vượt quá Cash hiện có + Tiền khách trả sau 4 ngày để tránh bị Weizen Bank phạt thấu chi hạ Credit Rating!).</em>
+      </div>
+    `;
+
+    // Render 8 Disruptors Table
+    const disTbody = document.getElementById('logistics-disruptors-tbody');
+    disTbody.innerHTML = ERPsimEngine.LOGISTICS_DISRUPTORS.map(d => {
+      const isAct = Boolean(activeFlags[d.id]);
+      return `
+        <tr class="${isAct ? 'active-tier' : ''}">
+          <td><strong style="color:#fbbf24;">${d.name} ${isAct ? '◀ ĐANG BẬT' : ''}</strong></td>
+          <td style="font-family:var(--font-sans);">${d.summary}</td>
+          <td style="font-family:var(--font-sans);color:#34d399;"><strong>Đối sách:</strong> ${d.counterStrategy}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // Also update Tab 2 tables so everything stays in sync
+    renderDairyPricingTable();
+    renderZmb1bRegionalTable(res.skuAnalysis);
+  }
+
+  logInputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', updateLogisticsPreset3Module);
+      el.addEventListener('change', updateLogisticsPreset3Module);
+    }
+  });
+
+  // =========================================================================
+  // TAB 2: DAIRY DC 16 ELASTICITY & ZMB1B REGIONAL ALLOCATION
+  // =========================================================================
+  function renderDairyPricingTable() {
+    const tbody = document.getElementById('pricing-solver-tbody');
+    if (!tbody) return;
+
+    let totalCurrProfit = 0;
+    let totalOptProfit = 0;
+    let stockoutCount = 0;
+
+    tbody.innerHTML = dairyPricingState.map((row, idx) => {
+      const solved = ERPsimEngine.solveDairyDc16Pricing(row);
+      totalCurrProfit += solved.currentDailyProfit;
+      totalOptProfit += solved.projectedOptimalProfit;
+      if (solved.isStockout) stockoutCount++;
+
+      const deltaSign = solved.priceDelta > 0 ? '+' : '';
+      const deltaColor = solved.priceDelta > 0.25 ? '#34d399' : (solved.priceDelta < -0.25 ? '#fbbf24' : '#94a3b8');
+
+      return `
+        <tr>
+          <td><strong>${solved.skuName}</strong></td>
+          <td><input type="number" class="table-input dp-inp" data-idx="${idx}" data-field="landedCogs" value="${fmtDec(row.landedCogs, 2)}" step="0.25" /></td>
+          <td><input type="number" class="table-input dp-inp" data-idx="${idx}" data-field="prevPrice" value="${fmtDec(row.prevPrice, 2)}" step="0.25" /></td>
+          <td><input type="number" class="table-input dp-inp" data-idx="${idx}" data-field="prevQty" value="${row.prevQty}" step="20" /></td>
+          <td><input type="number" class="table-input dp-inp" data-idx="${idx}" data-field="currPrice" value="${fmtDec(row.currPrice, 2)}" step="0.25" /></td>
+          <td><input type="number" class="table-input dp-inp" data-idx="${idx}" data-field="currQty" value="${row.currQty}" step="20" /></td>
+          <td><input type="number" class="table-input dp-inp" data-idx="${idx}" data-field="inventoryRemaining" value="${row.inventoryRemaining}" step="50" style="${solved.isStockout ? 'border-color:#f43f5e;color:#fb7185;' : ''}" /></td>
+          <td style="color:#60a5fa; font-weight:700;">${fmtDec(solved.effectiveElasticity, 2)}</td>
+          <td style="color:#94a3b8;">€${fmtDec(solved.priceCeiling, 2)}</td>
+          <td style="background:rgba(16,185,129,0.14); font-weight:800; color:#10b981; font-size:0.95rem;">
+            €${fmtDec(solved.recommendedPrice, 2)}
+            <span style="font-size:0.72rem; color:${deltaColor};">(${deltaSign}${fmtDec(solved.priceDelta, 2)})</span>
+          </td>
+          <td>${fmtDec(solved.marginPct, 1)}%</td>
+          <td style="color:#34d399; font-weight:700;">+${fmtEur(solved.profitGainPerDay)}</td>
+          <td>
+            <span style="display:inline-block; padding:0.18rem 0.45rem; border-radius:4px; font-size:0.7rem; font-weight:700; background:${solved.actionColor}22; color:${solved.actionColor}; border:1px solid ${solved.actionColor}55;">
+              ${solved.actionTag}
+            </span>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    document.getElementById('price-curr-profit').textContent = fmtEur(totalCurrProfit);
+    document.getElementById('price-opt-profit').textContent = fmtEur(totalOptProfit);
+    document.getElementById('price-profit-gain').textContent = `+${fmtEur(Math.max(0, totalOptProfit - totalCurrProfit))} / ngày nếu cập nhật VK32 (DC 16)`;
+    document.getElementById('price-stockout-count').textContent = `${stockoutCount} mã`;
+
+    tbody.querySelectorAll('.dp-inp').forEach(inp => {
+      inp.addEventListener('change', (e) => {
+        const idx = Number(e.target.dataset.idx);
+        const field = e.target.dataset.field;
+        const val = Number(e.target.value);
+        dairyPricingState[idx][field] = Number.isFinite(val) ? Math.max(0, val) : 0;
+        renderDairyPricingTable();
+      });
+    });
+  }
+
+  document.getElementById('btn-apply-optimal-prices').addEventListener('click', () => {
+    dairyPricingState = dairyPricingState.map(row => {
+      const solved = ERPsimEngine.solveDairyDc16Pricing(row);
+      return {
+        ...row,
+        prevPrice: row.currPrice,
+        prevQty: row.currQty,
+        currPrice: solved.recommendedPrice,
+        currQty: solved.expectedQtyAtOptimal
+      };
+    });
+    renderDairyPricingTable();
+  });
+
+  function renderZmb1bRegionalTable(skuAnalysis) {
+    const tbody = document.getElementById('zmb1b-regional-tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = skuAnalysis.map(s => `
+      <tr>
+        <td><strong>${s.name}</strong></td>
+        <td><input type="number" class="table-input zva-inp" data-sku="${s.code}" data-field="salesNO" value="${s.salesNO}" step="20" /></td>
+        <td><input type="number" class="table-input zva-inp" data-sku="${s.code}" data-field="salesSO" value="${s.salesSO}" step="20" /></td>
+        <td><input type="number" class="table-input zva-inp" data-sku="${s.code}" data-field="salesWE" value="${s.salesWE}" step="20" /></td>
+        <td><span class="badge-tcode">${s.shareNOPct}%</span> : <span class="badge-tcode">${s.shareSOPct}%</span> : <span class="badge-tcode">${s.shareWEPct}%</span></td>
+        <td style="font-weight:700;">${s.md61TargetToEnter} units</td>
+        <td style="background:rgba(16,185,129,0.14);color:#34d399;font-weight:800;font-size:0.95rem;">${s.zmb1bTargetNO} units</td>
+        <td style="background:rgba(59,130,246,0.14);color:#60a5fa;font-weight:800;font-size:0.95rem;">${s.zmb1bTargetSO} units</td>
+        <td style="background:rgba(245,158,11,0.14);color:#fbbf24;font-weight:800;font-size:0.95rem;">${s.zmb1bTargetWE} units</td>
+      </tr>
+    `).join('');
+
+    tbody.querySelectorAll('.zva-inp').forEach(inp => {
+      inp.addEventListener('change', (e) => {
+        const code = e.target.dataset.sku;
+        const field = e.target.dataset.field;
+        const val = Number(e.target.value);
+        if (skuInventoryState[code]) {
+          skuInventoryState[code][field] = Number.isFinite(val) ? Math.max(0, val) : 0;
+          updateLogisticsPreset3Module();
+        }
+      });
+    });
+  }
+
+  // =========================================================================
+  // TAB 3: COMPANY VALUATION (ZVAL) & WEIZEN BANK CREDIT RATING
   // =========================================================================
   const valInputs = [
-    'val-profit', 'val-setup-inv', 'val-elapsed', 'val-rounds',
-    'val-steps-round', 'val-mkt-risk', 'val-cash', 'val-ar',
-    'val-loans', 'val-ap', 'val-inventory'
+    'val-profit', 'val-elapsed', 'val-rounds', 'val-steps-round',
+    'val-mkt-risk', 'val-cash', 'val-ar', 'val-loans', 'val-ap', 'val-inventory'
   ];
 
   function updateValuationModule() {
     const params = {
       currentProfit: numVal('val-profit', 0),
-      setupInvestment478000: numVal('val-setup-inv', 0),
       elapsedSteps: Math.max(1, numVal('val-elapsed', 1)),
-      totalRounds: Math.max(1, numVal('val-rounds', 3)),
-      stepsPerRound: Math.max(1, numVal('val-steps-round', 20)),
+      totalRounds: Math.max(1, numVal('val-rounds', 4)),
+      stepsPerRound: Math.max(1, numVal('val-steps-round', 10)),
       marketRiskRate: numVal('val-mkt-risk', 7) / 100,
       cash: numVal('val-cash', 0),
       accountsReceivable: numVal('val-ar', 0),
@@ -55,14 +370,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const res = ERPsimEngine.calculateCompanyValuation(params);
 
-    // Top telemetry strip
     document.getElementById('top-valuation').textContent = fmtEur(res.companyValuation);
     document.getElementById('top-credit').textContent = `${res.creditInfo.rating} (${fmtDec(res.creditInfo.riskRate * 100, 2)}%)`;
     document.getElementById('top-credit').style.color = res.creditInfo.color;
-    document.getElementById('top-debt-loading').textContent = fmtEur(res.debtLoading);
-    document.getElementById('top-debt-loading').style.color = res.debtLoading >= 0 ? '#10b981' : '#fbbf24';
 
-    // Main Valuation Stat Boxes
     document.getElementById('res-company-valuation').textContent = fmtEur(res.companyValuation);
     document.getElementById('res-val-multiplier').textContent = `Hệ số nhân: ×${fmtDec(res.valuationMultiplier, 2)} lần lợi nhuận năm`;
     document.getElementById('res-credit-rating').textContent = `${res.creditInfo.rating} (+${fmtDec(res.creditInfo.riskRate * 100, 2)}%)`;
@@ -75,28 +386,31 @@ document.addEventListener('DOMContentLoaded', () => {
       ? `Mất ${fmtEur(res.valuationLostToCreditRisk)} do chưa đạt AAA+`
       : 'Đang đạt đỉnh tín dụng AAA+ tối đa!';
 
-    // Dynamic Strategic Advisor Box
     const advBox = document.getElementById('valuation-advisor-box');
-    if (res.creditInfo.rating === 'AAA+') {
+    if (params.cash <= 20000) {
+      advBox.className = 'alert-card danger';
+      advBox.innerHTML = `
+        <strong>🚨 CẢNH BÁO ĐỎ WEIZEN BANK (Trang 10 Participant's Guide):</strong> Số dư Tiền mặt (<code>113300 Bank Cash</code>) của bạn đang ở mức nguy hiểm (<strong>${fmtEur(params.cash)}</strong>)!
+        Nếu tiền mặt âm (&lt; €0), Weizen Bank sẽ tự động cho vay thấu chi nhưng <strong>lập tức hạ bậc Credit Rating và tăng lãi suất vay trong suốt phần còn lại của game</strong>! Hãy tạm hoãn chạy <code>ME59N</code> 1–2 ngày để chờ khách hàng thanh toán (4 ngày)!
+      `;
+    } else if (res.creditInfo.rating === 'AAA+') {
       advBox.className = 'alert-card';
       advBox.innerHTML = `
-        <strong>Trạng thái Tối Ưu (AAA+):</strong> Debt Loading của bạn đang dương (${fmtEur(res.debtLoading)}). Mẫu số chiết khấu đang ở mức thấp nhất có thể (<strong>${fmtDec(res.discountRate * 100, 2)}%</strong>).
-        Bạn có bộ đệm an toàn <strong>${fmtEur(res.creditInfo.bufferBeforeDrop)}</strong> trước khi bị tụt xuống hạng AA+.
+        <strong>✅ Trạng Thái Tín Dụng Hoàn Hảo (AAA+):</strong> Debt Loading dương (<strong>${fmtEur(res.debtLoading)}</strong>), Tiền mặt an toàn (<strong>${fmtEur(params.cash)}</strong>).
+        Mẫu số chiết khấu đang ở mức thấp nhất (<strong>10.00%</strong> → Nhân <strong>10 lần</strong> lợi nhuận!). Lưu ý Trang 18: Cuối game hàng tồn kho chưa bán vẫn được định giá bằng giá mua trên P&amp;L, nên <strong>tuyệt đối không bán phá giá dưới giá vốn</strong>!
       `;
     } else {
       const next = res.creditInfo.nextBetter;
       advBox.className = 'alert-card warning';
       advBox.innerHTML = `
-        <strong>Cảnh báo Đòn bẩy Định giá & Chiến thuật Cuối Game (End-Game Valuation Hack):</strong>
+        <strong>⚠️ Cảnh Báo Đòn Bẩy Định Giá (ZVAL):</strong>
         <ul style="margin-left: 1.2rem; margin-top: 0.35rem; font-size: 0.83rem;">
-          <li>Chỉ cần giảm nợ ròng (hoặc thu thêm tiền bán hàng) <strong>${fmtEur(res.creditInfo.amountToNextTier)}</strong>, bạn sẽ nhảy lên hạng <strong>${next.rating}</strong> và tăng Định giá Công ty ngay lập tức thêm <strong style="color:#34d399;">+${fmtEur(res.nextTierValuationGain)}</strong>!</li>
-          <li>Để lên đỉnh <strong>AAA+</strong> (nhận thêm <strong style="color:#34d399;">+${fmtEur(res.valuationLostToCreditRisk)}</strong> định giá), bạn cần cải thiện Debt Loading thêm <strong>${fmtEur(res.amountNeededForAAA)}</strong>.</li>
-          <li><strong>Mô phỏng Xả Tồn Kho Cuối Game:</strong> Hiện bạn có <strong>${fmtEur(params.inventoryValue)}</strong> tồn kho (không được cộng vào Debt Loading). Nếu ngừng MRP (<code>MD01</code>) ở 5 ngày cuối và xả 75% lượng tồn kho này thành Tiền/Phải thu (${fmtEur(res.endGameSimulation.liquidatedCashGain)}), hạng tín dụng sẽ nhảy lên <strong>${res.endGameSimulation.newRating}</strong> và Định giá tăng vọt thêm <strong style="color:#10b981;">+${fmtEur(res.endGameSimulation.valuationJump)}</strong>!</li>
+          <li>Chỉ cần thu thêm tiền bán hàng (hoặc giảm Phải trả NCC <code>AP</code>) <strong>${fmtEur(res.creditInfo.amountToNextTier)}</strong>, bạn sẽ nhảy lên hạng <strong>${next.rating}</strong> và tăng Định giá Công ty thêm <strong style="color:#34d399;">+${fmtEur(res.nextTierValuationGain)}</strong>!</li>
+          <li>Ở 3–4 ngày cuối của Round cuối cùng, hãy <strong>ngừng chạy <code>ME59N</code></strong> để không phát sinh thêm <code>Accounts Payable (AP)</code> và phí PO €1,000, giúp đẩy Debt Loading về <strong>≥ €0 (AAA+)</strong>!</li>
         </ul>
       `;
     }
 
-    // Populate 21-Tier Table
     const tbody = document.getElementById('credit-tier-tbody');
     tbody.innerHTML = ERPsimEngine.CREDIT_RATING_TABLE.map(tier => {
       const isCurrent = tier.rating === res.creditInfo.rating;
@@ -123,281 +437,52 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el) el.addEventListener('input', updateValuationModule);
   });
 
-  const btnStartDemo = document.getElementById('btn-load-start-demo');
-  if (btnStartDemo) {
-    btnStartDemo.addEventListener('click', () => {
-      document.getElementById('val-profit').value = 450000;
-      document.getElementById('val-setup-inv').value = 250000;
-      document.getElementById('val-elapsed').value = 10;
-      document.getElementById('val-cash').value = 1250000;
-      document.getElementById('val-ar').value = 850000;
-      document.getElementById('val-loans').value = 1200000;
-      document.getElementById('val-ap').value = 650000;
-      document.getElementById('val-inventory').value = 950000;
-      updateValuationModule();
-    });
-  }
+  document.getElementById('btn-load-start-demo').addEventListener('click', () => {
+    document.getElementById('val-profit').value = 185000;
+    document.getElementById('val-elapsed').value = 10;
+    document.getElementById('val-cash').value = 250000;
+    document.getElementById('val-ar').value = 180000;
+    document.getElementById('val-loans').value = 0;
+    document.getElementById('val-ap').value = 145000;
+    document.getElementById('val-inventory').value = 138000;
+    updateValuationModule();
+  });
 
   document.getElementById('btn-load-endgame-demo').addEventListener('click', () => {
-    document.getElementById('val-profit').value = 2450000;
-    document.getElementById('val-setup-inv').value = 500000;
-    document.getElementById('val-elapsed').value = 55;
-    document.getElementById('val-cash').value = 1100000;
-    document.getElementById('val-ar').value = 1800000;
-    document.getElementById('val-loans').value = 4500000;
-    document.getElementById('val-ap').value = 1450000;
-    document.getElementById('val-inventory').value = 2800000;
+    document.getElementById('val-profit').value = 620000;
+    document.getElementById('val-elapsed').value = 30;
+    document.getElementById('val-cash').value = 110000;
+    document.getElementById('val-ar').value = 240000;
+    document.getElementById('val-loans').value = 1200000;
+    document.getElementById('val-ap').value = 450000;
+    document.getElementById('val-inventory').value = 195000;
     updateValuationModule();
   });
 
   // =========================================================================
-  // MODULE 2: DEMAND REVERSE-ENGINEERING & VK32 OPTIMAL PRICING
-  // =========================================================================
-  let pricingState = [
-    { skuCode: 'F11', channelCode: 'DC10', cogs: 2.52, prevPrice: 4.55, prevQty: 3100, currPrice: 4.40, currQty: 3650, marketAvgPrice: 4.48, dailyMarketing: 0,    inventoryRemaining: 2400 },
-    { skuCode: 'F12', channelCode: 'DC10', cogs: 3.18, prevPrice: 5.40, prevQty: 2600, currPrice: 5.55, currQty: 1950, marketAvgPrice: 5.38, dailyMarketing: 0,    inventoryRemaining: 1900 },
-    { skuCode: 'F13', channelCode: 'DC10', cogs: 3.45, prevPrice: 5.75, prevQty: 2200, currPrice: 5.60, currQty: 2800, marketAvgPrice: 5.70, dailyMarketing: 0,    inventoryRemaining: 0    },
-    { skuCode: 'F02', channelCode: 'DC12', cogs: 1.72, prevPrice: 3.25, prevQty: 3400, currPrice: 3.40, currQty: 3120, marketAvgPrice: 3.35, dailyMarketing: 1200, inventoryRemaining: 2100 },
-    { skuCode: 'F03', channelCode: 'DC12', cogs: 1.85, prevPrice: 3.50, prevQty: 2900, currPrice: 3.35, currQty: 3900, marketAvgPrice: 3.55, dailyMarketing: 1500, inventoryRemaining: 0    },
-    { skuCode: 'F12', channelCode: 'DC12', cogs: 3.18, prevPrice: 5.60, prevQty: 2700, currPrice: 5.85, currQty: 2350, marketAvgPrice: 5.65, dailyMarketing: 1000, inventoryRemaining: 1650 },
-    { skuCode: 'F16', channelCode: 'DC12', cogs: 3.32, prevPrice: 5.70, prevQty: 2500, currPrice: 5.95, currQty: 2100, marketAvgPrice: 5.75, dailyMarketing: 900,  inventoryRemaining: 1800 },
-    { skuCode: 'F01', channelCode: 'DC14', cogs: 1.38, prevPrice: 2.85, prevQty: 1950, currPrice: 2.95, currQty: 1890, marketAvgPrice: 2.90, dailyMarketing: 800,  inventoryRemaining: 1200 },
-    { skuCode: 'F03', channelCode: 'DC14', cogs: 1.85, prevPrice: 3.65, prevQty: 2250, currPrice: 3.75, currQty: 2180, marketAvgPrice: 3.70, dailyMarketing: 1500, inventoryRemaining: 0    },
-    { skuCode: 'F04', channelCode: 'DC14', cogs: 1.82, prevPrice: 3.60, prevQty: 1800, currPrice: 3.95, currQty: 1520, marketAvgPrice: 3.68, dailyMarketing: 1100, inventoryRemaining: 950  }
-  ];
-
-  function renderPricingTable() {
-    const filter = document.getElementById('pricing-channel-filter').value;
-    const tbody = document.getElementById('pricing-solver-tbody');
-
-    let totalCurrProfit = 0;
-    let totalOptProfit = 0;
-    let stockoutCount = 0;
-
-    const rowsHtml = pricingState.map((row, idx) => {
-      if (filter !== 'ALL' && row.channelCode !== filter) return '';
-      const solved = ERPsimEngine.reverseEngineerSkuChannel(row);
-      if (!solved.compatible) return '';
-
-      totalCurrProfit += solved.currentDailyProfit;
-      totalOptProfit += solved.projectedOptimalProfit;
-      if (solved.isStockout) stockoutCount++;
-
-      const deltaSign = solved.priceDelta > 0 ? '+' : '';
-      const deltaColor = solved.priceDelta > 0.05 ? '#34d399' : (solved.priceDelta < -0.05 ? '#fbbf24' : '#94a3b8');
-
-      return `
-        <tr>
-          <td><strong>${solved.skuCode}</strong> <span style="font-size:0.72rem;color:#94a3b8;">${solved.skuName.replace(/^\S+\s/, '')}</span></td>
-          <td><span class="badge-tcode">${solved.channelCode}</span></td>
-          <td><input type="number" class="table-input" data-idx="${idx}" data-field="cogs" value="${row.cogs}" step="0.05" /></td>
-          <td><input type="number" class="table-input" data-idx="${idx}" data-field="prevPrice" value="${row.prevPrice}" step="0.05" /></td>
-          <td><input type="number" class="table-input" data-idx="${idx}" data-field="prevQty" value="${row.prevQty}" step="100" /></td>
-          <td><input type="number" class="table-input" data-idx="${idx}" data-field="currPrice" value="${row.currPrice}" step="0.05" /></td>
-          <td><input type="number" class="table-input" data-idx="${idx}" data-field="currQty" value="${row.currQty}" step="100" /></td>
-          <td><input type="number" class="table-input" data-idx="${idx}" data-field="marketAvgPrice" value="${row.marketAvgPrice}" step="0.05" /></td>
-          <td><input type="number" class="table-input" data-idx="${idx}" data-field="dailyMarketing" value="${row.dailyMarketing}" step="100" /></td>
-          <td><input type="number" class="table-input" data-idx="${idx}" data-field="inventoryRemaining" value="${row.inventoryRemaining}" step="100" style="${solved.isStockout ? 'border-color:#f43f5e;color:#fb7185;' : ''}" /></td>
-          <td style="color:#60a5fa; font-weight:700;">${fmtDec(solved.effectiveElasticity, 2)}</td>
-          <td style="color:#94a3b8;">€${fmtDec(solved.priceCeiling, 2)}</td>
-          <td style="background:rgba(16,185,129,0.14); font-weight:800; color:#10b981; font-size:0.95rem;">
-            €${fmtDec(solved.recommendedPrice, 2)}
-            <span style="font-size:0.72rem; color:${deltaColor};">(${deltaSign}${fmtDec(solved.priceDelta, 2)})</span>
-          </td>
-          <td>${fmtDec(solved.marginPct, 1)}%</td>
-          <td style="color:#34d399; font-weight:700;">+${fmtEur(solved.profitGainPerDay)}</td>
-          <td>
-            <span style="display:inline-block; padding:0.18rem 0.45rem; border-radius:4px; font-size:0.7rem; font-weight:700; background:${solved.actionColor}22; color:${solved.actionColor}; border:1px solid ${solved.actionColor}55;">
-              ${solved.actionTag}
-            </span>
-          </td>
-        </tr>
-      `;
-    }).join('');
-
-    tbody.innerHTML = rowsHtml;
-
-    document.getElementById('price-curr-profit').textContent = fmtEur(totalCurrProfit);
-    document.getElementById('price-opt-profit').textContent = fmtEur(totalOptProfit);
-    document.getElementById('price-profit-gain').textContent = `+${fmtEur(Math.max(0, totalOptProfit - totalCurrProfit))} / ngày nếu cập nhật VK32`;
-    document.getElementById('price-stockout-count').textContent = `${stockoutCount} mã`;
-
-    // Bind live input changes
-    tbody.querySelectorAll('.table-input').forEach(inp => {
-      inp.addEventListener('change', (e) => {
-        const idx = Number(e.target.dataset.idx);
-        const field = e.target.dataset.field;
-        pricingState[idx][field] = Number(e.target.value) || 0;
-        renderPricingTable();
-      });
-    });
-  }
-
-  document.getElementById('pricing-channel-filter').addEventListener('change', renderPricingTable);
-
-  document.getElementById('btn-apply-optimal-prices').addEventListener('click', () => {
-    pricingState = pricingState.map(row => {
-      const solved = ERPsimEngine.reverseEngineerSkuChannel(row);
-      if (!solved.compatible) return row;
-      return {
-        ...row,
-        prevPrice: row.currPrice,
-        prevQty: row.currQty,
-        currPrice: solved.recommendedPrice,
-        currQty: solved.expectedQtyAtOptimal
-      };
-    });
-    renderPricingTable();
-  });
-
-  // =========================================================================
-  // MODULE 3: REGIONAL PREFERENCE HEATMAP & ZADS MARKETING ALLOCATOR
-  // =========================================================================
-  let regionalMatrixState = [
-    { skuCode: 'F01', name: '500g Original',   unitMargin: 1.45, salesNorth: 1450, salesSouth: 920,  salesWest: 1100, adsNorth: 400,  adsSouth: 400, adsWest: 400 },
-    { skuCode: 'F02', name: '500g Nut',        unitMargin: 1.68, salesNorth: 2850, salesSouth: 1150, salesWest: 1300, adsNorth: 800,  adsSouth: 600, adsWest: 600 },
-    { skuCode: 'F03', name: '500g Blueberry',  unitMargin: 1.85, salesNorth: 1100, salesSouth: 3100, salesWest: 1250, adsNorth: 500,  adsSouth: 900, adsWest: 500 },
-    { skuCode: 'F04', name: '500g Strawberry', unitMargin: 1.78, salesNorth: 980,  salesSouth: 1200, salesWest: 2950, adsNorth: 400,  adsSouth: 400, adsWest: 800 },
-    { skuCode: 'F12', name: '1kg Nut',         unitMargin: 2.45, salesNorth: 2400, salesSouth: 1050, salesWest: 1150, adsNorth: 700,  adsSouth: 300, adsWest: 300 },
-    { skuCode: 'F16', name: '1kg Mixed Fruit', unitMargin: 2.55, salesNorth: 1150, salesSouth: 2250, salesWest: 2500, adsNorth: 400,  adsSouth: 700, adsWest: 800 }
-  ];
-
-  function heatColor(theta) {
-    if (theta >= 1.35) return 'background: rgba(16, 185, 129, 0.28); color: #34d399; border: 1px solid #10b981;';
-    if (theta >= 1.05) return 'background: rgba(59, 130, 246, 0.22); color: #60a5fa; border: 1px solid #3b82f6;';
-    return 'background: rgba(148, 163, 184, 0.1); color: #94a3b8; border: 1px solid #334155;';
-  }
-
-  function renderRegionalMarketingModule() {
-    const budget = Number(document.getElementById('mkt-total-budget').value) || 5400;
-    const res = ERPsimEngine.reverseEngineerRegionalMarketing(regionalMatrixState, budget);
-
-    // Render top champion cards per region
-    const cardsContainer = document.getElementById('region-champions-cards');
-    cardsContainer.innerHTML = ['North', 'South', 'West'].map(reg => {
-      const top1 = res.regionRankings[reg][0];
-      const top2 = res.regionRankings[reg][1];
-      const spend1 = res.recommendations[reg][top1.skuCode].spend;
-      const spend2 = res.recommendations[reg][top2.skuCode].spend;
-      return `
-        <div class="stat-box" style="border-left: 3px solid #10b981;">
-          <div class="s-label">VÙNG ${reg.toUpperCase()} — SẢN PHẨM KHỚP THỊ HIẾU NHẤT</div>
-          <div class="s-value" style="font-size: 1.05rem; color: #34d399;">
-            #1: ${top1.skuCode} (${top1.name}) — Θ = ${fmtDec(top1.theta, 2)}
-          </div>
-          <div class="s-sub" style="margin-top:0.35rem; color:#e2e8f0;">
-            • Bơm ZADS <strong>${fmtEur(spend1)}/ngày</strong> cho <strong>${top1.skuCode}</strong><br/>
-            • Hỗ trợ <strong>${fmtEur(spend2)}/ngày</strong> cho <strong>${top2.skuCode}</strong> (Θ = ${fmtDec(top2.theta, 2)})<br/>
-            • <span style="color:#fb7185;">Các mã còn lại tại ${reg}: Đặt €0 để tránh tự ăn mòn!</span>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    // Render matrix table
-    const tbody = document.getElementById('regional-marketing-tbody');
-    tbody.innerHTML = res.analyzedRows.map((row, idx) => {
-      const recN = res.recommendations.North[row.skuCode];
-      const recS = res.recommendations.South[row.skuCode];
-      const recW = res.recommendations.West[row.skuCode];
-
-      return `
-        <tr>
-          <td><strong>${row.skuCode}</strong> ${row.name}</td>
-          <td><input type="number" class="table-input reg-inp" data-idx="${idx}" data-field="unitMargin" value="${row.unitMargin}" step="0.1" /></td>
-          <td><input type="number" class="table-input reg-inp" data-idx="${idx}" data-field="salesNorth" value="${row.salesNorth}" step="100" /></td>
-          <td><input type="number" class="table-input reg-inp" data-idx="${idx}" data-field="salesSouth" value="${row.salesSouth}" step="100" /></td>
-          <td><input type="number" class="table-input reg-inp" data-idx="${idx}" data-field="salesWest" value="${row.salesWest}" step="100" /></td>
-          <td><span class="heat-cell" style="${heatColor(row.thetaNorth)}">${fmtDec(row.thetaNorth, 2)} (${row.shareNorthPct}%)</span></td>
-          <td><span class="heat-cell" style="${heatColor(row.thetaSouth)}">${fmtDec(row.thetaSouth, 2)} (${row.shareSouthPct}%)</span></td>
-          <td><span class="heat-cell" style="${heatColor(row.thetaWest)}">${fmtDec(row.thetaWest, 2)} (${row.shareWestPct}%)</span></td>
-          <td style="font-weight:700; color:${recN.spend > 0 ? '#10b981' : '#64748b'};">${fmtEur(recN.spend)} <span style="font-size:0.68rem;">${recN.priority === 1 ? '★#1' : (recN.priority === 2 ? '◆#2' : '')}</span></td>
-          <td style="font-weight:700; color:${recS.spend > 0 ? '#10b981' : '#64748b'};">${fmtEur(recS.spend)} <span style="font-size:0.68rem;">${recS.priority === 1 ? '★#1' : (recS.priority === 2 ? '◆#2' : '')}</span></td>
-          <td style="font-weight:700; color:${recW.spend > 0 ? '#10b981' : '#64748b'};">${fmtEur(recW.spend)} <span style="font-size:0.68rem;">${recW.priority === 1 ? '★#1' : (recW.priority === 2 ? '◆#2' : '')}</span></td>
-        </tr>
-      `;
-    }).join('');
-
-    tbody.querySelectorAll('.reg-inp').forEach(inp => {
-      inp.addEventListener('change', (e) => {
-        const idx = Number(e.target.dataset.idx);
-        const field = e.target.dataset.field;
-        regionalMatrixState[idx][field] = Number(e.target.value) || 0;
-        renderRegionalMarketingModule();
-      });
-    });
-  }
-
-  document.getElementById('mkt-total-budget').addEventListener('input', renderRegionalMarketingModule);
-
-  // =========================================================================
-  // MODULE 4: PRODUCTION, SETUP TIME (478000) & CARBON TAX
-  // =========================================================================
-  const prodInputs = ['prod-478000', 'prod-11000', 'prod-productivity', 'prod-lot-size', 'prod-avg-margin', 'prod-rem-days'];
-  const co2Inputs = ['co2-boxes', 'co2-setup-hrs', 'co2-inventory', 'co2-deliveries', 'co2-tax-rate'];
-
-  function updateProductionModule() {
-    const account478000 = numVal('prod-478000', 0);
-    const res = ERPsimEngine.calculateSetupAndProduction({
-      account478000,
-      account11000ExtraUnits: numVal('prod-11000', 0),
-      productivityPct: Math.max(10, numVal('prod-productivity', 75)),
-      lotSize: Math.max(1000, numVal('prod-lot-size', 16000)),
-      avgMarginPerBox: numVal('prod-avg-margin', 1.65),
-      remainingDays: Math.max(1, numVal('prod-rem-days', 35))
-    });
-
-    document.getElementById('top-setup-time').textContent = `${fmtDec(res.setupTimeHours, 2)} giờ`;
-    document.getElementById('res-prod-setup').textContent = `${fmtDec(res.setupTimeHours, 2)} giờ`;
-    document.getElementById('res-prod-saved').textContent = `Tiết kiệm ${fmtDec(res.hoursSavedPerChangeover, 2)} giờ/lần đổi mã (so với 8h gốc)`;
-    document.getElementById('res-prod-output').textContent = `${Math.round(res.actualDailyOutput).toLocaleString('en-US')} hộp/ngày`;
-    document.getElementById('res-prod-util').textContent = `Hiệu suất chạy máy: ${fmtDec(res.capacityUtilizationPct, 1)}% ngày`;
-    document.getElementById('res-prod-extra-profit').textContent = `+${fmtEur(res.extraProfitOverRemainingGame)}`;
-
-    const tbody = document.getElementById('setup-milestones-tbody');
-    tbody.innerHTML = res.milestones.map(m => {
-      const isCurrent = Math.abs(m.investment - account478000) < 25000;
-      return `
-        <tr class="${isCurrent ? 'active-tier' : ''}">
-          <td>${fmtEur(m.investment)} ${isCurrent ? '◀' : ''}</td>
-          <td style="color:#60a5fa; font-weight:700;">${fmtDec(m.setupHours, 2)} giờ</td>
-          <td>${fmtDec(m.pctDayLostPerSetup, 1)}%</td>
-          <td>${m.dailyOutputBoxes.toLocaleString('en-US')} hộp</td>
-          <td style="color:#34d399;">+${m.extraBoxesPerDay.toLocaleString('en-US')} hộp</td>
-          <td style="color:#10b981; font-weight:700;">+${fmtEur(m.projectedProfitGain)}</td>
-        </tr>
-      `;
-    }).join('');
-  }
-
-  function updateCarbonModule() {
-    const res = ERPsimEngine.calculateCarbonFootprint({
-      dailyBoxesProduced: numVal('co2-boxes', 0),
-      dailySetupHours: numVal('co2-setup-hrs', 0),
-      averageInventoryBoxes: numVal('co2-inventory', 0),
-      dailyDeliveriesCount: numVal('co2-deliveries', 0),
-      carbonTaxRatePerKg: numVal('co2-tax-rate', 0.30)
-    });
-
-    document.getElementById('res-co2-total').textContent = `${res.totalDailyCo2Kg.toLocaleString('en-US')} kg CO2e`;
-    document.getElementById('res-co2-breakdown').textContent = `SX: ${res.prodCo2Kg}kg | Setup: ${res.setupCo2Kg}kg | Kho: ${res.storageCo2Kg}kg | Giao vận: ${res.transportCo2Kg}kg`;
-    document.getElementById('res-co2-tax').textContent = `${fmtEur(res.dailyCarbonTaxEur)} / ngày`;
-  }
-
-  prodInputs.forEach(id => document.getElementById(id).addEventListener('input', updateProductionModule));
-  co2Inputs.forEach(id => document.getElementById(id).addEventListener('input', updateCarbonModule));
-
-  // =========================================================================
-  // MODULE 5: SAP CLIPBOARD IMPORTER & ODATA CONNECTOR
+  // TAB 4: SAP CLIPBOARD IMPORTER (ZVA05 / ZVC2 / ZMB52) & ODATA CONNECTOR
   // =========================================================================
   document.getElementById('btn-load-sample-tsv').addEventListener('click', () => {
     const sample = [
-      'SKU\tChannel\tRegion\tPrice\tQty\tMarketAvgPrice\tCOGS\tMarketing\tInventory',
-      'F11\tDC10\tNorth\t4.42\t3800\t4.50\t2.52\t0\t1900',
-      'F12\tDC10\tSouth\t5.50\t2200\t5.38\t3.18\t0\t1200',
-      'F02\tDC12\tNorth\t3.40\t3350\t3.35\t1.72\t1400\t2100',
-      'F03\tDC12\tSouth\t3.45\t4100\t3.55\t1.85\t1600\t0',
-      'F04\tDC14\tWest\t3.90\t2450\t3.75\t1.82\t1300\t650'
+      'Area\tMaterial\tDescription\tPrice\tQty\tInventory',
+      'NO\tAA-T01\tMilk\t28.20\t420\t480',
+      'SO\tAA-T01\tMilk\t28.20\t290\t480',
+      'WE\tAA-T01\tMilk\t28.20\t310\t480',
+      'NO\tAA-T02\tCream\t87.50\t95\t140',
+      'SO\tAA-T02\tCream\t87.50\t165\t140',
+      'WE\tAA-T02\tCream\t87.50\t110\t140',
+      'NO\tAA-T03\tYoghurt\t31.80\t240\t320',
+      'SO\tAA-T03\tYoghurt\t31.80\t310\t320',
+      'WE\tAA-T03\tYoghurt\t31.80\t210\t320',
+      'NO\tAA-T04\tCheese\t103.00\t220\t0',
+      'SO\tAA-T04\tCheese\t103.00\t120\t0',
+      'WE\tAA-T04\tCheese\t103.00\t140\t0',
+      'NO\tAA-T05\tButter\t74.00\t135\t190',
+      'SO\tAA-T05\tButter\t74.00\t155\t190',
+      'WE\tAA-T05\tButter\t74.00\t210\t190',
+      'NO\tAA-T06\tIce Cream\t53.50\t115\t160',
+      'SO\tAA-T06\tIce Cream\t53.50\t185\t160',
+      'WE\tAA-T06\tIce Cream\t53.50\t130\t160'
     ].join('\n');
     document.getElementById('sap-raw-paste').value = sample;
   });
@@ -413,68 +498,64 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    let updatedCount = 0;
-    let dairyZva05Count = 0;
     const dairyRegAgg = {};
+    let matchedRows = 0;
 
     parsed.records.forEach(rec => {
-      const rawSku = (rec.SKU || rec.Material || '').trim();
-      if (!rawSku) return;
-      // Handle "$$-T01" or "AA-T01" -> "T01"
+      const rawSku = (rec.Material || rec.SKU || '').trim();
       const dairyMatch = rawSku.match(/T0[1-6]$/i);
-      const area = (rec.Area || rec.Region || '').trim().toUpperCase();
+      if (!dairyMatch) return;
 
-      if (dairyMatch) {
-        const dCode = dairyMatch[0].toUpperCase();
-        if (!dairyRegAgg[dCode]) dairyRegAgg[dCode] = { NO: 0, SO: 0, WE: 0 };
-        const qty = Number(rec.Qty || rec.Quantity) || 0;
-        if (area.startsWith('N')) dairyRegAgg[dCode].NO += qty;
-        else if (area.startsWith('S')) dairyRegAgg[dCode].SO += qty;
-        else if (area.startsWith('W')) dairyRegAgg[dCode].WE += qty;
-        dairyZva05Count++;
+      const dCode = dairyMatch[0].toUpperCase();
+      if (!dairyRegAgg[dCode]) {
+        dairyRegAgg[dCode] = { NO: 0, SO: 0, WE: 0, totalQty: 0, lastPrice: null, lastInv: null };
       }
 
-      const sku = dairyMatch ? dairyMatch[0].toUpperCase() : rawSku;
-      const ch = (rec.Channel || rec.DC || 'DC12').trim();
+      const qty = Number(rec.Qty || rec.Quantity || rec.Stock) || 0;
+      const area = (rec.Area || rec.Region || rec.SLoc || '').trim().toUpperCase();
 
-      const existingIdx = pricingState.findIndex(p => p.skuCode === sku && p.channelCode === ch);
-      const entry = {
-        skuCode: sku,
-        channelCode: ch,
-        cogs: Number(rec.COGS || rec.Cost) || 1.80,
-        prevPrice: existingIdx >= 0 ? pricingState[existingIdx].currPrice : (Number(rec.Price) || 3.40) * 0.97,
-        prevQty: existingIdx >= 0 ? pricingState[existingIdx].currQty : (Number(rec.Qty) || 2000) * 1.04,
-        currPrice: Number(rec.Price) || 3.50,
-        currQty: Number(rec.Qty || rec.Quantity) || 2200,
-        marketAvgPrice: Number(rec.MarketAvgPrice) || Number(rec.Price) || 3.45,
-        dailyMarketing: Number(rec.Marketing) || 0,
-        inventoryRemaining: rec.Inventory !== undefined ? Number(rec.Inventory) : 1000
-      };
+      if (area.includes('N')) dairyRegAgg[dCode].NO += qty;
+      else if (area.includes('S')) dairyRegAgg[dCode].SO += qty;
+      else if (area.includes('W')) dairyRegAgg[dCode].WE += qty;
 
-      if (existingIdx >= 0) {
-        pricingState[existingIdx] = entry;
-      } else {
-        pricingState.push(entry);
+      dairyRegAgg[dCode].totalQty += qty;
+      if (rec.Price !== undefined && rec.Price !== '') {
+        dairyRegAgg[dCode].lastPrice = Number(rec.Price);
       }
-      updatedCount++;
+      if (rec.Inventory !== undefined && rec.Inventory !== '') {
+        dairyRegAgg[dCode].lastInv = Number(rec.Inventory);
+      }
+      matchedRows++;
     });
 
-    if (dairyZva05Count > 0) {
-      Object.keys(dairyRegAgg).forEach(code => {
-        if (skuInventoryState[code]) {
-          if (dairyRegAgg[code].NO > 0) skuInventoryState[code].salesNO = dairyRegAgg[code].NO;
-          if (dairyRegAgg[code].SO > 0) skuInventoryState[code].salesSO = dairyRegAgg[code].SO;
-          if (dairyRegAgg[code].WE > 0) skuInventoryState[code].salesWE = dairyRegAgg[code].WE;
+    Object.keys(dairyRegAgg).forEach(code => {
+      const agg = dairyRegAgg[code];
+      if (skuInventoryState[code]) {
+        if (agg.NO > 0 || agg.SO > 0 || agg.WE > 0) {
+          skuInventoryState[code].salesNO = agg.NO;
+          skuInventoryState[code].salesSO = agg.SO;
+          skuInventoryState[code].salesWE = agg.WE;
         }
-      });
-      updateLogisticsPreset3Module();
-    }
+        if (agg.lastInv !== null && Number.isFinite(agg.lastInv)) {
+          skuInventoryState[code].currentStockAndOpenPo = agg.lastInv;
+        }
+      }
 
-    renderPricingTable();
+      const pIdx = dairyPricingState.findIndex(r => r.skuCode === code);
+      if (pIdx >= 0) {
+        dairyPricingState[pIdx].prevPrice = dairyPricingState[pIdx].currPrice;
+        dairyPricingState[pIdx].prevQty = dairyPricingState[pIdx].currQty;
+        if (agg.lastPrice) dairyPricingState[pIdx].currPrice = agg.lastPrice;
+        if (agg.totalQty > 0) dairyPricingState[pIdx].currQty = agg.totalQty;
+        if (agg.lastInv !== null && Number.isFinite(agg.lastInv)) {
+          dairyPricingState[pIdx].inventoryRemaining = agg.lastInv;
+        }
+      }
+    });
+
+    updateLogisticsPreset3Module();
     statusEl.style.color = '#34d399';
-    statusEl.textContent = dairyZva05Count > 0
-      ? `Đã đồng bộ thành công ${dairyZva05Count} dòng ZVA05 Dairy (Area: NO/SO/WE) vào cột ZMB1B trên Tab Logistics Sustainability!`
-      : `Đã phân tích và đồng bộ thành công ${updatedCount} bản ghi SKU/Channel vào Tab 2 (Bộ Giải Ngược Cầu & Giá VK32)!`;
+    statusEl.textContent = `Đã đồng bộ thành công ${matchedRows} dòng dữ liệu Dairy (T01..T06) vào Tab 1 (MD61 & ZMB1B) và Tab 2 (Độ co giãn giá VK32 - DC 16)!`;
   });
 
   document.getElementById('btn-test-odata').addEventListener('click', async () => {
@@ -497,32 +578,34 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await resp.json();
       if (resp.ok && data.ok) {
-        statusBox.textContent = `Kết nối SAP S/4HANA ZODATA thành công (${data.bytes} bytes). Đang đồng bộ Entity Sets (Sales, Market, Current_Inventory, Company_Valuation)...`;
+        statusBox.textContent = `Kết nối SAP S/4HANA ZODATA thành công (${data.bytes} bytes). Đang đồng bộ dữ liệu Dairy (T01..T06)...`;
         try {
           const jsonPayload = JSON.parse(data.raw);
           const records = (jsonPayload.d && jsonPayload.d.results) || jsonPayload.value || [];
           if (Array.isArray(records) && records.length > 0) {
             let synced = 0;
             records.forEach(item => {
-              const sku = item.Material || item.MATERIAL || item.SKU;
-              const ch = item.Distribution_Channel || item.DISTR_CHAN || (item.Channel ? String(item.Channel) : '');
-              const chCode = ch.startsWith('DC') ? ch : (ch ? `DC${ch}` : 'DC12');
-              if (sku) {
-                const idx = pricingState.findIndex(p => p.skuCode === sku && p.channelCode === chCode);
+              const rawSku = item.Material || item.MATERIAL || item.SKU || '';
+              const match = String(rawSku).match(/T0[1-6]$/i);
+              if (match) {
+                const code = match[0].toUpperCase();
+                const idx = dairyPricingState.findIndex(p => p.skuCode === code);
                 if (idx >= 0) {
-                  if (item.Net_Price || item.Price) pricingState[idx].currPrice = Number(item.Net_Price || item.Price);
-                  if (item.Quantity || item.Quantity_Sold) pricingState[idx].currQty = Number(item.Quantity || item.Quantity_Sold);
-                  if (item.Average_Price || item.MarketAvgPrice) pricingState[idx].marketAvgPrice = Number(item.Average_Price || item.MarketAvgPrice);
-                  if (item.Current_Inventory !== undefined) pricingState[idx].inventoryRemaining = Number(item.Current_Inventory);
+                  if (item.Net_Price || item.Price) dairyPricingState[idx].currPrice = Number(item.Net_Price || item.Price);
+                  if (item.Quantity || item.Quantity_Sold) dairyPricingState[idx].currQty = Number(item.Quantity || item.Quantity_Sold);
+                  if (item.Current_Inventory !== undefined) {
+                    dairyPricingState[idx].inventoryRemaining = Number(item.Current_Inventory);
+                    skuInventoryState[code].currentStockAndOpenPo = Number(item.Current_Inventory);
+                  }
                   synced++;
                 }
               }
             });
-            renderPricingTable();
-            statusBox.textContent = `Đồng bộ trực tiếp S/4HANA OData hoàn tất! Đã cập nhật ${synced} bản ghi từ feed (${records.length} dòng).`;
+            updateLogisticsPreset3Module();
+            statusBox.textContent = `Đồng bộ trực tiếp S/4HANA OData hoàn tất! Đã cập nhật ${synced} bản ghi Dairy từ feed (${records.length} dòng).`;
           }
         } catch (_) {
-          // Metadata or XML feed returned
+          // XML or metadata feed
         }
       } else {
         statusBox.textContent = `Phản hồi từ Proxy: ${data.error || 'Không thể kết nối tới máy chủ SAP OData.'}`;
@@ -532,216 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // =========================================================================
-  // MODULE 0: LOGISTICS SUSTAINABILITY (PRESET 1, 2, 3) & 8 DISRUPTORS SOLVER
-  // =========================================================================
-  const logInputs = [
-    'log-preset-mode', 'log-base-tax', 'log-po-lot', 'log-total-stock', 'log-transfers-day',
-    'log-reg-orders', 'log-dir-orders', 'dis-1-cold', 'dis-1-combo',
-    'dis-2-carbon', 'dis-3-supplier', 'dis-3-vendor', 'dis-4-gridlock',
-    'dis-5-glitch', 'dis-6-breach', 'dis-7-flood', 'dis-7-warehouse', 'dis-8-ai'
-  ];
-
-  const skuInventoryState = {
-    T01: { currentStockAndOpenPo: 500, desiredOrderQty: 600, salesNO: 380, salesSO: 310, salesWE: 310 },
-    T02: { currentStockAndOpenPo: 150, desiredOrderQty: 300, salesNO: 110, salesSO: 140, salesWE: 100 },
-    T03: { currentStockAndOpenPo: 350, desiredOrderQty: 500, salesNO: 250, salesSO: 290, salesWE: 220 },
-    T04: { currentStockAndOpenPo: 180, desiredOrderQty: 420, salesNO: 190, salesSO: 130, salesWE: 150 },
-    T05: { currentStockAndOpenPo: 200, desiredOrderQty: 380, salesNO: 150, salesSO: 160, salesWE: 190 },
-    T06: { currentStockAndOpenPo: 150, desiredOrderQty: 300, salesNO: 120, salesSO: 170, salesWE: 130 }
-  };
-
-  const presetModeSelect = document.getElementById('log-preset-mode');
-  if (presetModeSelect) {
-    presetModeSelect.addEventListener('change', (e) => {
-      const mode = e.target.value;
-      if (mode === 'PRESET1' || mode === 'PRESET2') {
-        document.getElementById('log-base-tax').value = '0.15';
-        if (mode === 'PRESET1') {
-          document.getElementById('log-dir-orders').value = '0';
-        }
-      } else {
-        document.getElementById('log-base-tax').value = '0.10';
-      }
-      updateLogisticsPreset3Module();
-    });
-  }
-
-  function updateLogisticsPreset3Module() {
-    const presetMode = document.getElementById('log-preset-mode') ? document.getElementById('log-preset-mode').value : 'PRESET3';
-    const coldActive = document.getElementById('dis-1-cold').checked;
-    const carbonActive = document.getElementById('dis-2-carbon').checked;
-    const supplierActive = document.getElementById('dis-3-supplier').checked;
-    const gridlockActive = document.getElementById('dis-4-gridlock').checked;
-    const glitchActive = document.getElementById('dis-5-glitch') ? document.getElementById('dis-5-glitch').checked : false;
-    const breachActive = document.getElementById('dis-6-breach') ? document.getElementById('dis-6-breach').checked : false;
-    const floodActive = document.getElementById('dis-7-flood') ? document.getElementById('dis-7-flood').checked : false;
-    const floodWh = document.getElementById('dis-7-warehouse') ? document.getElementById('dis-7-warehouse').value : '03';
-    const aiActive = document.getElementById('dis-8-ai') ? document.getElementById('dis-8-ai').checked : false;
-
-    const res = ERPsimEngine.solveLogisticsSustainabilityPreset3({
-      presetMode,
-      baseCarbonTax: numVal('log-base-tax', 0.10),
-      orderLotSizePerPo: Math.max(50, numVal('log-po-lot', 600)),
-      totalWarehouseUnits: numVal('log-total-stock', 3600),
-      transfersPerDay: numVal('log-transfers-day', 0),
-      regionalSalesOrdersPerDay: numVal('log-reg-orders', 0),
-      directSalesOrdersPerDay: numVal('log-dir-orders', 0),
-      coldSpellActive: coldActive,
-      coldSpellCombo: document.getElementById('dis-1-combo').value,
-      carbonDecreeActive: carbonActive,
-      supplierDisruptionActive: supplierActive,
-      impactedSupplier: document.getElementById('dis-3-vendor').value,
-      hubGridlockActive: gridlockActive,
-      skuInventoryState
-    });
-
-    document.getElementById('log-eff-tax').textContent = `€${fmtDec(res.effectiveCarbonTax, 2)} / kg CO₂e`;
-    document.getElementById('log-overstock-fee').textContent = `${fmtEur(res.overstockFeePerDay)} / ngày`;
-    document.getElementById('log-overstock-fee').style.color = res.overstockFeePerDay > 0 ? '#f43f5e' : '#10b981';
-    document.getElementById('log-overstock-co2').textContent = `Vượt ${res.excessUnits.toLocaleString('en-US')} units (+${res.overstockCo2PerDay} kg CO₂e/ngày)`;
-    document.getElementById('log-daily-total-cost').textContent = `${fmtEur(res.dailyCarbonTaxEur + res.dailyTransportAndStorageFeesEur)} / ngày`;
-    document.getElementById('log-daily-co2-sub').textContent = `Phát thải vận hành: ${res.dailyLogisticsCo2.toLocaleString('en-US')} kg CO₂e/ngày (Thuế: ${fmtEur(res.dailyCarbonTaxEur)})`;
-    document.getElementById('log-direct-loss').textContent = `-€${fmtDec(res.lossPerDirectSaleOrder, 2)} / đơn`;
-
-    // Active Disruptor Alert Banner
-    const activeFlags = {
-      1: coldActive,
-      2: carbonActive,
-      3: supplierActive,
-      4: gridlockActive,
-      5: glitchActive,
-      6: breachActive,
-      7: floodActive,
-      8: aiActive
-    };
-    const activeAlerts = [];
-    if (coldActive) activeAlerts.push(`<li><strong>[Event 1 - Cold Spell]:</strong> Đã tự động cộng +5.0 kg CO₂e/unit vào 2 sản phẩm bị ảnh hưởng và tính lại cột <strong>GIÁ BÁN TỐI ƯU VK32 (DC 16)</strong> bên dưới. Phạt Carbon vượt kho giảm còn 200 kg/container!</li>`);
-    if (carbonActive) activeAlerts.push(`<li><strong>[Event 2 - Carbon Decree]:</strong> Thuế suất Carbon đã cộng thêm +€0.20/kg (lên <strong>€${fmtDec(res.effectiveCarbonTax, 2)}/kg</strong>). Hãy cập nhật ngay giá VK32 mới theo bảng dưới!</li>`);
-    if (supplierActive) activeAlerts.push(`<li><strong>[Event 3 - Supplier Disruption (${document.getElementById('dis-3-vendor').value})]:</strong> Đã cộng +2.50 kg/unit &amp; +200 kg/PO vào ${document.getElementById('dis-3-vendor').value}. Kiểm tra cột <strong>CHỌN NCC TỐI ƯU (ZME12)</strong> bên dưới!</li>`);
-    if (gridlockActive) activeAlerts.push(`<li><strong>[Event 4 - Hub Gridlock]:</strong> Bán từ Kho tổng 03 hiện mất tới <strong>-€${fmtDec(res.lossPerDirectSaleOrder, 2)}/đơn</strong>! Bắt buộc bỏ tích <code>Use 03</code> và giãn chu kỳ <code>ZMB1B</code> ra 3–4 ngày/lần!</li>`);
-    if (glitchActive) activeAlerts.push(`<li><strong>[Event 5 - System Glitch]:</strong> Mở dữ liệu qua cổng <code>ZODATA</code> (miễn phí €0) hoặc vào <code>ZITM</code> chỉ mua lại duy nhất báo cáo <code>ZMB52</code> (€5,000).</li>`);
-    if (breachActive) activeAlerts.push(`<li><strong>[Event 6 - Data Breach]:</strong> Mở ngay bảng OData <code>Current_Inventory</code> soi xem đối thủ đang đứt hàng (Stock = 0) ở mặt hàng nào/vùng nào → Dùng <code>ZMB1B</code> đẩy hàng vào đó và tăng giá <code>VK32</code> +12%!</li>`);
-    if (floodActive) {
-      if (floodWh === '03') {
-        activeAlerts.push(`<li><strong>[Event 7 - Flash Flood trúng Kho Tổng 03]:</strong> 3 kho vùng (03N, 03S, 03W) vẫn còn hàng bán! Người 1 chạy ngay <code>MD61 → MD01 → ZME12 (V04) → ME59N</code> để 1–2 ngày sau hàng mới về lại kho 03!</li>`);
-      } else {
-        activeAlerts.push(`<li><strong>[Event 7 - Flash Flood trúng Kho Vùng ${floodWh}]:</strong> Người 2 vào ngay <code>ZMB1B</code> đẩy hàng từ Kho tổng 03 xuống cứu viện kho <strong>${floodWh}</strong>; Người 3 tăng giá <code>VK32</code> +12% vì các đối thủ cũng vừa mất trắng kho ${floodWh}!</li>`);
-      }
-    }
-    if (aiActive) activeAlerts.push(`<li><strong>[Event 8 - AI Innovation]:</strong> Đã mở khóa T-code <code>ZRPA</code> hỗ trợ điền nhanh <code>MD61</code>. Với giá bán <code>VK32</code>, hãy ưu tiên áp dụng cột <strong>GIÁ BÁN TỐI ƯU VK32 (KÊNH DC 16)</strong> bên dưới!</li>`);
-
-    const alertBox = document.getElementById('active-disruptor-alerts');
-    if (alertBox) {
-      if (activeAlerts.length > 0) {
-        alertBox.style.display = 'block';
-        alertBox.className = 'alert-card warning';
-        alertBox.innerHTML = `<strong>⚡ LỆNH PHẢN CÔNG KHẨN CẤP CHO SỰ KIỆN ĐANG DIỄN RA:</strong><ul style="margin-left:1.2rem;margin-top:0.35rem;font-size:0.82rem;">${activeAlerts.join('')}</ul>`;
-      } else {
-        alertBox.style.display = 'none';
-      }
-    }
-
-    const skuTbody = document.getElementById('logistics-sku-tbody');
-    skuTbody.innerHTML = res.skuAnalysis.map(s => {
-      const vColor = s.recommendedVendor === 'V04' ? '#10b981' : '#3b82f6';
-      const v08CostStr = s.v08LandedUnitCost === null ? '<span style="color:#64748b;">Không có V08</span>' : `€${fmtDec(s.v08LandedUnitCost, 2)}`;
-      const breakEvenStr = s.v08LandedUnitCost === null
-        ? 'Chỉ V04'
-        : (s.breakEvenLotSize === Infinity ? 'V08 luôn rẻ hơn' : `≥ ${s.breakEvenLotSize} u`);
-
-      return `
-        <tr>
-          <td>
-            <strong>${s.name}</strong>
-            ${s.isColdHit ? '<span class="badge-tcode rose">❄ Cold +5kg</span>' : ''}
-          </td>
-          <td>€${fmtDec(s.costV04, 2)} | ${s.v08LandedUnitCost === null ? '—' : '€' + fmtDec(s.costV08, 2)}</td>
-          <td>${fmtDec(s.v04UnitCo2, 1)}kg | ${s.v08LandedUnitCost === null ? '—' : fmtDec(s.v08UnitCo2, 1) + 'kg'}</td>
-          <td style="${s.recommendedVendor === 'V04' ? 'color:#34d399;font-weight:700;' : ''}">€${fmtDec(s.v04LandedUnitCost, 2)}</td>
-          <td style="${s.recommendedVendor === 'V08' ? 'color:#60a5fa;font-weight:700;' : ''}">${v08CostStr}</td>
-          <td>
-            <span style="display:inline-block;padding:0.2rem 0.5rem;border-radius:4px;font-weight:800;background:${vColor}22;color:${vColor};border:1px solid ${vColor}66;">
-              ${s.recommendedVendor} ${s.v08LandedUnitCost === null ? '' : `(-€${fmtDec(s.savingsPerUnit, 2)})`}
-            </span>
-          </td>
-          <td>${breakEvenStr}</td>
-          <td>
-            <input type="number" class="table-input log-inv-inp" data-sku="${s.code}" data-field="currentStockAndOpenPo" value="${s.currentStockAndOpenPo}" step="50" style="width:70px;" />
-          </td>
-          <td>
-            <input type="number" class="table-input log-inv-inp" data-sku="${s.code}" data-field="desiredOrderQty" value="${s.desiredOrderQty}" step="50" style="width:70px;" />
-          </td>
-          <td style="background:rgba(59,130,246,0.22);color:#93c5fd;font-weight:900;font-size:0.95rem;text-align:center;">
-            ${s.md61TargetToEnter.toLocaleString('en-US')}
-          </td>
-          <td style="font-size:0.76rem;color:#cbd5e1;">
-            N:<strong>${s.zmb1bTargetNO}</strong> | S:<strong>${s.zmb1bTargetSO}</strong> | W:<strong>${s.zmb1bTargetWE}</strong>
-          </td>
-          <td>€${fmtDec(s.initialPrice, 2)}</td>
-          <td style="background:rgba(16,185,129,0.16);color:#10b981;font-weight:800;font-size:0.95rem;">
-            €${fmtDec(s.recommendedPriceDC16, 2)}
-          </td>
-          <td style="color:#34d399;font-weight:700;">+€${fmtDec(s.netProfitPerUnit, 2)}</td>
-        </tr>
-      `;
-    }).join('');
-
-    skuTbody.querySelectorAll('.log-inv-inp').forEach(inp => {
-      inp.addEventListener('change', (e) => {
-        const code = e.target.dataset.sku;
-        const field = e.target.dataset.field;
-        const val = Number(e.target.value);
-        if (skuInventoryState[code]) {
-          skuInventoryState[code][field] = Number.isFinite(val) ? Math.max(0, val) : 0;
-          updateLogisticsPreset3Module();
-        }
-      });
-    });
-
-    const capSummaryEl = document.getElementById('md61-cap-summary');
-    if (capSummaryEl) {
-      const overCap = res.totalMd61TargetUnits > 4000;
-      capSummaryEl.className = overCap ? 'alert-card danger' : 'alert-card';
-      capSummaryEl.innerHTML = `
-        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.75rem;">
-          <div>
-            <strong>📊 Kiểm Tra Trần Kho MD61 &amp; Quỹ Tiền Mặt Weizen Bank (Trang 10, 16, 32 Participant's Guide):</strong><br/>
-            • Tổng Mức Tồn Kho Mục Tiêu gõ vào <code>MD61</code>: <strong style="color:${overCap ? '#fb7185' : '#34d399'};font-size:0.95rem;">${res.totalMd61TargetUnits.toLocaleString('en-US')} / 4,000 units</strong>
-            (${overCap ? `⚠️ Đang vượt trần ${res.totalMd61TargetUnits - 4000} units → Sẽ bị phạt €300 + 500kg CO₂e/1,000u khi hàng về!` : '✅ Nằm trong trần 4,000 units miễn phí lưu kho!'})<br/>
-            • Tổng Lượng Đặt Mua Mới (PO Qty): <strong>${res.totalNewOrderUnits.toLocaleString('en-US')} units</strong> &rarr; Cần chuẩn bị Tiền mặt thanh toán (sau 5 ngày với V04): <strong style="color:#fbbf24;">${fmtEur(res.totalPoCashNeeded)}</strong>
-            <em>(Khởi điểm công ty chỉ có €250,000 Cash; tuyệt đối không đặt PO vượt quá Cash hiện có + Tiền khách trả sau 4 ngày để tránh bị Weizen Bank phạt thấu chi hạ Credit Rating!).</em>
-          </div>
-        </div>
-      `;
-    }
-
-    const disTbody = document.getElementById('logistics-disruptors-tbody');
-    disTbody.innerHTML = ERPsimEngine.LOGISTICS_DISRUPTORS.map(d => {
-      const isAct = Boolean(activeFlags[d.id]);
-      return `
-        <tr class="${isAct ? 'active-tier' : ''}">
-          <td><strong style="color:#fbbf24;">${d.name} ${isAct ? '◀ ĐANG BẬT' : ''}</strong></td>
-          <td style="font-family:var(--font-sans);">${d.summary}</td>
-          <td style="font-family:var(--font-sans);color:#34d399;"><strong>Đối sách:</strong> ${d.counterStrategy}</td>
-        </tr>
-      `;
-    }).join('');
-  }
-
-  logInputs.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('input', updateLogisticsPreset3Module);
-      el.addEventListener('change', updateLogisticsPreset3Module);
-    }
-  });
-
-  // Initial render of all modules
+  // Initial render of all Preset 3 modules
   updateLogisticsPreset3Module();
   updateValuationModule();
-  renderPricingTable();
-  renderRegionalMarketingModule();
-  updateProductionModule();
-  updateCarbonModule();
 });
