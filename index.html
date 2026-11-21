@@ -198,9 +198,32 @@
           </div>
         </div>
 
-        <!-- 6 Dairy Products Vendor, MD61 Target & Pricing Solver Table -->
-        <div class="formula-box" style="margin-bottom: 0.85rem;">
-          <strong>⚠️ CÔNG THỨC BẮT BUỘC TRONG MD61 (Trang 16 &amp; 32 Participant's Guide):</strong> Con số gõ vào cột thứ 2 của <code>MD61</code> là <strong>MỨC TỒN KHO MỤC TIÊU (Target Inventory)</strong>, KHÔNG phải số lượng đặt mua thêm! Khi chạy <code>MD01</code>, SAP tính: <code>Lượng Đặt Mua Mới = MD61_Target - (Tồn Kho Hiện Tại ZMB52 + Hàng Đang Về ZME2N)</code>. Hãy nhập cột <em>"Tồn ZMB52 + Đang Về"</em> và <em>"Lượng Muốn Mua Thêm"</em> bên dưới, hệ thống sẽ tính chính xác cột <strong>CON SỐ GÕ VÀO MD61</strong> cho bạn!
+        <!-- 6 Dairy Products Vendor, Auto MD61 Target & Pricing Solver Table -->
+        <div class="stat-box" style="margin-bottom: 0.85rem; border-left: 3px solid #3b82f6; background: rgba(30, 58, 138, 0.16);">
+          <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.75rem;">
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:1rem;">
+              <strong style="color:#93c5fd; font-size:0.84rem;">🤖 BỘ TỰ ĐỘNG TÍNH "LƯỢNG ĐẶT THÊM" &amp; MD61:</strong>
+              <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="checkbox" id="log-auto-order" checked /> <strong>Bật Tự Động Tính Theo ZVC2 &amp; Event</strong>
+              </label>
+              <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="checkbox" id="log-cap-4000" checked /> <strong>Khóa Trần Kho ≤ 3,950 u</strong>
+              </label>
+              <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.78rem;">
+                <span>Phủ hàng:</span>
+                <input type="number" id="log-coverage-days" class="form-control" value="5" min="0" max="12" step="0.5" style="width:64px; padding:0.2rem 0.4rem;" />
+                <span>ngày</span>
+              </div>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">
+              <button class="btn btn-outline" id="btn-md61-preset-start" style="padding:0.25rem 0.55rem; font-size:0.73rem;">Khai cuộc (4 ngày)</button>
+              <button class="btn btn-primary" id="btn-md61-preset-normal" style="padding:0.25rem 0.55rem; font-size:0.73rem;">Chuẩn V04 (5 ngày)</button>
+              <button class="btn btn-outline" id="btn-md61-preset-endgame" style="padding:0.25rem 0.55rem; font-size:0.73rem; border-color:#f43f5e; color:#fb7185;">3 Ngày Cuối (Xả kho = 0)</button>
+            </div>
+          </div>
+          <div style="font-size:0.74rem; color:#cbd5e1; margin-top:0.45rem;">
+            Công thức tự động: <code>Lượng Đặt Thêm = (Bán TB/ngày ZVC2 × Số ngày phủ hàng) − (Tồn ZMB52 + Đang về ZME2N)</code>. Tự cộng <strong>+2 ngày</strong> nếu dính Event đổi sang <code>V08</code>, <strong>+1 ngày</strong> nếu dính <code>Hub Gridlock</code>, và tự tính bù tồn kho khi dính <code>Flash Flood</code>!
+          </div>
         </div>
 
         <div class="table-wrap" style="margin-bottom: 1.25rem;">
@@ -213,12 +236,11 @@
                 <th>Giá Vốn Thực (V04)</th>
                 <th>Giá Vốn Thực (V08)</th>
                 <th>CHỌN NCC (ZME12)</th>
-                <th>Hòa Vốn V04</th>
+                <th>Bán TB/ngày (ZVC2)</th>
                 <th>Tồn ZMB52 + Đang Về</th>
-                <th>Lượng Muốn Mua Thêm</th>
+                <th style="background:rgba(16,185,129,0.14);color:#6ee7b7;">LƯỢNG ĐẶT THÊM</th>
                 <th style="background:#1e3a8a;color:#93c5fd;">CON SỐ GÕ VÀO MD61</th>
                 <th>ZMB1B (03N | 03S | 03W)</th>
-                <th>Giá Đầu Kỳ</th>
                 <th>GIÁ TỐI ƯU VK32 (DC 16)</th>
                 <th>Lãi Ròng /Unit</th>
               </tr>

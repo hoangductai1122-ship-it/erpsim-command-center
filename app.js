@@ -33,12 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // SHARED STATE FOR THE 6 DAIRY PRODUCTS (T01..T06) IN PRESET 3
   // =========================================================================
   const skuInventoryState = {
-    T01: { currentStockAndOpenPo: 500, desiredOrderQty: 600, salesNO: 380, salesSO: 310, salesWE: 310 },
-    T02: { currentStockAndOpenPo: 150, desiredOrderQty: 300, salesNO: 110, salesSO: 140, salesWE: 100 },
-    T03: { currentStockAndOpenPo: 350, desiredOrderQty: 500, salesNO: 250, salesSO: 290, salesWE: 220 },
-    T04: { currentStockAndOpenPo: 180, desiredOrderQty: 420, salesNO: 190, salesSO: 130, salesWE: 150 },
-    T05: { currentStockAndOpenPo: 200, desiredOrderQty: 380, salesNO: 150, salesSO: 160, salesWE: 190 },
-    T06: { currentStockAndOpenPo: 150, desiredOrderQty: 300, salesNO: 120, salesSO: 170, salesWE: 130 }
+    T01: { dailySalesRate: 220, currentStockAndOpenPo: 500, desiredOrderQty: 600, salesNO: 380, salesSO: 310, salesWE: 310 },
+    T02: { dailySalesRate: 90,  currentStockAndOpenPo: 150, desiredOrderQty: 300, salesNO: 110, salesSO: 140, salesWE: 100 },
+    T03: { dailySalesRate: 170, currentStockAndOpenPo: 350, desiredOrderQty: 500, salesNO: 250, salesSO: 290, salesWE: 220 },
+    T04: { dailySalesRate: 110, currentStockAndOpenPo: 180, desiredOrderQty: 420, salesNO: 190, salesSO: 130, salesWE: 150 },
+    T05: { dailySalesRate: 110, currentStockAndOpenPo: 200, desiredOrderQty: 380, salesNO: 150, salesSO: 160, salesWE: 190 },
+    T06: { dailySalesRate: 90,  currentStockAndOpenPo: 150, desiredOrderQty: 300, salesNO: 120, salesSO: 170, salesWE: 130 }
   };
 
   let dairyPricingState = [
@@ -55,9 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================================================
   const logInputs = [
     'log-base-tax', 'log-po-lot', 'log-total-stock', 'log-transfers-day',
-    'log-reg-orders', 'log-dir-orders', 'dis-1-cold', 'dis-1-combo',
-    'dis-2-carbon', 'dis-3-supplier', 'dis-3-vendor', 'dis-4-gridlock',
-    'dis-5-glitch', 'dis-6-breach', 'dis-7-flood', 'dis-7-warehouse', 'dis-8-ai'
+    'log-reg-orders', 'log-dir-orders', 'log-coverage-days', 'log-auto-order', 'log-cap-4000',
+    'dis-1-cold', 'dis-1-combo', 'dis-2-carbon', 'dis-3-supplier', 'dis-3-vendor',
+    'dis-4-gridlock', 'dis-5-glitch', 'dis-6-breach', 'dis-7-flood', 'dis-7-warehouse', 'dis-8-ai'
   ];
 
   function updateLogisticsPreset3Module() {
@@ -70,11 +70,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const floodActive = document.getElementById('dis-7-flood').checked;
     const floodWh = document.getElementById('dis-7-warehouse').value;
     const aiActive = document.getElementById('dis-8-ai').checked;
+    const autoOrderCalc = document.getElementById('log-auto-order').checked;
+    const capWarehouse4000 = document.getElementById('log-cap-4000').checked;
+    const coverageDays = Math.max(0, numVal('log-coverage-days', 5));
 
     const res = ERPsimEngine.solveLogisticsSustainabilityPreset3({
       baseCarbonTax: numVal('log-base-tax', 0.10),
       orderLotSizePerPo: Math.max(50, numVal('log-po-lot', 1800)),
       totalWarehouseUnits: numVal('log-total-stock', 3600),
+      coverageDays,
+      autoOrderCalc,
+      capWarehouse4000,
       transfersPerDay: numVal('log-transfers-day', 0),
       regionalSalesOrdersPerDay: numVal('log-reg-orders', 0),
       directSalesOrdersPerDay: numVal('log-dir-orders', 0),
@@ -84,6 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
       supplierDisruptionActive: supplierActive,
       impactedSupplier: document.getElementById('dis-3-vendor').value,
       hubGridlockActive: gridlockActive,
+      flashFloodActive: floodActive,
+      flashFloodWarehouse: floodWh,
       skuInventoryState
     });
 
@@ -149,7 +157,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const skuTbody = document.getElementById('logistics-sku-tbody');
     skuTbody.innerHTML = res.skuAnalysis.map(s => {
       const vColor = s.recommendedVendor === 'V04' ? '#10b981' : '#3b82f6';
-      const breakEvenStr = s.breakEvenLotSize === Infinity ? 'V08 luôn rẻ hơn' : `≥ ${s.breakEvenLotSize} u`;
+      const orderCellHtml = autoOrderCalc
+        ? `<div style="font-weight:900;color:#6ee7b7;font-size:0.95rem;">+${s.desiredOrderQty.toLocaleString('en-US')}</div>
+           <div style="font-size:0.68rem;color:#94a3b8;">${s.effectiveCoverageDays}d${s.orderNote ? ` • ${s.orderNote}` : ''}</div>`
+        : `<input type="number" class="table-input log-inv-inp" data-sku="${s.code}" data-field="desiredOrderQty" value="${s.desiredOrderQty}" step="50" style="width:72px;" />`;
 
       return `
         <tr>
@@ -166,12 +177,15 @@ document.addEventListener('DOMContentLoaded', () => {
               ${s.recommendedVendor} (-€${fmtDec(s.savingsPerUnit, 2)})
             </span>
           </td>
-          <td>${breakEvenStr}</td>
           <td>
-            <input type="number" class="table-input log-inv-inp" data-sku="${s.code}" data-field="currentStockAndOpenPo" value="${s.currentStockAndOpenPo}" step="50" style="width:72px;" />
+            <input type="number" class="table-input log-inv-inp" data-sku="${s.code}" data-field="dailySalesRate" value="${s.dailySalesRate}" step="10" style="width:68px;" />
           </td>
           <td>
-            <input type="number" class="table-input log-inv-inp" data-sku="${s.code}" data-field="desiredOrderQty" value="${s.desiredOrderQty}" step="50" style="width:72px;" />
+            <input type="number" class="table-input log-inv-inp" data-sku="${s.code}" data-field="currentStockAndOpenPo" value="${s.currentStockAndOpenPo}" step="50" style="width:72px;" />
+            ${autoOrderCalc && floodActive ? `<div style="font-size:0.66rem;color:#fb7185;">Sau lũ: ~${s.effectiveStock}</div>` : ''}
+          </td>
+          <td style="background:rgba(16,185,129,0.10);text-align:center;">
+            ${orderCellHtml}
           </td>
           <td style="background:rgba(59,130,246,0.22);color:#93c5fd;font-weight:900;font-size:0.95rem;text-align:center;">
             ${s.md61TargetToEnter.toLocaleString('en-US')}
@@ -179,7 +193,6 @@ document.addEventListener('DOMContentLoaded', () => {
           <td style="font-size:0.76rem;color:#cbd5e1;">
             03N:<strong>${s.zmb1bTargetNO}</strong> | 03S:<strong>${s.zmb1bTargetSO}</strong> | 03W:<strong>${s.zmb1bTargetWE}</strong>
           </td>
-          <td>€${fmtDec(s.initialPrice, 2)}</td>
           <td style="background:rgba(16,185,129,0.16);color:#10b981;font-weight:800;font-size:0.95rem;">
             €${fmtDec(s.recommendedPriceDC16, 2)}
           </td>
@@ -202,14 +215,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const capSummaryEl = document.getElementById('md61-cap-summary');
     const overCap = res.totalMd61TargetUnits > 4000;
-    capSummaryEl.className = overCap ? 'alert-card danger' : 'alert-card';
+    const cashWarning = res.totalPoCashNeeded > 180000;
+    capSummaryEl.className = overCap ? 'alert-card danger' : (cashWarning ? 'alert-card warning' : 'alert-card');
     capSummaryEl.innerHTML = `
       <div>
         <strong>📊 Kiểm Tra Trần Kho MD61 &amp; Quỹ Tiền Mặt Weizen Bank (Trang 10, 16, 32 Participant's Guide):</strong><br/>
         • Tổng Mức Tồn Kho Mục Tiêu gõ vào <code>MD61</code>: <strong style="color:${overCap ? '#fb7185' : '#34d399'};font-size:0.95rem;">${res.totalMd61TargetUnits.toLocaleString('en-US')} / 4,000 units</strong>
-        (${overCap ? `⚠️ Đang vượt trần ${res.totalMd61TargetUnits - 4000} units → Sẽ bị phạt €300 + 500kg CO₂e/1,000u khi hàng về!` : '✅ Nằm trong trần 4,000 units miễn phí lưu kho!'})<br/>
-        • Tổng Lượng Đặt Mua Mới (PO Qty): <strong>${res.totalNewOrderUnits.toLocaleString('en-US')} units</strong> &rarr; Cần chuẩn bị Tiền mặt thanh toán (sau 5 ngày với V04): <strong style="color:#fbbf24;">${fmtEur(res.totalPoCashNeeded)}</strong>
-        <em>(Khởi điểm công ty chỉ có €250,000 Cash; tuyệt đối không đặt PO vượt quá Cash hiện có + Tiền khách trả sau 4 ngày để tránh bị Weizen Bank phạt thấu chi hạ Credit Rating!).</em>
+        (${overCap ? `⚠️ Đang vượt trần ${res.totalMd61TargetUnits - 4000} units → Sẽ bị phạt €300 + 500kg CO₂e/1,000u khi hàng về!` : (res.wasCappedTo4000 ? '✅ Hệ thống đã tự động co tỷ lệ về ≤ 3,950 units để né phạt vượt kho 4,000u!' : '✅ Nằm an toàn trong trần 4,000 units miễn phí lưu kho!')})<br/>
+        • Tổng Lượng Đặt Mua Mới (PO Qty): <strong>${res.totalNewOrderUnits.toLocaleString('en-US')} units</strong> &rarr; Cần chuẩn bị Tiền mặt thanh toán (sau 5 ngày với V04): <strong style="color:${cashWarning ? '#fb7185' : '#fbbf24'};">${fmtEur(res.totalPoCashNeeded)}</strong>
+        ${cashWarning ? ' <strong style="color:#fb7185;">(⚠️ Cẩn thận ở Round 1: vốn khởi đầu chỉ có €250,000 Cash, nên giảm ngày phủ hàng xuống 4 ngày nếu Cash chưa về kịp!)</strong>' : ' <em>(An toàn với quỹ tiền mặt khởi điểm €250,000 của Weizen Bank).</em>'}
       </div>
     `;
 
@@ -237,6 +251,25 @@ document.addEventListener('DOMContentLoaded', () => {
       el.addEventListener('input', updateLogisticsPreset3Module);
       el.addEventListener('change', updateLogisticsPreset3Module);
     }
+  });
+
+  // Quick MD61 Coverage Presets
+  document.getElementById('btn-md61-preset-start').addEventListener('click', () => {
+    document.getElementById('log-auto-order').checked = true;
+    document.getElementById('log-cap-4000').checked = true;
+    document.getElementById('log-coverage-days').value = 4;
+    updateLogisticsPreset3Module();
+  });
+  document.getElementById('btn-md61-preset-normal').addEventListener('click', () => {
+    document.getElementById('log-auto-order').checked = true;
+    document.getElementById('log-cap-4000').checked = true;
+    document.getElementById('log-coverage-days').value = 5;
+    updateLogisticsPreset3Module();
+  });
+  document.getElementById('btn-md61-preset-endgame').addEventListener('click', () => {
+    document.getElementById('log-auto-order').checked = true;
+    document.getElementById('log-coverage-days').value = 0;
+    updateLogisticsPreset3Module();
   });
 
   // =========================================================================

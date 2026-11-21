@@ -111,12 +111,17 @@ const ERPsimEngine = (() => {
       baseCarbonTax = 0.10, // Preset 3 starts at €0.10/kg (+€0.05 per round)
       orderLotSizePerPo = 1800,
       totalWarehouseUnits = 3600,
+      coverageDays = 5,
+      autoOrderCalc = true,
+      capWarehouse4000 = true,
       coldSpellActive = false,
       coldSpellCombo = 'T01_T02', // 1:T01+T02, 2:T01+T03, 3:T01+T05, 4:T02+T03, 5:T02+T05, 6:T03+T05
       carbonDecreeActive = false,
       supplierDisruptionActive = false,
       impactedSupplier = 'V04',
       hubGridlockActive = false,
+      flashFloodActive = false,
+      flashFloodWarehouse = '03',
       directSalesOrdersPerDay = 0,
       regionalSalesOrdersPerDay = 32,
       transfersPerDay = 3,
@@ -126,11 +131,7 @@ const ERPsimEngine = (() => {
     const effectiveCarbonTax = baseCarbonTax + (carbonDecreeActive ? 0.20 : 0);
     const coldSpellSkus = coldSpellCombo.split('_');
 
-    let totalMd61TargetUnits = 0;
-    let totalPoCashNeeded = 0;
-    let totalNewOrderUnits = 0;
-
-    const skuAnalysis = LOGISTICS_PRESET3_SKUS.map(sku => {
+    let skuAnalysis = LOGISTICS_PRESET3_SKUS.map(sku => {
       const isColdHit = coldSpellActive && coldSpellSkus.includes(sku.code);
       const coldExtraUnitCo2 = isColdHit ? 5.0 : 0.0;
 
@@ -164,19 +165,8 @@ const ERPsimEngine = (() => {
       const recommendedPriceDC16 = Number(Math.min(sku.initialPrice * 1.32, Math.max(fullEffectiveMarginalCost * 1.12, optimalPriceDC16 * 0.65 + sku.initialPrice * 0.42)).toFixed(2));
       const netProfitPerUnit = Number((recommendedPriceDC16 - fullEffectiveMarginalCost).toFixed(2));
 
-      // MD61 Target Inventory Formula (Participant's Guide Page 16 & 32):
-      // Requisition = MD61_Target - (Current_Inventory_ZMB52 + Open_PO_ZME2N)
-      const st = skuInventoryState[sku.code] || {};
-      const currentStockAndOpenPo = st.currentStockAndOpenPo !== undefined ? st.currentStockAndOpenPo : Math.round(sku.initialStock * 0.5);
-      const desiredOrderQty = st.desiredOrderQty !== undefined ? st.desiredOrderQty : Math.round(sku.defaultTarget - currentStockAndOpenPo);
-      const md61TargetToEnter = Math.max(0, currentStockAndOpenPo + Math.max(0, desiredOrderQty));
-
-      totalMd61TargetUnits += md61TargetToEnter;
-      totalNewOrderUnits += Math.max(0, desiredOrderQty);
-      const chosenUnitPrice = recommendedVendor === 'V04' ? sku.costV04 : sku.costV08;
-      totalPoCashNeeded += Math.max(0, desiredOrderQty) * chosenUnitPrice;
-
       // Regional ZVA05 Split (Area: NO, SO, WE) -> ZMB1B allocation
+      const st = skuInventoryState[sku.code] || {};
       const sNO = st.salesNO !== undefined ? st.salesNO : 100;
       const sSO = st.salesSO !== undefined ? st.salesSO : 100;
       const sWE = st.salesWE !== undefined ? st.salesWE : 100;
@@ -185,9 +175,53 @@ const ERPsimEngine = (() => {
       const shareSO = sSO / totRegSales;
       const shareWE = sWE / totRegSales;
 
-      const zmb1bTargetNO = Math.round(md61TargetToEnter * shareNO);
-      const zmb1bTargetSO = Math.round(md61TargetToEnter * shareSO);
-      const zmb1bTargetWE = Math.max(0, md61TargetToEnter - zmb1bTargetNO - zmb1bTargetSO);
+      // MD61 Target Inventory & Auto Order Calculator (Participant's Guide Page 16 & 32):
+      // Requisition = MD61_Target - (Current_Inventory_ZMB52 + Open_PO_ZME2N)
+      const currentStockAndOpenPo = st.currentStockAndOpenPo !== undefined ? st.currentStockAndOpenPo : Math.round(sku.initialStock * 0.5);
+      const dailySalesRate = st.dailySalesRate !== undefined ? st.dailySalesRate : Math.round(sku.defaultTarget / 5);
+
+      // Effective stock after Flash Flood (if active)
+      let effectiveStock = currentStockAndOpenPo;
+      let orderNote = '';
+      if (autoOrderCalc && flashFloodActive) {
+        if (flashFloodWarehouse === '03') {
+          effectiveStock = Math.round(currentStockAndOpenPo * 0.60);
+          orderNote = 'Bù lũ kho 03';
+        } else if (flashFloodWarehouse === '03N') {
+          effectiveStock = Math.round(currentStockAndOpenPo * (1 - shareNO * 0.85));
+          orderNote = 'Bù lũ 03N';
+        } else if (flashFloodWarehouse === '03S') {
+          effectiveStock = Math.round(currentStockAndOpenPo * (1 - shareSO * 0.85));
+          orderNote = 'Bù lũ 03S';
+        } else if (flashFloodWarehouse === '03W') {
+          effectiveStock = Math.round(currentStockAndOpenPo * (1 - shareWE * 0.85));
+          orderNote = 'Bù lũ 03W';
+        }
+      }
+
+      // Dynamic coverage days reaction to V08 (1-4d lead time) and Hub Gridlock (consolidate POs)
+      let effectiveCoverageDays = Math.max(0, coverageDays);
+      if (autoOrderCalc && coverageDays > 0) {
+        if (recommendedVendor === 'V08') {
+          effectiveCoverageDays += 2;
+          orderNote = orderNote ? `${orderNote} + V08(+2d)` : 'V08 Lead 1-4d (+2d)';
+        }
+        if (hubGridlockActive) {
+          effectiveCoverageDays += 1;
+          orderNote = orderNote ? `${orderNote} + Gom PO(+1d)` : 'Gom PO (+1d)';
+        }
+      }
+
+      let desiredOrderQty;
+      let md61TargetToEnter;
+      if (autoOrderCalc) {
+        const desiredTarget = Math.round(dailySalesRate * effectiveCoverageDays);
+        desiredOrderQty = Math.max(0, desiredTarget - effectiveStock);
+        md61TargetToEnter = effectiveStock + desiredOrderQty;
+      } else {
+        desiredOrderQty = st.desiredOrderQty !== undefined ? Math.max(0, st.desiredOrderQty) : Math.max(0, Math.round(sku.defaultTarget - currentStockAndOpenPo));
+        md61TargetToEnter = Math.max(0, currentStockAndOpenPo + desiredOrderQty);
+      }
 
       return {
         ...sku,
@@ -203,14 +237,61 @@ const ERPsimEngine = (() => {
         recommendedPriceDC16,
         netProfitPerUnit,
         currentStockAndOpenPo,
+        effectiveStock,
+        dailySalesRate,
+        effectiveCoverageDays,
+        orderNote,
         desiredOrderQty,
         md61TargetToEnter,
         salesNO: sNO,
         salesSO: sSO,
         salesWE: sWE,
+        shareNO,
+        shareSO,
+        shareWE,
         shareNOPct: Number((shareNO * 100).toFixed(1)),
         shareSOPct: Number((shareSO * 100).toFixed(1)),
-        shareWEPct: Number((shareWE * 100).toFixed(1)),
+        shareWEPct: Number((shareWE * 100).toFixed(1))
+      };
+    });
+
+    // Optional Auto-Cap at 3,950 units (avoid 4,000-unit warehouse penalty)
+    const rawTotalMd61 = skuAnalysis.reduce((acc, s) => acc + s.md61TargetToEnter, 0);
+    const rawTotalEffStock = skuAnalysis.reduce((acc, s) => acc + s.effectiveStock, 0);
+    const rawTotalOrder = skuAnalysis.reduce((acc, s) => acc + s.desiredOrderQty, 0);
+    let wasCappedTo4000 = false;
+
+    if (autoOrderCalc && capWarehouse4000 && rawTotalMd61 > 3950 && rawTotalOrder > 0) {
+      wasCappedTo4000 = true;
+      const allowedNewOrderTotal = Math.max(0, 3950 - rawTotalEffStock);
+      const scale = allowedNewOrderTotal / rawTotalOrder;
+      skuAnalysis = skuAnalysis.map(s => {
+        const cappedOrder = Math.max(0, Math.floor(s.desiredOrderQty * scale));
+        return {
+          ...s,
+          desiredOrderQty: cappedOrder,
+          md61TargetToEnter: s.effectiveStock + cappedOrder
+        };
+      });
+    }
+
+    // Finalize ZMB1B regional splits and totals
+    let totalMd61TargetUnits = 0;
+    let totalPoCashNeeded = 0;
+    let totalNewOrderUnits = 0;
+
+    skuAnalysis = skuAnalysis.map(s => {
+      const zmb1bTargetNO = Math.round(s.md61TargetToEnter * s.shareNO);
+      const zmb1bTargetSO = Math.round(s.md61TargetToEnter * s.shareSO);
+      const zmb1bTargetWE = Math.max(0, s.md61TargetToEnter - zmb1bTargetNO - zmb1bTargetSO);
+
+      totalMd61TargetUnits += s.md61TargetToEnter;
+      totalNewOrderUnits += s.desiredOrderQty;
+      const chosenUnitPrice = s.recommendedVendor === 'V04' ? s.costV04 : s.costV08;
+      totalPoCashNeeded += s.desiredOrderQty * chosenUnitPrice;
+
+      return {
+        ...s,
         zmb1bTargetNO,
         zmb1bTargetSO,
         zmb1bTargetWE
@@ -258,6 +339,7 @@ const ERPsimEngine = (() => {
       totalMd61TargetUnits,
       totalNewOrderUnits,
       totalPoCashNeeded: Math.round(totalPoCashNeeded),
+      wasCappedTo4000,
       excessUnits,
       overstockFeePerDay,
       overstockCo2PerDay,
