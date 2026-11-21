@@ -86,22 +86,78 @@
           </div>
         </div>
 
+        <!-- 1-Click Round & Day Selector + Quick SAP Paste Drawer Toggle -->
+        <div class="stat-box" style="margin-bottom: 0.85rem; border-left: 3px solid #10b981; background: rgba(16, 185, 129, 0.08);">
+          <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.75rem;">
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;">
+              <strong style="color:#34d399; font-size:0.83rem;">⏱️ CHỌN NHANH HIỆP &amp; NGÀY THI ĐẤU:</strong>
+              <button class="btn btn-primary round-quick-btn" data-round="1" data-tax="0.10" style="padding:0.25rem 0.6rem; font-size:0.74rem;">Hiệp 1 (€0.10/kg)</button>
+              <button class="btn btn-outline round-quick-btn" data-round="2" data-tax="0.15" style="padding:0.25rem 0.6rem; font-size:0.74rem;">Hiệp 2 (€0.15/kg)</button>
+              <button class="btn btn-outline round-quick-btn" data-round="3" data-tax="0.20" style="padding:0.25rem 0.6rem; font-size:0.74rem;">Hiệp 3 (€0.20/kg)</button>
+              <button class="btn btn-outline round-quick-btn" data-round="4" data-tax="0.25" style="padding:0.25rem 0.6rem; font-size:0.74rem;">Hiệp 4 (€0.25/kg)</button>
+              <div style="display:flex; align-items:center; gap:0.35rem; font-size:0.78rem; margin-left:0.35rem;">
+                <span>Ngày:</span>
+                <select id="log-day-in-round" class="form-control" style="padding:0.2rem 0.4rem; font-size:0.75rem; width:96px;">
+                  <option value="1">Ngày 1 (Bật Use 03)</option>
+                  <option value="2">Ngày 2 (Tắt Use 03!)</option>
+                  <option value="3">Ngày 3</option>
+                  <option value="4">Ngày 4</option>
+                  <option value="5" selected>Ngày 5 (Giữa hiệp)</option>
+                  <option value="6">Ngày 6</option>
+                  <option value="7">Ngày 7</option>
+                  <option value="8">Ngày 8 (Xả kho nếu hiệp cuối)</option>
+                  <option value="9">Ngày 9 (Xả kho nếu hiệp cuối)</option>
+                  <option value="10">Ngày 10 (Kết thúc hiệp)</option>
+                </select>
+              </div>
+              <label style="font-size:0.76rem; display:flex; align-items:center; gap:0.35rem; cursor:pointer; color:#fb7185;">
+                <input type="checkbox" id="log-is-final-round" /> <strong>Đây là Hiệp Cuối</strong>
+              </label>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">
+              <button class="btn btn-emerald" id="btn-toggle-quick-paste" style="padding:0.28rem 0.65rem; font-size:0.75rem;">
+                📥 Dán Nhanh Bảng SAP (ZMB52 / ZVC2 / ZVA05)
+              </button>
+            </div>
+          </div>
+
+          <!-- Collapsible Quick SAP Paste Box right inside Tab 1 -->
+          <div id="tab1-quick-paste-drawer" style="display:none; margin-top:0.75rem; padding-top:0.75rem; border-top:1px dashed var(--border);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem; flex-wrap:wrap; gap:0.5rem;">
+              <span style="font-size:0.76rem; color:#93c5fd;">
+                <strong>⚡ DÁN BẤT KỲ BẢNG SAP NÀO VÀO ĐÂY:</strong> Hệ thống tự nhận diện <code>ZMB52</code> (Tồn kho 4 kho), <code>ZVC2</code> (Tốc độ bán TB/ngày), <code>ZVA05</code> (Tỷ lệ 3 miền NO/SO/WE &amp; Giá bán), hoặc <code>ZME2N</code> (Đơn PO đang về)!
+              </span>
+              <div style="display:flex; gap:0.4rem;">
+                <button class="btn btn-outline" id="btn-tab1-sample-paste" style="padding:0.2rem 0.5rem; font-size:0.72rem;">Nạp Mẫu Thử</button>
+                <button class="btn btn-primary" id="btn-tab1-apply-paste" style="padding:0.2rem 0.65rem; font-size:0.73rem;">⚡ Phân Tích &amp; Điền Tự Động</button>
+              </div>
+            </div>
+            <textarea id="tab1-raw-paste" class="form-control" rows="4" style="font-family:var(--font-mono); font-size:0.74rem;" placeholder="Ctrl+A, Ctrl+C từ màn hình ZMB52, ZVC2 hoặc ZVA05 trên SAP rồi Ctrl+V vào đây..."></textarea>
+            <div id="tab1-paste-status" style="font-size:0.74rem; color:#34d399; margin-top:0.35rem; font-weight:600;"></div>
+          </div>
+        </div>
+
         <!-- Controls & Active Disruptor Switches -->
         <div class="grid-2" style="margin-bottom: 1rem;">
           <div class="stat-box">
-            <div class="s-label" style="color:#60a5fa; font-weight:700; margin-bottom:0.6rem;">THÔNG SỐ VẬN HÀNH &amp; KHO BÃI HIỆN TẠI (PRESET 3)</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+              <div class="s-label" style="color:#60a5fa; font-weight:700;">THÔNG SỐ VẬN HÀNH &amp; KHO BÃI HIỆN TẠI (PRESET 3)</div>
+              <label style="font-size:0.73rem; display:flex; align-items:center; gap:0.35rem; cursor:pointer; color:#34d399;">
+                <input type="checkbox" id="log-auto-sync-totals" checked /> <strong>Tự đồng bộ Tồn kho &amp; Cỡ lô PO từ bảng</strong>
+              </label>
+            </div>
             <div class="form-grid" style="grid-template-columns: repeat(3, 1fr);">
               <div class="form-group">
                 <label>Thuế Carbon Gốc (€/kg)</label>
                 <input type="number" id="log-base-tax" class="form-control" value="0.10" step="0.05" />
               </div>
               <div class="form-group">
-                <label>Tổng số lượng gộp/PO (Units)</label>
+                <label>Tổng lượng gộp/PO (Tự đồng bộ)</label>
                 <input type="number" id="log-po-lot" class="form-control" value="1800" step="100" />
               </div>
               <div class="form-group">
                 <label>Tổng Tồn Kho 4 Kho (ZMB52)</label>
-                <input type="number" id="log-total-stock" class="form-control" value="3600" step="200" />
+                <input type="number" id="log-total-stock" class="form-control" value="1530" step="100" />
               </div>
               <div class="form-group">
                 <label>Số chuyến ZMB1B / ngày</label>
@@ -112,9 +168,10 @@
                 <input type="number" id="log-reg-orders" class="form-control" value="32" min="0" max="100" />
               </div>
               <div class="form-group">
-                <label>Đơn bán từ Kho Tổng 03</label>
-                <input type="number" id="log-dir-orders" class="form-control" value="0" min="0" max="100" />
+                <label>Tiền mặt 113300 hiện có (€)</label>
+                <input type="number" id="log-available-cash" class="form-control" value="250000" step="25000" />
               </div>
+              <input type="hidden" id="log-dir-orders" value="0" />
             </div>
           </div>
 
@@ -201,28 +258,46 @@
         <!-- 6 Dairy Products Vendor, Auto MD61 Target & Pricing Solver Table -->
         <div class="stat-box" style="margin-bottom: 0.85rem; border-left: 3px solid #3b82f6; background: rgba(30, 58, 138, 0.16);">
           <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.75rem;">
-            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:1rem;">
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.85rem;">
               <strong style="color:#93c5fd; font-size:0.84rem;">🤖 BỘ TỰ ĐỘNG TÍNH "LƯỢNG ĐẶT THÊM" &amp; MD61:</strong>
-              <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
-                <input type="checkbox" id="log-auto-order" checked /> <strong>Bật Tự Động Tính Theo ZVC2 &amp; Event</strong>
+              <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.35rem; cursor:pointer;">
+                <input type="checkbox" id="log-auto-order" checked /> <strong>Tự Tính Theo ZVC2 &amp; Event</strong>
               </label>
-              <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+              <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.35rem; cursor:pointer;">
                 <input type="checkbox" id="log-cap-4000" checked /> <strong>Khóa Trần Kho ≤ 3,950 u</strong>
               </label>
-              <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.78rem;">
+              <label style="font-size:0.78rem; display:flex; align-items:center; gap:0.35rem; cursor:pointer; color:#fbbf24;">
+                <input type="checkbox" id="log-cap-cash" checked /> <strong>Chống Âm Tiền Mặt Weizen Bank</strong>
+              </label>
+              <div style="display:flex; align-items:center; gap:0.35rem; font-size:0.78rem;">
                 <span>Phủ hàng:</span>
-                <input type="number" id="log-coverage-days" class="form-control" value="5" min="0" max="12" step="0.5" style="width:64px; padding:0.2rem 0.4rem;" />
+                <input type="number" id="log-coverage-days" class="form-control" value="5" min="0" max="12" step="0.5" style="width:60px; padding:0.2rem 0.4rem;" />
                 <span>ngày</span>
               </div>
+              <div style="display:flex; align-items:center; gap:0.35rem; font-size:0.78rem;">
+                <span>Chế độ ZMB1B:</span>
+                <select id="log-zmb1b-mode" class="form-control" style="padding:0.2rem 0.4rem; font-size:0.75rem; width:135px;">
+                  <option value="PULL" selected>PULL (Định mức tồn)</option>
+                  <option value="PUSH">PUSH (Lượng đẩy/lần)</option>
+                </select>
+              </div>
             </div>
-            <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">
-              <button class="btn btn-outline" id="btn-md61-preset-start" style="padding:0.25rem 0.55rem; font-size:0.73rem;">Khai cuộc (4 ngày)</button>
-              <button class="btn btn-primary" id="btn-md61-preset-normal" style="padding:0.25rem 0.55rem; font-size:0.73rem;">Chuẩn V04 (5 ngày)</button>
-              <button class="btn btn-outline" id="btn-md61-preset-endgame" style="padding:0.25rem 0.55rem; font-size:0.73rem; border-color:#f43f5e; color:#fb7185;">3 Ngày Cuối (Xả kho = 0)</button>
+            <div style="display:flex; flex-wrap:wrap; gap:0.35rem;">
+              <button class="btn btn-outline" id="btn-md61-preset-start" style="padding:0.23rem 0.5rem; font-size:0.72rem;">Khai cuộc (4 ngày)</button>
+              <button class="btn btn-primary" id="btn-md61-preset-normal" style="padding:0.23rem 0.5rem; font-size:0.72rem;">Chuẩn V04 (5 ngày)</button>
+              <button class="btn btn-outline" id="btn-md61-preset-endgame" style="padding:0.23rem 0.5rem; font-size:0.72rem; border-color:#f43f5e; color:#fb7185;">3 Ngày Cuối (Xả kho = 0)</button>
             </div>
           </div>
-          <div style="font-size:0.74rem; color:#cbd5e1; margin-top:0.45rem;">
-            Công thức tự động: <code>Lượng Đặt Thêm = (Bán TB/ngày ZVC2 × Số ngày phủ hàng) − (Tồn ZMB52 + Đang về ZME2N)</code>. Tự cộng <strong>+2 ngày</strong> nếu dính Event đổi sang <code>V08</code>, <strong>+1 ngày</strong> nếu dính <code>Hub Gridlock</code>, và tự tính bù tồn kho khi dính <code>Flash Flood</code>!
+          <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.5rem; margin-top:0.55rem; padding-top:0.45rem; border-top:1px solid rgba(148,163,184,0.18);">
+            <div style="font-size:0.74rem; color:#cbd5e1;" id="zmb1b-live-recommendation">
+              Khuyến nghị ZMB1B: Chế độ <strong>PULL</strong> • Chu kỳ <strong>2 ngày/lần</strong> • <strong>BỎ TÍCH Use 03</strong> từ Ngày 2 trở đi!
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:0.4rem; align-items:center;">
+              <button class="btn btn-outline" id="btn-copy-md61" style="padding:0.2rem 0.55rem; font-size:0.72rem; border-color:#60a5fa; color:#93c5fd;">📋 Copy 6 Số MD61</button>
+              <button class="btn btn-outline" id="btn-copy-vk32" style="padding:0.2rem 0.55rem; font-size:0.72rem; border-color:#10b981; color:#6ee7b7;">📋 Copy 6 Giá VK32</button>
+              <button class="btn btn-outline" id="btn-copy-zmb1b" style="padding:0.2rem 0.55rem; font-size:0.72rem; border-color:#f59e0b; color:#fcd34d;">📋 Copy Bảng ZMB1B</button>
+              <span id="copy-toast-msg" style="font-size:0.72rem; color:#34d399; font-weight:700;"></span>
+            </div>
           </div>
         </div>
 

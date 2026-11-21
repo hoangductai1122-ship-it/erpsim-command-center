@@ -108,12 +108,18 @@ const ERPsimEngine = (() => {
    */
   function solveLogisticsSustainabilityPreset3(params) {
     const {
+      roundNumber = 1,
+      dayInRound = 1,
+      isFinalRound = false,
       baseCarbonTax = 0.10, // Preset 3 starts at €0.10/kg (+€0.05 per round)
       orderLotSizePerPo = 1800,
       totalWarehouseUnits = 3600,
       coverageDays = 5,
       autoOrderCalc = true,
       capWarehouse4000 = true,
+      availableCash = 250000,
+      capCashSafety = false,
+      zmb1bMode = 'PULL', // 'PULL' (regional target stock) or 'PUSH' (shipment qty per cycle)
       coldSpellActive = false,
       coldSpellCombo = 'T01_T02', // 1:T01+T02, 2:T01+T03, 3:T01+T05, 4:T02+T03, 5:T02+T05, 6:T03+T05
       carbonDecreeActive = false,
@@ -130,6 +136,18 @@ const ERPsimEngine = (() => {
 
     const effectiveCarbonTax = baseCarbonTax + (carbonDecreeActive ? 0.20 : 0);
     const coldSpellSkus = coldSpellCombo.split('_');
+
+    // Recommended ZMB1B delivery frequency (days) & Use 03 switch
+    const recommendedZmb1bFreqDays = (hubGridlockActive || carbonDecreeActive || effectiveCarbonTax >= 0.30) ? 3 : 2;
+    const recommendedUse03 = (roundNumber === 1 && dayInRound === 1 && !hubGridlockActive && !carbonDecreeActive);
+    const isEndgameLiquidation = isFinalRound && dayInRound >= 8;
+
+    // First pass: calculate real current stock sum across 6 SKUs
+    const sumSkuCurrentStock = LOGISTICS_PRESET3_SKUS.reduce((acc, sku) => {
+      const st = skuInventoryState[sku.code] || {};
+      const cur = st.currentStockAndOpenPo !== undefined ? st.currentStockAndOpenPo : Math.round(sku.initialStock * 0.5);
+      return acc + cur;
+    }, 0);
 
     let skuAnalysis = LOGISTICS_PRESET3_SKUS.map(sku => {
       const isColdHit = coldSpellActive && coldSpellSkus.includes(sku.code);
@@ -158,13 +176,6 @@ const ERPsimEngine = (() => {
       const fixedPoDiff = (v04PoFixedFee + v04PoCo2 * effectiveCarbonTax) - (v08PoFixedFee + v08PoCo2 * effectiveCarbonTax);
       const breakEvenLotSize = unitVarDiff > 0 ? Math.max(0, Math.round(fixedPoDiff / unitVarDiff)) : Infinity;
 
-      // Optimal Retail Price on DC 16 (Retail Stores)
-      const regionalOrderCo2CostPerUnit = (75 * effectiveCarbonTax) / 25;
-      const fullEffectiveMarginalCost = minLandedCost + regionalOrderCo2CostPerUnit;
-      const optimalPriceDC16 = fullEffectiveMarginalCost * (sku.elasticity / (sku.elasticity - 1));
-      const recommendedPriceDC16 = Number(Math.min(sku.initialPrice * 1.32, Math.max(fullEffectiveMarginalCost * 1.12, optimalPriceDC16 * 0.65 + sku.initialPrice * 0.42)).toFixed(2));
-      const netProfitPerUnit = Number((recommendedPriceDC16 - fullEffectiveMarginalCost).toFixed(2));
-
       // Regional ZVA05 Split (Area: NO, SO, WE) -> ZMB1B allocation
       const st = skuInventoryState[sku.code] || {};
       const sNO = st.salesNO !== undefined ? st.salesNO : 100;
@@ -175,8 +186,6 @@ const ERPsimEngine = (() => {
       const shareSO = sSO / totRegSales;
       const shareWE = sWE / totRegSales;
 
-      // MD61 Target Inventory & Auto Order Calculator (Participant's Guide Page 16 & 32):
-      // Requisition = MD61_Target - (Current_Inventory_ZMB52 + Open_PO_ZME2N)
       const currentStockAndOpenPo = st.currentStockAndOpenPo !== undefined ? st.currentStockAndOpenPo : Math.round(sku.initialStock * 0.5);
       const dailySalesRate = st.dailySalesRate !== undefined ? st.dailySalesRate : Math.round(sku.defaultTarget / 5);
 
@@ -199,9 +208,28 @@ const ERPsimEngine = (() => {
         }
       }
 
-      // Dynamic coverage days reaction to V08 (1-4d lead time) and Hub Gridlock (consolidate POs)
-      let effectiveCoverageDays = Math.max(0, coverageDays);
-      if (autoOrderCalc && coverageDays > 0) {
+      // Dynamic Retail Price on DC 16 (Retail Stores) with Stockout / Overstock Feedback (Page 19 Participant's Guide)
+      const regionalOrderCo2CostPerUnit = (75 * effectiveCarbonTax) / 25;
+      const fullEffectiveMarginalCost = minLandedCost + regionalOrderCo2CostPerUnit;
+      const optimalPriceDC16 = fullEffectiveMarginalCost * (sku.elasticity / (sku.elasticity - 1));
+      let baseRecPrice = optimalPriceDC16 * 0.65 + sku.initialPrice * 0.42;
+
+      const daysOfStockOnHand = dailySalesRate > 0 ? (effectiveStock / dailySalesRate) : 3;
+      let priceActionNote = 'Tối ưu biên lãi';
+      if (effectiveStock <= 0 || daysOfStockOnHand < 1.2) {
+        baseRecPrice *= 1.06; // Page 19: Short-term price increase to prevent stockout
+        priceActionNote = 'Tăng giá chống đứt hàng';
+      } else if (daysOfStockOnHand > 5.5) {
+        baseRecPrice *= 0.96; // Gently accelerate inventory turnover without selling below cost
+        priceActionNote = 'Giảm nhẹ xả tồn';
+      }
+
+      const recommendedPriceDC16 = Number(Math.min(sku.initialPrice * 1.34, Math.max(fullEffectiveMarginalCost * 1.10, baseRecPrice)).toFixed(2));
+      const netProfitPerUnit = Number((recommendedPriceDC16 - fullEffectiveMarginalCost).toFixed(2));
+
+      // Dynamic coverage days reaction to V08 (1-4d lead time), Hub Gridlock, and Endgame Liquidation
+      let effectiveCoverageDays = isEndgameLiquidation ? 0 : Math.max(0, coverageDays);
+      if (autoOrderCalc && effectiveCoverageDays > 0) {
         if (recommendedVendor === 'V08') {
           effectiveCoverageDays += 2;
           orderNote = orderNote ? `${orderNote} + V08(+2d)` : 'V08 Lead 1-4d (+2d)';
@@ -210,6 +238,8 @@ const ERPsimEngine = (() => {
           effectiveCoverageDays += 1;
           orderNote = orderNote ? `${orderNote} + Gom PO(+1d)` : 'Gom PO (+1d)';
         }
+      } else if (isEndgameLiquidation) {
+        orderNote = 'Xả kho cuối trận (AAA+)';
       }
 
       let desiredOrderQty;
@@ -235,6 +265,7 @@ const ERPsimEngine = (() => {
         savingsPerUnit: Number(savingsPerUnit.toFixed(2)),
         breakEvenLotSize,
         recommendedPriceDC16,
+        priceActionNote,
         netProfitPerUnit,
         currentStockAndOpenPo,
         effectiveStock,
@@ -255,7 +286,7 @@ const ERPsimEngine = (() => {
       };
     });
 
-    // Optional Auto-Cap at 3,950 units (avoid 4,000-unit warehouse penalty)
+    // Optional Auto-Cap 1: Warehouse Capacity Cap at 3,950 units (avoid 4,000-unit warehouse penalty)
     const rawTotalMd61 = skuAnalysis.reduce((acc, s) => acc + s.md61TargetToEnter, 0);
     const rawTotalEffStock = skuAnalysis.reduce((acc, s) => acc + s.effectiveStock, 0);
     const rawTotalOrder = skuAnalysis.reduce((acc, s) => acc + s.desiredOrderQty, 0);
@@ -275,15 +306,41 @@ const ERPsimEngine = (() => {
       });
     }
 
-    // Finalize ZMB1B regional splits and totals
+    // Optional Auto-Cap 2: Weizen Bank Cash Overdraft Protection (keep PO cost <= 80% of available Cash)
+    let wasCappedByCash = false;
+    const rawPoCost = skuAnalysis.reduce((acc, s) => {
+      const p = s.recommendedVendor === 'V04' ? s.costV04 : s.costV08;
+      return acc + s.desiredOrderQty * p;
+    }, 0);
+    const safeCashBudget = Math.max(0, availableCash * 0.82 - 1000);
+    if (autoOrderCalc && capCashSafety && rawPoCost > safeCashBudget && rawPoCost > 0) {
+      wasCappedByCash = true;
+      const cashScale = safeCashBudget / rawPoCost;
+      skuAnalysis = skuAnalysis.map(s => {
+        const cappedOrder = Math.max(0, Math.floor(s.desiredOrderQty * cashScale));
+        return {
+          ...s,
+          desiredOrderQty: cappedOrder,
+          md61TargetToEnter: s.effectiveStock + cappedOrder
+        };
+      });
+    }
+
+    // Finalize ZMB1B regional splits (PULL target vs PUSH shipment qty) and totals
     let totalMd61TargetUnits = 0;
     let totalPoCashNeeded = 0;
     let totalNewOrderUnits = 0;
 
     skuAnalysis = skuAnalysis.map(s => {
-      const zmb1bTargetNO = Math.round(s.md61TargetToEnter * s.shareNO);
-      const zmb1bTargetSO = Math.round(s.md61TargetToEnter * s.shareSO);
-      const zmb1bTargetWE = Math.max(0, s.md61TargetToEnter - zmb1bTargetNO - zmb1bTargetSO);
+      // In PULL mode: regional target inventory (~82% of total target distributed across 03N/03S/03W, keeping ~18% buffer at 03)
+      // In PUSH mode: exact shipment quantity per transfer cycle = dailySalesRate * recommendedZmb1bFreqDays * regionalShare
+      const regionalPool = zmb1bMode === 'PUSH'
+        ? Math.round(s.dailySalesRate * recommendedZmb1bFreqDays)
+        : Math.round(s.md61TargetToEnter * 0.85);
+
+      const zmb1bTargetNO = Math.round(regionalPool * s.shareNO);
+      const zmb1bTargetSO = Math.round(regionalPool * s.shareSO);
+      const zmb1bTargetWE = Math.max(0, regionalPool - zmb1bTargetNO - zmb1bTargetSO);
 
       totalMd61TargetUnits += s.md61TargetToEnter;
       totalNewOrderUnits += s.desiredOrderQty;
@@ -336,10 +393,15 @@ const ERPsimEngine = (() => {
     return {
       effectiveCarbonTax: Number(effectiveCarbonTax.toFixed(2)),
       skuAnalysis,
+      sumSkuCurrentStock,
       totalMd61TargetUnits,
       totalNewOrderUnits,
       totalPoCashNeeded: Math.round(totalPoCashNeeded),
       wasCappedTo4000,
+      wasCappedByCash,
+      recommendedZmb1bFreqDays,
+      recommendedUse03,
+      isEndgameLiquidation,
       excessUnits,
       overstockFeePerDay,
       overstockCo2PerDay,

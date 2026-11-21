@@ -53,9 +53,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================================================
   // TAB 1: LOGISTICS SUSTAINABILITY (PRESET 3) & 8 DISRUPTORS SOLVER
   // =========================================================================
+  let currentRoundNumber = 1;
+  let lastSolvedAnalysis = [];
+
   const logInputs = [
     'log-base-tax', 'log-po-lot', 'log-total-stock', 'log-transfers-day',
     'log-reg-orders', 'log-dir-orders', 'log-coverage-days', 'log-auto-order', 'log-cap-4000',
+    'log-cap-cash', 'log-available-cash', 'log-zmb1b-mode', 'log-day-in-round', 'log-is-final-round',
+    'log-auto-sync-totals',
     'dis-1-cold', 'dis-1-combo', 'dis-2-carbon', 'dis-3-supplier', 'dis-3-vendor',
     'dis-4-gridlock', 'dis-5-glitch', 'dis-6-breach', 'dis-7-flood', 'dis-7-warehouse', 'dis-8-ai'
   ];
@@ -72,15 +77,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const aiActive = document.getElementById('dis-8-ai').checked;
     const autoOrderCalc = document.getElementById('log-auto-order').checked;
     const capWarehouse4000 = document.getElementById('log-cap-4000').checked;
+    const capCashSafety = document.getElementById('log-cap-cash').checked;
+    const availableCash = Math.max(0, numVal('log-available-cash', 250000));
+    const zmb1bMode = document.getElementById('log-zmb1b-mode').value || 'PULL';
+    const dayInRound = Math.max(1, numVal('log-day-in-round', 5));
+    const isFinalRound = document.getElementById('log-is-final-round').checked;
+    const autoSyncTotals = document.getElementById('log-auto-sync-totals').checked;
     const coverageDays = Math.max(0, numVal('log-coverage-days', 5));
 
-    const res = ERPsimEngine.solveLogisticsSustainabilityPreset3({
+    // Pre-sync Total Stock from the 6 SKUs when auto-sync is enabled
+    if (autoSyncTotals) {
+      const sumStock = Object.values(skuInventoryState).reduce((acc, st) => acc + (Number(st.currentStockAndOpenPo) || 0), 0);
+      document.getElementById('log-total-stock').value = sumStock;
+    }
+
+    let res = ERPsimEngine.solveLogisticsSustainabilityPreset3({
+      roundNumber: currentRoundNumber,
+      dayInRound,
+      isFinalRound,
       baseCarbonTax: numVal('log-base-tax', 0.10),
       orderLotSizePerPo: Math.max(50, numVal('log-po-lot', 1800)),
-      totalWarehouseUnits: numVal('log-total-stock', 3600),
+      totalWarehouseUnits: numVal('log-total-stock', 1530),
       coverageDays,
       autoOrderCalc,
       capWarehouse4000,
+      availableCash,
+      capCashSafety,
+      zmb1bMode,
       transfersPerDay: numVal('log-transfers-day', 0),
       regionalSalesOrdersPerDay: numVal('log-reg-orders', 0),
       directSalesOrdersPerDay: numVal('log-dir-orders', 0),
@@ -94,6 +117,48 @@ document.addEventListener('DOMContentLoaded', () => {
       flashFloodWarehouse: floodWh,
       skuInventoryState
     });
+
+    // If autoSyncTotals is ON and totalNewOrderUnits > 0, sync #log-po-lot and re-solve once for exact PO fee amortization
+    if (autoSyncTotals && res.totalNewOrderUnits >= 50 && Math.abs(numVal('log-po-lot', 1800) - res.totalNewOrderUnits) > 5) {
+      document.getElementById('log-po-lot').value = res.totalNewOrderUnits;
+      res = ERPsimEngine.solveLogisticsSustainabilityPreset3({
+        roundNumber: currentRoundNumber,
+        dayInRound,
+        isFinalRound,
+        baseCarbonTax: numVal('log-base-tax', 0.10),
+        orderLotSizePerPo: Math.max(50, res.totalNewOrderUnits),
+        totalWarehouseUnits: numVal('log-total-stock', 1530),
+        coverageDays,
+        autoOrderCalc,
+        capWarehouse4000,
+        availableCash,
+        capCashSafety,
+        zmb1bMode,
+        transfersPerDay: numVal('log-transfers-day', 0),
+        regionalSalesOrdersPerDay: numVal('log-reg-orders', 0),
+        directSalesOrdersPerDay: numVal('log-dir-orders', 0),
+        coldSpellActive: coldActive,
+        coldSpellCombo: document.getElementById('dis-1-combo').value,
+        carbonDecreeActive: carbonActive,
+        supplierDisruptionActive: supplierActive,
+        impactedSupplier: document.getElementById('dis-3-vendor').value,
+        hubGridlockActive: gridlockActive,
+        flashFloodActive: floodActive,
+        flashFloodWarehouse: floodWh,
+        skuInventoryState
+      });
+    }
+
+    lastSolvedAnalysis = res.skuAnalysis;
+
+    // Live ZMB1B recommendation banner
+    const zmb1bRecEl = document.getElementById('zmb1b-live-recommendation');
+    if (zmb1bRecEl) {
+      const use03Html = res.recommendedUse03
+        ? '<strong style="color:#fbbf24;">TẠM TÍCH Use 03 (Chỉ duy nhất Ngày 1 Hiệp 1)</strong>'
+        : '<strong style="color:#34d399;">BỎ TÍCH Sales from Sloc 3 / Use 03</strong>';
+      zmb1bRecEl.innerHTML = `Khuyến nghị <code>ZMB1B</code>: Chế độ <strong>${zmb1bMode}</strong> • Chu kỳ <strong>${res.recommendedZmb1bFreqDays} ngày/lần</strong> • ${use03Html} ${res.isEndgameLiquidation ? '• <strong style="color:#fb7185;">🚨 ĐANG Ở 3 NGÀY CUỐI TRẬN: Đã tự động khóa Lượng Đặt Thêm = 0 để xả kho lên AAA+!</strong>' : ''}`;
+    }
 
     // Update Top Telemetry Bar
     document.getElementById('top-md61-cap').textContent = `${res.totalMd61TargetUnits.toLocaleString('en-US')} / 4,000 u`;
@@ -109,11 +174,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('log-daily-co2-sub').textContent = `Phát thải vận hành: ${res.dailyLogisticsCo2.toLocaleString('en-US')} kg CO₂e/ngày (Thuế: ${fmtEur(res.dailyCarbonTaxEur)})`;
     document.getElementById('log-direct-loss').textContent = `-€${fmtDec(res.lossPerDirectSaleOrder, 2)} / đơn`;
 
-    // Sync landed COGS into Tab 2 Dairy Pricing State
+    // Sync landed COGS, daily sales & inventory into Tab 2 Dairy Pricing State
     res.skuAnalysis.forEach(s => {
       const pRow = dairyPricingState.find(r => r.skuCode === s.code);
       if (pRow) {
         pRow.landedCogs = s.minLandedCost;
+        pRow.inventoryRemaining = s.currentStockAndOpenPo;
+        pRow.currQty = s.dailySalesRate;
       }
     });
 
@@ -195,6 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </td>
           <td style="background:rgba(16,185,129,0.16);color:#10b981;font-weight:800;font-size:0.95rem;">
             €${fmtDec(s.recommendedPriceDC16, 2)}
+            <div style="font-size:0.65rem;color:#94a3b8;font-weight:600;">${s.priceActionNote}</div>
           </td>
           <td style="color:#34d399;font-weight:700;">+€${fmtDec(s.netProfitPerUnit, 2)}</td>
         </tr>
@@ -215,15 +283,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const capSummaryEl = document.getElementById('md61-cap-summary');
     const overCap = res.totalMd61TargetUnits > 4000;
-    const cashWarning = res.totalPoCashNeeded > 180000;
+    const cashWarning = res.totalPoCashNeeded > availableCash * 0.85;
     capSummaryEl.className = overCap ? 'alert-card danger' : (cashWarning ? 'alert-card warning' : 'alert-card');
     capSummaryEl.innerHTML = `
       <div>
         <strong>📊 Kiểm Tra Trần Kho MD61 &amp; Quỹ Tiền Mặt Weizen Bank (Trang 10, 16, 32 Participant's Guide):</strong><br/>
         • Tổng Mức Tồn Kho Mục Tiêu gõ vào <code>MD61</code>: <strong style="color:${overCap ? '#fb7185' : '#34d399'};font-size:0.95rem;">${res.totalMd61TargetUnits.toLocaleString('en-US')} / 4,000 units</strong>
         (${overCap ? `⚠️ Đang vượt trần ${res.totalMd61TargetUnits - 4000} units → Sẽ bị phạt €300 + 500kg CO₂e/1,000u khi hàng về!` : (res.wasCappedTo4000 ? '✅ Hệ thống đã tự động co tỷ lệ về ≤ 3,950 units để né phạt vượt kho 4,000u!' : '✅ Nằm an toàn trong trần 4,000 units miễn phí lưu kho!')})<br/>
-        • Tổng Lượng Đặt Mua Mới (PO Qty): <strong>${res.totalNewOrderUnits.toLocaleString('en-US')} units</strong> &rarr; Cần chuẩn bị Tiền mặt thanh toán (sau 5 ngày với V04): <strong style="color:${cashWarning ? '#fb7185' : '#fbbf24'};">${fmtEur(res.totalPoCashNeeded)}</strong>
-        ${cashWarning ? ' <strong style="color:#fb7185;">(⚠️ Cẩn thận ở Round 1: vốn khởi đầu chỉ có €250,000 Cash, nên giảm ngày phủ hàng xuống 4 ngày nếu Cash chưa về kịp!)</strong>' : ' <em>(An toàn với quỹ tiền mặt khởi điểm €250,000 của Weizen Bank).</em>'}
+        • Tổng Lượng Đặt Mua Mới (PO Qty): <strong>${res.totalNewOrderUnits.toLocaleString('en-US')} units</strong> &rarr; Tiền mặt cần thanh toán (sau 5 ngày với V04): <strong style="color:${cashWarning ? '#fb7185' : '#fbbf24'};">${fmtEur(res.totalPoCashNeeded)}</strong> / Tiền mặt hiện có: <strong>${fmtEur(availableCash)}</strong>
+        ${res.wasCappedByCash ? ' <strong style="color:#34d399;">(🛡️ Đã tự động giới hạn PO trong 82% quỹ tiền mặt hiện có để chống âm tài khoản 113300 Weizen Bank!)</strong>' : (cashWarning ? ' <strong style="color:#fb7185;">(⚠️ Hãy tích ô "Chống Âm Tiền Mặt Weizen Bank" để hệ thống tự co đơn PO về ngưỡng an toàn!)</strong>' : ' <em>(An toàn tuyệt đối trước hạn mức thấu chi Weizen Bank).</em>')}
       </div>
     `;
 
@@ -253,10 +321,81 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Quick MD61 Coverage Presets
+  // Quick MD61 Coverage Presets & 1-Click Round Buttons & Copy Buttons
+  document.querySelectorAll('.round-quick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.round-quick-btn').forEach(b => {
+        b.classList.remove('btn-primary');
+        b.classList.add('btn-outline');
+      });
+      btn.classList.remove('btn-outline');
+      btn.classList.add('btn-primary');
+
+      currentRoundNumber = Number(btn.dataset.round) || 1;
+      const tax = Number(btn.dataset.tax) || 0.10;
+      document.getElementById('log-base-tax').value = fmtDec(tax, 2);
+      const dayInRound = Math.max(1, numVal('log-day-in-round', 5));
+      const elapsedEl = document.getElementById('val-elapsed');
+      if (elapsedEl) {
+        elapsedEl.value = (currentRoundNumber - 1) * 10 + dayInRound;
+        updateValuationModule();
+      }
+      updateLogisticsPreset3Module();
+    });
+  });
+
+  document.getElementById('log-day-in-round').addEventListener('change', () => {
+    const dayInRound = Math.max(1, numVal('log-day-in-round', 5));
+    const elapsedEl = document.getElementById('val-elapsed');
+    if (elapsedEl) {
+      elapsedEl.value = (currentRoundNumber - 1) * 10 + dayInRound;
+      updateValuationModule();
+    }
+    updateLogisticsPreset3Module();
+  });
+
+  document.getElementById('log-available-cash').addEventListener('input', () => {
+    const cashVal = numVal('log-available-cash', 250000);
+    const valCashEl = document.getElementById('val-cash');
+    if (valCashEl) {
+      valCashEl.value = cashVal;
+      updateValuationModule();
+    }
+  });
+
+  function showCopyToast(msg) {
+    const el = document.getElementById('copy-toast-msg');
+    if (!el) return;
+    el.textContent = msg;
+    setTimeout(() => { el.textContent = ''; }, 3000);
+  }
+
+  document.getElementById('btn-copy-md61').addEventListener('click', () => {
+    const text = lastSolvedAnalysis.map(s => s.md61TargetToEnter).join('\n');
+    navigator.clipboard.writeText(text).then(() => showCopyToast('✅ Đã copy 6 số MD61 (dán thẳng vào cột 2 MD61)!'));
+  });
+
+  document.getElementById('btn-copy-vk32').addEventListener('click', () => {
+    const text = lastSolvedAnalysis.map(s => fmtDec(s.recommendedPriceDC16, 2)).join('\n');
+    navigator.clipboard.writeText(text).then(() => showCopyToast('✅ Đã copy 6 giá bán tối ưu VK32 (DC 16)!'));
+  });
+
+  document.getElementById('btn-copy-zmb1b').addEventListener('click', () => {
+    const text = lastSolvedAnalysis.map(s => `${s.code}\t${s.zmb1bTargetNO}\t${s.zmb1bTargetSO}\t${s.zmb1bTargetWE}`).join('\n');
+    navigator.clipboard.writeText(text).then(() => showCopyToast('✅ Đã copy bảng phân bổ ZMB1B (03N / 03S / 03W)!'));
+  });
+
+  document.getElementById('btn-toggle-quick-paste').addEventListener('click', () => {
+    const drawer = document.getElementById('tab1-quick-paste-drawer');
+    if (drawer) {
+      drawer.style.display = drawer.style.display === 'none' ? 'block' : 'none';
+    }
+  });
+
   document.getElementById('btn-md61-preset-start').addEventListener('click', () => {
     document.getElementById('log-auto-order').checked = true;
     document.getElementById('log-cap-4000').checked = true;
+    document.getElementById('log-cap-cash').checked = true;
     document.getElementById('log-coverage-days').value = 4;
     updateLogisticsPreset3Module();
   });
@@ -493,81 +632,110 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // =========================================================================
-  // TAB 4: SAP CLIPBOARD IMPORTER (ZVA05 / ZVC2 / ZMB52) & ODATA CONNECTOR
+  // UNIVERSAL SAP REPORT PARSER (ZMB52 / ZVC2 / ZVA05 / ZME2N) FOR TAB 1 & TAB 4
   // =========================================================================
-  document.getElementById('btn-load-sample-tsv').addEventListener('click', () => {
-    const sample = [
-      'Area\tMaterial\tDescription\tPrice\tQty\tInventory',
-      'NO\tAA-T01\tMilk\t28.20\t420\t480',
-      'SO\tAA-T01\tMilk\t28.20\t290\t480',
-      'WE\tAA-T01\tMilk\t28.20\t310\t480',
-      'NO\tAA-T02\tCream\t87.50\t95\t140',
-      'SO\tAA-T02\tCream\t87.50\t165\t140',
-      'WE\tAA-T02\tCream\t87.50\t110\t140',
-      'NO\tAA-T03\tYoghurt\t31.80\t240\t320',
-      'SO\tAA-T03\tYoghurt\t31.80\t310\t320',
-      'WE\tAA-T03\tYoghurt\t31.80\t210\t320',
-      'NO\tAA-T04\tCheese\t103.00\t220\t0',
-      'SO\tAA-T04\tCheese\t103.00\t120\t0',
-      'WE\tAA-T04\tCheese\t103.00\t140\t0',
-      'NO\tAA-T05\tButter\t74.00\t135\t190',
-      'SO\tAA-T05\tButter\t74.00\t155\t190',
-      'WE\tAA-T05\tButter\t74.00\t210\t190',
-      'NO\tAA-T06\tIce Cream\t53.50\t115\t160',
-      'SO\tAA-T06\tIce Cream\t53.50\t185\t160',
-      'WE\tAA-T06\tIce Cream\t53.50\t130\t160'
-    ].join('\n');
-    document.getElementById('sap-raw-paste').value = sample;
-  });
+  const SAMPLE_SAP_PASTE = [
+    'Rnd\tDay\tArea\tMaterial\tDescription\tPrice\tQty\tInventory',
+    '01\t04\tNO\tAA-T01\tMilk\t28.20\t85\t480',
+    '01\t04\tSO\tAA-T01\tMilk\t28.20\t65\t480',
+    '01\t04\tWE\tAA-T01\tMilk\t28.20\t70\t480',
+    '01\t05\tNO\tAA-T01\tMilk\t28.20\t90\t480',
+    '01\t05\tSO\tAA-T01\tMilk\t28.20\t70\t480',
+    '01\t05\tWE\tAA-T01\tMilk\t28.20\t75\t480',
+    '01\t05\tNO\tAA-T02\tCream\t87.50\t28\t140',
+    '01\t05\tSO\tAA-T02\tCream\t87.50\t42\t140',
+    '01\t05\tWE\tAA-T02\tCream\t87.50\t26\t140',
+    '01\t05\tNO\tAA-T03\tYoghurt\t31.80\t58\t320',
+    '01\t05\tSO\tAA-T03\tYoghurt\t31.80\t74\t320',
+    '01\t05\tWE\tAA-T03\tYoghurt\t31.80\t50\t320',
+    '01\t05\tNO\tAA-T04\tCheese\t103.00\t52\t95',
+    '01\t05\tSO\tAA-T04\tCheese\t103.00\t30\t95',
+    '01\t05\tWE\tAA-T04\tCheese\t103.00\t36\t95',
+    '01\t05\tNO\tAA-T05\tButter\t74.00\t34\t190',
+    '01\t05\tSO\tAA-T05\tButter\t74.00\t38\t190',
+    '01\t05\tWE\tAA-T05\tButter\t74.00\t48\t190',
+    '01\t05\tNO\tAA-T06\tIce Cream\t53.50\t26\t160',
+    '01\t05\tSO\tAA-T06\tIce Cream\t53.50\t44\t160',
+    '01\t05\tWE\tAA-T06\tIce Cream\t53.50\t30\t160'
+  ].join('\n');
 
-  document.getElementById('btn-parse-sap-paste').addEventListener('click', () => {
-    const raw = document.getElementById('sap-raw-paste').value;
-    const parsed = ERPsimEngine.parseSapTableText(raw);
-    const statusEl = document.getElementById('sap-parse-status');
-
+  function parseAndSyncAnySapReport(rawText, statusEl) {
+    const parsed = ERPsimEngine.parseSapTableText(rawText);
     if (!parsed.records || parsed.records.length === 0) {
-      statusEl.style.color = '#fb7185';
-      statusEl.textContent = 'Không tìm thấy dòng dữ liệu hợp lệ. Hãy chắc chắn dòng đầu tiên là tiêu đề cột.';
+      if (statusEl) {
+        statusEl.style.color = '#fb7185';
+        statusEl.textContent = 'Không tìm thấy dòng dữ liệu hợp lệ. Hãy chắc chắn dòng đầu tiên là tiêu đề cột từ SAP.';
+      }
       return;
     }
 
-    const dairyRegAgg = {};
+    const headersUpper = (parsed.headers || []).map(h => h.toUpperCase());
+    const isZmb52Only = headersUpper.includes('SLOC') && headersUpper.includes('STOCK') && !headersUpper.includes('PRICE') && !headersUpper.includes('VALUE');
+    const isZme2nOnly = headersUpper.includes('STATUS') && (headersUpper.includes('RECEPTION') || headersUpper.includes('VENDOR'));
+
+    const dairyAgg = {};
     let matchedRows = 0;
 
     parsed.records.forEach(rec => {
-      const rawSku = (rec.Material || rec.SKU || '').trim();
+      const rawSku = (rec.Material || rec.MATERIAL || rec.SKU || '').trim();
       const dairyMatch = rawSku.match(/T0[1-6]$/i);
       if (!dairyMatch) return;
 
       const dCode = dairyMatch[0].toUpperCase();
-      if (!dairyRegAgg[dCode]) {
-        dairyRegAgg[dCode] = { NO: 0, SO: 0, WE: 0, totalQty: 0, lastPrice: null, lastInv: null };
+      if (!dairyAgg[dCode]) {
+        dairyAgg[dCode] = { NO: 0, SO: 0, WE: 0, totalQty: 0, stockSum: 0, openPoSum: 0, lastPrice: null, lastInv: null, daysSet: new Set() };
       }
 
-      const qty = Number(rec.Qty || rec.Quantity || rec.Stock) || 0;
-      const area = (rec.Area || rec.Region || rec.SLoc || '').trim().toUpperCase();
-
-      if (area.includes('N')) dairyRegAgg[dCode].NO += qty;
-      else if (area.includes('S')) dairyRegAgg[dCode].SO += qty;
-      else if (area.includes('W')) dairyRegAgg[dCode].WE += qty;
-
-      dairyRegAgg[dCode].totalQty += qty;
-      if (rec.Price !== undefined && rec.Price !== '') {
-        dairyRegAgg[dCode].lastPrice = Number(rec.Price);
+      const dayKey = `${rec.Rnd || rec.Round || '1'}_${rec.Day || '1'}`;
+      if (rec.Day !== undefined && rec.Day !== '') {
+        dairyAgg[dCode].daysSet.add(dayKey);
       }
-      if (rec.Inventory !== undefined && rec.Inventory !== '') {
-        dairyRegAgg[dCode].lastInv = Number(rec.Inventory);
+
+      if (isZmb52Only) {
+        const stQty = Number(String(rec.Stock || rec.Qty || '0').replace(/,/g, '')) || 0;
+        dairyAgg[dCode].stockSum += stQty;
+      } else if (isZme2nOnly) {
+        const stStatus = String(rec.Status || '').toUpperCase();
+        if (!stStatus.includes('DELIVERED')) {
+          const poQty = Number(String(rec.Quantity || rec.Qty || '0').replace(/,/g, '')) || 0;
+          dairyAgg[dCode].openPoSum += poQty;
+        }
+      } else {
+        const qty = Number(String(rec.Qty || rec.Quantity || '0').replace(/,/g, '')) || 0;
+        const area = (rec.Area || rec.Region || '').trim().toUpperCase();
+
+        if (area.includes('N')) dairyAgg[dCode].NO += qty;
+        else if (area.includes('S')) dairyAgg[dCode].SO += qty;
+        else if (area.includes('W')) dairyAgg[dCode].WE += qty;
+
+        dairyAgg[dCode].totalQty += qty;
+        if (rec.Price !== undefined && rec.Price !== '') {
+          dairyAgg[dCode].lastPrice = Number(String(rec.Price).replace(/,/g, ''));
+        }
+        if (rec.Inventory !== undefined && rec.Inventory !== '') {
+          dairyAgg[dCode].lastInv = Number(String(rec.Inventory).replace(/,/g, ''));
+        }
       }
       matchedRows++;
     });
 
-    Object.keys(dairyRegAgg).forEach(code => {
-      const agg = dairyRegAgg[code];
-      if (skuInventoryState[code]) {
+    Object.keys(dairyAgg).forEach(code => {
+      const agg = dairyAgg[code];
+      if (!skuInventoryState[code]) return;
+
+      if (isZmb52Only) {
+        skuInventoryState[code].currentStockAndOpenPo = agg.stockSum;
+      } else if (isZme2nOnly) {
+        skuInventoryState[code].currentStockAndOpenPo += agg.openPoSum;
+      } else {
         if (agg.NO > 0 || agg.SO > 0 || agg.WE > 0) {
           skuInventoryState[code].salesNO = agg.NO;
           skuInventoryState[code].salesSO = agg.SO;
           skuInventoryState[code].salesWE = agg.WE;
+        }
+        const numDays = Math.max(1, agg.daysSet.size);
+        if (agg.totalQty > 0) {
+          skuInventoryState[code].dailySalesRate = Math.round(agg.totalQty / numDays);
         }
         if (agg.lastInv !== null && Number.isFinite(agg.lastInv)) {
           skuInventoryState[code].currentStockAndOpenPo = agg.lastInv;
@@ -576,19 +744,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const pIdx = dairyPricingState.findIndex(r => r.skuCode === code);
       if (pIdx >= 0) {
-        dairyPricingState[pIdx].prevPrice = dairyPricingState[pIdx].currPrice;
-        dairyPricingState[pIdx].prevQty = dairyPricingState[pIdx].currQty;
-        if (agg.lastPrice) dairyPricingState[pIdx].currPrice = agg.lastPrice;
-        if (agg.totalQty > 0) dairyPricingState[pIdx].currQty = agg.totalQty;
-        if (agg.lastInv !== null && Number.isFinite(agg.lastInv)) {
-          dairyPricingState[pIdx].inventoryRemaining = agg.lastInv;
+        if (agg.lastPrice) {
+          dairyPricingState[pIdx].prevPrice = dairyPricingState[pIdx].currPrice;
+          dairyPricingState[pIdx].currPrice = agg.lastPrice;
         }
+        if (skuInventoryState[code].dailySalesRate > 0) {
+          dairyPricingState[pIdx].prevQty = dairyPricingState[pIdx].currQty;
+          dairyPricingState[pIdx].currQty = skuInventoryState[code].dailySalesRate;
+        }
+        dairyPricingState[pIdx].inventoryRemaining = skuInventoryState[code].currentStockAndOpenPo;
       }
     });
 
     updateLogisticsPreset3Module();
-    statusEl.style.color = '#34d399';
-    statusEl.textContent = `Đã đồng bộ thành công ${matchedRows} dòng dữ liệu Dairy (T01..T06) vào Tab 1 (MD61 & ZMB1B) và Tab 2 (Độ co giãn giá VK32 - DC 16)!`;
+    const reportType = isZmb52Only ? 'ZMB52 (Tồn kho 4 kho)' : (isZme2nOnly ? 'ZME2N (Đơn PO đang về)' : 'ZVA05 / ZVC2 (Doanh số & Tỷ lệ vùng)');
+    if (statusEl) {
+      statusEl.style.color = '#34d399';
+      statusEl.textContent = `✅ Đã nhận diện ${reportType} (${matchedRows} dòng) và tự động tính lại Lượng Đặt Thêm, Con Số MD61, ZMB1B & Giá VK32!`;
+    }
+  }
+
+  document.getElementById('btn-load-sample-tsv').addEventListener('click', () => {
+    document.getElementById('sap-raw-paste').value = SAMPLE_SAP_PASTE;
+  });
+  document.getElementById('btn-parse-sap-paste').addEventListener('click', () => {
+    parseAndSyncAnySapReport(document.getElementById('sap-raw-paste').value, document.getElementById('sap-parse-status'));
+  });
+  document.getElementById('btn-tab1-sample-paste').addEventListener('click', () => {
+    document.getElementById('tab1-raw-paste').value = SAMPLE_SAP_PASTE;
+  });
+  document.getElementById('btn-tab1-apply-paste').addEventListener('click', () => {
+    parseAndSyncAnySapReport(document.getElementById('tab1-raw-paste').value, document.getElementById('tab1-paste-status'));
   });
 
   document.getElementById('btn-test-odata').addEventListener('click', async () => {
