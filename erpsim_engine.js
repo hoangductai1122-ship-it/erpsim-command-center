@@ -549,16 +549,17 @@ const ERPsimEngine = (() => {
   }
 
   /**
-   * 6. LOGISTICS SUSTAINABILITY (PRESET 3 - DAIRY) & 8 RANDOM DISRUPTORS ENGINE
-   * Based directly on Official ERPsim Logistics Sustainability Preset 3 Job Aid & Disruptors Guide Rev 2.0
+   * 6. LOGISTICS SUSTAINABILITY (PRESET 1, 2, 3 - DAIRY) & 8 RANDOM DISRUPTORS ENGINE
+   * Based directly on Official ERPsim Logistics Sustainability Preset 1/2/3 Job Aids,
+   * Participant's Guide 2024-2025 Edition (Nov 13, 2025) & Disruptors Guide Rev 2.0
    */
   const LOGISTICS_PRESET3_SKUS = [
-    { code: 'T01', name: 'Milk ($$-T01)',      initialStock: 950, costV04: 22.95, costV08: 24.10, initialPrice: 25.25, elasticity: 3.15 },
-    { code: 'T02', name: 'Cream ($$-T02)',     initialStock: 300, costV04: 72.07, costV08: 73.67, initialPrice: 75.78, elasticity: 2.65 },
-    { code: 'T03', name: 'Yoghurt ($$-T03)',   initialStock: 700, costV04: 25.85, costV08: 27.14, initialPrice: 28.43, elasticity: 3.05 },
-    { code: 'T04', name: 'Cheese ($$-T04)',    initialStock: 350, costV04: 82.68, costV08: 86.81, initialPrice: 90.95, elasticity: 2.45 },
-    { code: 'T05', name: 'Butter ($$-T05)',    initialStock: 400, costV04: 59.88, costV08: 62.87, initialPrice: 65.87, elasticity: 2.75 },
-    { code: 'T06', name: 'Ice Cream ($$-T06)', initialStock: 300, costV04: 43.15, costV08: 45.31, initialPrice: 47.47, elasticity: 2.85 }
+    { code: 'T01', name: 'Milk ($$-T01)',      initialStock: 950, costV04: 22.95, costV08: 24.10, initialPrice: 25.25, elasticity: 3.15, defaultTarget: 1100 },
+    { code: 'T02', name: 'Cream ($$-T02)',     initialStock: 300, costV04: 72.07, costV08: 75.67, initialPrice: 79.78, elasticity: 2.55, defaultTarget: 450  },
+    { code: 'T03', name: 'Yoghurt ($$-T03)',   initialStock: 700, costV04: 25.85, costV08: 27.14, initialPrice: 28.43, elasticity: 3.05, defaultTarget: 850  },
+    { code: 'T04', name: 'Cheese ($$-T04)',    initialStock: 350, costV04: 82.68, costV08: 86.81, initialPrice: 90.95, elasticity: 2.45, defaultTarget: 550  },
+    { code: 'T05', name: 'Butter ($$-T05)',    initialStock: 400, costV04: 59.88, costV08: 62.87, initialPrice: 65.87, elasticity: 2.75, defaultTarget: 550  },
+    { code: 'T06', name: 'Ice Cream ($$-T06)', initialStock: 300, costV04: 43.15, costV08: 45.31, initialPrice: 47.47, elasticity: 2.85, defaultTarget: 450  }
   ];
 
   const LOGISTICS_DISRUPTORS = [
@@ -622,8 +623,9 @@ const ERPsimEngine = (() => {
 
   function solveLogisticsSustainabilityPreset3(params) {
     const {
+      presetMode = 'PRESET3', // 'PRESET1', 'PRESET2', 'PRESET3'
       currentRound = 1,
-      baseCarbonTax = 0.10, // Round 1 = 0.10, increases +0.05 per round
+      baseCarbonTax = 0.10, // Preset 3 starts at 0.10 (+0.05/round); Preset 1 & 2 fixed at 0.15
       orderLotSizePerPo = 600,
       totalWarehouseUnits = 3600,
       coldSpellActive = false,
@@ -634,52 +636,85 @@ const ERPsimEngine = (() => {
       hubGridlockActive = false,
       directSalesOrdersPerDay = 0,
       regionalSalesOrdersPerDay = 32,
-      transfersPerDay = 3
+      transfersPerDay = 3,
+      skuInventoryState = {} // Map of code -> { currentStockAndOpenPo, desiredOrderQty, salesNO, salesSO, salesWE }
     } = params;
 
     // 1. Effective Carbon Tax Rate (€/kg CO2e)
-    // Standard rule from Slide 7 & 14: Initial €0.10/kg, +€0.05 per round after R1 (or custom base), +€0.20 if Carbon Decree
     const effectiveCarbonTax = baseCarbonTax + (carbonDecreeActive ? 0.20 : 0);
 
     // 2. Cold Spell affected SKUs
     const coldSpellSkus = coldSpellCombo.split('_');
 
-    // 3. Supplier comparison for each of the 6 Dairy SKUs (T01..T06)
+    // Preset-specific base carbon parameters
+    const baseV04UnitCo2 = presetMode === 'PRESET1' ? 1.0 : 1.2;
+    const baseV08PoCo2 = presetMode === 'PRESET2' ? 200 : 400; // Preset 2 = 200 kg/PO, Preset 3 = 400 kg/PO
+
+    let totalMd61TargetUnits = 0;
+    let totalPoCashNeeded = 0;
+    let totalNewOrderUnits = 0;
+
+    // 3. Supplier comparison & MD61 Target Inventory Calculator for each of the 6 Dairy SKUs (T01..T06)
     const skuAnalysis = LOGISTICS_PRESET3_SKUS.map(sku => {
       const isColdHit = coldSpellActive && coldSpellSkus.includes(sku.code);
       const coldExtraUnitCo2 = isColdHit ? 5.0 : 0.0;
 
       // V04 unit & PO carbon
-      const v04UnitCo2 = 1.2 + coldExtraUnitCo2 + (supplierDisruptionActive && impactedSupplier === 'V04' ? 2.50 : 0);
+      const v04UnitCo2 = baseV04UnitCo2 + coldExtraUnitCo2 + (supplierDisruptionActive && impactedSupplier === 'V04' ? 2.50 : 0);
       const v04PoCo2 = 100 + (supplierDisruptionActive && impactedSupplier === 'V04' ? 200 : 0) + (hubGridlockActive ? 100 : 0);
       const v04PoFixedFee = 1000;
 
       // V08 unit & PO carbon
       const v08UnitCo2 = 0.8 + coldExtraUnitCo2 + (supplierDisruptionActive && impactedSupplier === 'V08' ? 2.50 : 0);
-      const v08PoCo2 = 400 + (supplierDisruptionActive && impactedSupplier === 'V08' ? 200 : 0) + (hubGridlockActive ? 100 : 0);
+      const v08PoCo2 = baseV08PoCo2 + (supplierDisruptionActive && impactedSupplier === 'V08' ? 200 : 0) + (hubGridlockActive ? 100 : 0);
       const v08PoFixedFee = 600;
 
       // True Landed Cost per Unit at given orderLotSizePerPo
       const safeLot = Math.max(50, orderLotSizePerPo);
       const v04LandedUnitCost = sku.costV04 + (v04UnitCo2 * effectiveCarbonTax) + (v04PoFixedFee + v04PoCo2 * effectiveCarbonTax) / safeLot;
-      const v08LandedUnitCost = sku.costV08 + (v08UnitCo2 * effectiveCarbonTax) + (v08PoFixedFee + v08PoCo2 * effectiveCarbonTax) / safeLot;
+      const v08LandedUnitCost = presetMode === 'PRESET1'
+        ? Infinity
+        : sku.costV08 + (v08UnitCo2 * effectiveCarbonTax) + (v08PoFixedFee + v08PoCo2 * effectiveCarbonTax) / safeLot;
 
-      const recommendedVendor = v04LandedUnitCost <= v08LandedUnitCost ? 'V04' : 'V08';
+      const recommendedVendor = (presetMode === 'PRESET1' || v04LandedUnitCost <= v08LandedUnitCost) ? 'V04' : 'V08';
       const minLandedCost = Math.min(v04LandedUnitCost, v08LandedUnitCost);
-      const savingsPerUnit = Math.abs(v08LandedUnitCost - v04LandedUnitCost);
+      const savingsPerUnit = presetMode === 'PRESET1' ? 0 : Math.abs(v08LandedUnitCost - v04LandedUnitCost);
 
       // Calculate Break-even Lot Size Q* where TC_V04(Q*) == TC_V08(Q*)
       const unitVarDiff = (sku.costV08 + v08UnitCo2 * effectiveCarbonTax) - (sku.costV04 + v04UnitCo2 * effectiveCarbonTax);
       const fixedPoDiff = (v04PoFixedFee + v04PoCo2 * effectiveCarbonTax) - (v08PoFixedFee + v08PoCo2 * effectiveCarbonTax);
-      const breakEvenLotSize = unitVarDiff > 0 ? Math.max(0, Math.round(fixedPoDiff / unitVarDiff)) : Infinity;
+      const breakEvenLotSize = presetMode === 'PRESET1'
+        ? 0
+        : (unitVarDiff > 0 ? Math.max(0, Math.round(fixedPoDiff / unitVarDiff)) : Infinity);
 
       // Optimal Retail Price on DC 16 (Retail Stores) using Amoroso-Robinson + Logistics Carbon pass-through
       const regionalOrderCo2CostPerUnit = (75 * effectiveCarbonTax) / 25; // ~25 units per average customer order
       const fullEffectiveMarginalCost = minLandedCost + regionalOrderCo2CostPerUnit;
       const optimalPriceDC16 = fullEffectiveMarginalCost * (sku.elasticity / (sku.elasticity - 1));
-      // Blend with market tolerance ceiling so we don't hit choke price
       const recommendedPriceDC16 = Number(Math.min(sku.initialPrice * 1.32, Math.max(fullEffectiveMarginalCost * 1.12, optimalPriceDC16 * 0.65 + sku.initialPrice * 0.42)).toFixed(2));
       const netProfitPerUnit = Number((recommendedPriceDC16 - fullEffectiveMarginalCost).toFixed(2));
+
+      // MD61 Target Inventory Formula (Participant's Guide Page 16 & 32):
+      // MRP Requisition = MD61_Target - (Current_Inventory_ZMB52 + Open_PO_ZME2N)
+      // Therefore: MD61_Target_To_Type = Current_Stock_And_Open_PO + Desired_New_Order_Qty
+      const st = skuInventoryState[sku.code] || {};
+      const currentStockAndOpenPo = st.currentStockAndOpenPo !== undefined ? st.currentStockAndOpenPo : Math.round(sku.initialStock * 0.5);
+      const desiredOrderQty = st.desiredOrderQty !== undefined ? st.desiredOrderQty : Math.round(sku.defaultTarget - currentStockAndOpenPo);
+      const md61TargetToEnter = Math.max(0, currentStockAndOpenPo + Math.max(0, desiredOrderQty));
+
+      totalMd61TargetUnits += md61TargetToEnter;
+      totalNewOrderUnits += Math.max(0, desiredOrderQty);
+      const chosenUnitPrice = recommendedVendor === 'V04' ? sku.costV04 : sku.costV08;
+      totalPoCashNeeded += Math.max(0, desiredOrderQty) * chosenUnitPrice;
+
+      // Regional ZVA05 Split (Area: NO, SO, WE) -> ZMB1B allocation
+      const sNO = st.salesNO !== undefined ? st.salesNO : 100;
+      const sSO = st.salesSO !== undefined ? st.salesSO : 100;
+      const sWE = st.salesWE !== undefined ? st.salesWE : 100;
+      const totRegSales = Math.max(1, sNO + sSO + sWE);
+      const zmb1bTargetNO = Math.round(md61TargetToEnter * (sNO / totRegSales));
+      const zmb1bTargetSO = Math.round(md61TargetToEnter * (sSO / totRegSales));
+      const zmb1bTargetWE = Math.max(0, md61TargetToEnter - zmb1bTargetNO - zmb1bTargetSO);
 
       return {
         ...sku,
@@ -687,14 +722,24 @@ const ERPsimEngine = (() => {
         v04UnitCo2: Number(v04UnitCo2.toFixed(2)),
         v08UnitCo2: Number(v08UnitCo2.toFixed(2)),
         v04LandedUnitCost: Number(v04LandedUnitCost.toFixed(2)),
-        v08LandedUnitCost: Number(v08LandedUnitCost.toFixed(2)),
+        v08LandedUnitCost: presetMode === 'PRESET1' ? null : Number(v08LandedUnitCost.toFixed(2)),
         recommendedVendor,
         savingsPerUnit: Number(savingsPerUnit.toFixed(2)),
         breakEvenLotSize,
         recommendedPriceDC16,
-        netProfitPerUnit
+        netProfitPerUnit,
+        currentStockAndOpenPo,
+        desiredOrderQty,
+        md61TargetToEnter,
+        zmb1bTargetNO,
+        zmb1bTargetSO,
+        zmb1bTargetWE
       };
     });
+
+    if (totalNewOrderUnits > 0) {
+      totalPoCashNeeded += 1000; // Add fixed PO shipping fee
+    }
 
     // 4. Warehousing & Logistics Daily Carbon + Fee Summary
     const excessUnits = Math.max(0, totalWarehouseUnits - 4000);
@@ -730,8 +775,12 @@ const ERPsimEngine = (() => {
     const lossPerDirectSaleOrder = directSalesFeeEach + (directSalesCo2Each - regionalSalesCo2Each) * effectiveCarbonTax;
 
     return {
+      presetMode,
       effectiveCarbonTax: Number(effectiveCarbonTax.toFixed(2)),
       skuAnalysis,
+      totalMd61TargetUnits,
+      totalNewOrderUnits,
+      totalPoCashNeeded: Math.round(totalPoCashNeeded),
       excessUnits,
       overstockFeePerDay,
       overstockCo2PerDay,

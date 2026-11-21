@@ -80,15 +80,23 @@
         <div class="panel-header">
           <div>
             <div class="panel-title">
-              Bộ Giải Thuật Toán Logistics Sustainability (Preset 3 - Dairy) & 8 Sự Kiện Xúc Xắc (Disruptors)
-              <span class="badge-tcode emerald">MD61: $$-T</span>
+              Bộ Giải Thuật Toán Logistics Sustainability (Preset 1, 2, 3 - Dairy) &amp; 8 Sự Kiện Xúc Xắc
+              <span class="badge-tcode emerald">MD61: $$-T (Target = Tồn + Mua)</span>
               <span class="badge-tcode amber">ZME12: V04 vs V08</span>
-              <span class="badge-tcode">ZMB1B: 03 -> 03N/S/W</span>
+              <span class="badge-tcode">ZMB1B: Sales from Sloc 3</span>
               <span class="badge-tcode rose">VK32: DC 16</span>
             </div>
             <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">
-              Khớp 100% với 2 file <strong>ERPsim Logistics Sustainability Disruptors Guide (Rev 2.0)</strong> & <strong>Preset 3 Job Aid</strong>. Khi giảng viên tung xúc xắc trúng sự kiện nào, hãy bật công tắc sự kiện đó bên dưới để hệ thống tính lại Nhà cung cấp tối ưu (V04 hay V08), Giá vốn đã cộng Thuế Carbon và Giá bán tối ưu trên kênh DC 16!
+              Khớp 100% với bộ tài liệu <strong>Participant's Guide 2024–2025</strong>, <strong>Job Aid Preset 1 / Preset 2 / Preset 3</strong> &amp; <strong>Disruptors Guide Rev 2.0</strong>. Hỗ trợ tính trực tiếp <strong>Con số phải gõ vào MD61 (Target Inventory)</strong>, phân bổ 3 kho vùng <strong>ZMB1B (NO/SO/WE)</strong> và kiểm soát Tiền mặt chống âm quỹ Weizen Bank!
             </p>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <label style="font-size:0.78rem; font-weight:700; color:#34d399;">Chế độ Preset:</label>
+            <select id="log-preset-mode" class="form-control" style="font-weight:700; border-color:#10b981;">
+              <option value="PRESET3" selected>Preset 3 (V04 vs V08 • 400kg PO V08 • Thuế 0.10 + Disruptors)</option>
+              <option value="PRESET2">Preset 2 (V04 vs V08 • 200kg PO V08 • Thuế cố định 0.15)</option>
+              <option value="PRESET1">Preset 1 (Chỉ V04 1.0kg/u • Không bán từ 03 • Thuế cố định 0.15)</option>
+            </select>
           </div>
         </div>
 
@@ -204,28 +212,36 @@
           </div>
         </div>
 
-        <!-- 6 Dairy Products Vendor & Pricing Solver Table -->
+        <!-- 6 Dairy Products Vendor, MD61 Target & Pricing Solver Table -->
+        <div class="formula-box" style="margin-bottom: 0.85rem;">
+          <strong>⚠️ QUY TẮC SỐNG CÒN TRONG MD61 (Trang 16 &amp; 32 Participant's Guide):</strong> Con số gõ vào cột thứ 2 của <code>MD61</code> là <strong>MỨC TỒN KHO MỤC TIÊU (Target Inventory)</strong>, KHÔNG phải số lượng đặt mua thêm! Khi chạy <code>MD01</code>, SAP tính: <code>Lượng Đặt Mua Mới = MD61_Target - (Tồn Kho Hiện Tại ZMB52 + Hàng Đang Về ZME2N)</code>. Hãy nhập cột <em>"Tồn + Đang Về"</em> và <em>"Lượng Muốn Mua Thêm"</em> bên dưới, hệ thống sẽ tính chính xác cột <strong>CON SỐ GÕ VÀO MD61</strong> cho bạn!
+        </div>
+
         <div class="table-wrap" style="margin-bottom: 1.25rem;">
           <table class="data-table">
             <thead>
               <tr>
                 <th>Mã Sản Phẩm Dairy</th>
-                <th>Tồn Đầu Kỳ</th>
-                <th>Giá Gốc V04 (Lead 1-2d)</th>
-                <th>Giá Gốc V08 (Lead 1-4d)</th>
-                <th>CO2/Unit (V04 | V08)</th>
-                <th>Giá Vốn Thực Đã Cộng Ship & Carbon (V04)</th>
-                <th>Giá Vốn Thực Đã Cộng Ship & Carbon (V08)</th>
-                <th>CHỌN NCC TỐI ƯU (ZME12)</th>
-                <th>Ngưỡng Lô Hòa Vốn V04</th>
-                <th>Giá Khởi Điểm</th>
-                <th>GIÁ BÁN TỐI ƯU VK32 (KÊNH DC 16)</th>
+                <th>Giá Gốc V04 | V08</th>
+                <th>CO₂/Unit (V04 | V08)</th>
+                <th>Giá Vốn Thực (V04)</th>
+                <th>Giá Vốn Thực (V08)</th>
+                <th>CHỌN NCC (ZME12)</th>
+                <th>Hòa Vốn V04</th>
+                <th>Tồn ZMB52 + Đang Về</th>
+                <th>Lượng Muốn Mua Thêm</th>
+                <th style="background:#1e3a8a;color:#93c5fd;">CON SỐ GÕ VÀO MD61</th>
+                <th>ZMB1B (NO | SO | WE)</th>
+                <th>Giá Đầu Kỳ</th>
+                <th>GIÁ TỐI ƯU VK32 (DC 16)</th>
                 <th>Lãi Ròng /Unit</th>
               </tr>
             </thead>
             <tbody id="logistics-sku-tbody"></tbody>
           </table>
         </div>
+
+        <div id="md61-cap-summary" class="alert-card" style="margin-bottom: 1.25rem;"></div>
 
         <!-- 8 Disruptors Tactical Counter-Playbook -->
         <div class="panel-header" style="margin-top: 0.5rem;">

@@ -414,20 +414,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let updatedCount = 0;
+    let dairyZva05Count = 0;
+    const dairyRegAgg = {};
+
     parsed.records.forEach(rec => {
-      const sku = (rec.SKU || rec.Material || '').trim();
+      const rawSku = (rec.SKU || rec.Material || '').trim();
+      if (!rawSku) return;
+      // Handle "$$-T01" or "AA-T01" -> "T01"
+      const dairyMatch = rawSku.match(/T0[1-6]$/i);
+      const area = (rec.Area || rec.Region || '').trim().toUpperCase();
+
+      if (dairyMatch) {
+        const dCode = dairyMatch[0].toUpperCase();
+        if (!dairyRegAgg[dCode]) dairyRegAgg[dCode] = { NO: 0, SO: 0, WE: 0 };
+        const qty = Number(rec.Qty || rec.Quantity) || 0;
+        if (area.startsWith('N')) dairyRegAgg[dCode].NO += qty;
+        else if (area.startsWith('S')) dairyRegAgg[dCode].SO += qty;
+        else if (area.startsWith('W')) dairyRegAgg[dCode].WE += qty;
+        dairyZva05Count++;
+      }
+
+      const sku = dairyMatch ? dairyMatch[0].toUpperCase() : rawSku;
       const ch = (rec.Channel || rec.DC || 'DC12').trim();
-      if (!sku) return;
 
       const existingIdx = pricingState.findIndex(p => p.skuCode === sku && p.channelCode === ch);
       const entry = {
         skuCode: sku,
         channelCode: ch,
-        cogs: Number(rec.COGS) || 1.80,
+        cogs: Number(rec.COGS || rec.Cost) || 1.80,
         prevPrice: existingIdx >= 0 ? pricingState[existingIdx].currPrice : (Number(rec.Price) || 3.40) * 0.97,
         prevQty: existingIdx >= 0 ? pricingState[existingIdx].currQty : (Number(rec.Qty) || 2000) * 1.04,
         currPrice: Number(rec.Price) || 3.50,
-        currQty: Number(rec.Qty) || 2200,
+        currQty: Number(rec.Qty || rec.Quantity) || 2200,
         marketAvgPrice: Number(rec.MarketAvgPrice) || Number(rec.Price) || 3.45,
         dailyMarketing: Number(rec.Marketing) || 0,
         inventoryRemaining: rec.Inventory !== undefined ? Number(rec.Inventory) : 1000
@@ -441,9 +459,22 @@ document.addEventListener('DOMContentLoaded', () => {
       updatedCount++;
     });
 
+    if (dairyZva05Count > 0) {
+      Object.keys(dairyRegAgg).forEach(code => {
+        if (skuInventoryState[code]) {
+          if (dairyRegAgg[code].NO > 0) skuInventoryState[code].salesNO = dairyRegAgg[code].NO;
+          if (dairyRegAgg[code].SO > 0) skuInventoryState[code].salesSO = dairyRegAgg[code].SO;
+          if (dairyRegAgg[code].WE > 0) skuInventoryState[code].salesWE = dairyRegAgg[code].WE;
+        }
+      });
+      updateLogisticsPreset3Module();
+    }
+
     renderPricingTable();
     statusEl.style.color = '#34d399';
-    statusEl.textContent = `Đã phân tích và đồng bộ thành công ${updatedCount} bản ghi SKU/Channel vào Tab 2 (Bộ Giải Ngược Cầu & Giá VK32)!`;
+    statusEl.textContent = dairyZva05Count > 0
+      ? `Đã đồng bộ thành công ${dairyZva05Count} dòng ZVA05 Dairy (Area: NO/SO/WE) vào cột ZMB1B trên Tab Logistics Sustainability!`
+      : `Đã phân tích và đồng bộ thành công ${updatedCount} bản ghi SKU/Channel vào Tab 2 (Bộ Giải Ngược Cầu & Giá VK32)!`;
   });
 
   document.getElementById('btn-test-odata').addEventListener('click', async () => {
@@ -502,16 +533,42 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // =========================================================================
-  // MODULE 0: LOGISTICS SUSTAINABILITY (PRESET 3) & 8 DISRUPTORS SOLVER
+  // MODULE 0: LOGISTICS SUSTAINABILITY (PRESET 1, 2, 3) & 8 DISRUPTORS SOLVER
   // =========================================================================
   const logInputs = [
-    'log-base-tax', 'log-po-lot', 'log-total-stock', 'log-transfers-day',
+    'log-preset-mode', 'log-base-tax', 'log-po-lot', 'log-total-stock', 'log-transfers-day',
     'log-reg-orders', 'log-dir-orders', 'dis-1-cold', 'dis-1-combo',
     'dis-2-carbon', 'dis-3-supplier', 'dis-3-vendor', 'dis-4-gridlock',
     'dis-5-glitch', 'dis-6-breach', 'dis-7-flood', 'dis-7-warehouse', 'dis-8-ai'
   ];
 
+  const skuInventoryState = {
+    T01: { currentStockAndOpenPo: 500, desiredOrderQty: 600, salesNO: 380, salesSO: 310, salesWE: 310 },
+    T02: { currentStockAndOpenPo: 150, desiredOrderQty: 300, salesNO: 110, salesSO: 140, salesWE: 100 },
+    T03: { currentStockAndOpenPo: 350, desiredOrderQty: 500, salesNO: 250, salesSO: 290, salesWE: 220 },
+    T04: { currentStockAndOpenPo: 180, desiredOrderQty: 420, salesNO: 190, salesSO: 130, salesWE: 150 },
+    T05: { currentStockAndOpenPo: 200, desiredOrderQty: 380, salesNO: 150, salesSO: 160, salesWE: 190 },
+    T06: { currentStockAndOpenPo: 150, desiredOrderQty: 300, salesNO: 120, salesSO: 170, salesWE: 130 }
+  };
+
+  const presetModeSelect = document.getElementById('log-preset-mode');
+  if (presetModeSelect) {
+    presetModeSelect.addEventListener('change', (e) => {
+      const mode = e.target.value;
+      if (mode === 'PRESET1' || mode === 'PRESET2') {
+        document.getElementById('log-base-tax').value = '0.15';
+        if (mode === 'PRESET1') {
+          document.getElementById('log-dir-orders').value = '0';
+        }
+      } else {
+        document.getElementById('log-base-tax').value = '0.10';
+      }
+      updateLogisticsPreset3Module();
+    });
+  }
+
   function updateLogisticsPreset3Module() {
+    const presetMode = document.getElementById('log-preset-mode') ? document.getElementById('log-preset-mode').value : 'PRESET3';
     const coldActive = document.getElementById('dis-1-cold').checked;
     const carbonActive = document.getElementById('dis-2-carbon').checked;
     const supplierActive = document.getElementById('dis-3-supplier').checked;
@@ -523,6 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const aiActive = document.getElementById('dis-8-ai') ? document.getElementById('dis-8-ai').checked : false;
 
     const res = ERPsimEngine.solveLogisticsSustainabilityPreset3({
+      presetMode,
       baseCarbonTax: numVal('log-base-tax', 0.10),
       orderLotSizePerPo: Math.max(50, numVal('log-po-lot', 600)),
       totalWarehouseUnits: numVal('log-total-stock', 3600),
@@ -534,7 +592,8 @@ document.addEventListener('DOMContentLoaded', () => {
       carbonDecreeActive: carbonActive,
       supplierDisruptionActive: supplierActive,
       impactedSupplier: document.getElementById('dis-3-vendor').value,
-      hubGridlockActive: gridlockActive
+      hubGridlockActive: gridlockActive,
+      skuInventoryState
     });
 
     document.getElementById('log-eff-tax').textContent = `€${fmtDec(res.effectiveCarbonTax, 2)} / kg CO₂e`;
@@ -586,24 +645,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const skuTbody = document.getElementById('logistics-sku-tbody');
     skuTbody.innerHTML = res.skuAnalysis.map(s => {
       const vColor = s.recommendedVendor === 'V04' ? '#10b981' : '#3b82f6';
+      const v08CostStr = s.v08LandedUnitCost === null ? '<span style="color:#64748b;">Không có V08</span>' : `€${fmtDec(s.v08LandedUnitCost, 2)}`;
+      const breakEvenStr = s.v08LandedUnitCost === null
+        ? 'Chỉ V04'
+        : (s.breakEvenLotSize === Infinity ? 'V08 luôn rẻ hơn' : `≥ ${s.breakEvenLotSize} u`);
+
       return `
         <tr>
           <td>
             <strong>${s.name}</strong>
-            ${s.isColdHit ? '<span class="badge-tcode rose">❄ Cold Spell +5kg</span>' : ''}
+            ${s.isColdHit ? '<span class="badge-tcode rose">❄ Cold +5kg</span>' : ''}
           </td>
-          <td>${s.initialStock}</td>
-          <td>€${fmtDec(s.costV04, 2)}</td>
-          <td>€${fmtDec(s.costV08, 2)}</td>
-          <td>${fmtDec(s.v04UnitCo2, 1)}kg | ${fmtDec(s.v08UnitCo2, 1)}kg</td>
+          <td>€${fmtDec(s.costV04, 2)} | ${s.v08LandedUnitCost === null ? '—' : '€' + fmtDec(s.costV08, 2)}</td>
+          <td>${fmtDec(s.v04UnitCo2, 1)}kg | ${s.v08LandedUnitCost === null ? '—' : fmtDec(s.v08UnitCo2, 1) + 'kg'}</td>
           <td style="${s.recommendedVendor === 'V04' ? 'color:#34d399;font-weight:700;' : ''}">€${fmtDec(s.v04LandedUnitCost, 2)}</td>
-          <td style="${s.recommendedVendor === 'V08' ? 'color:#60a5fa;font-weight:700;' : ''}">€${fmtDec(s.v08LandedUnitCost, 2)}</td>
+          <td style="${s.recommendedVendor === 'V08' ? 'color:#60a5fa;font-weight:700;' : ''}">${v08CostStr}</td>
           <td>
-            <span style="display:inline-block;padding:0.2rem 0.55rem;border-radius:4px;font-weight:800;background:${vColor}22;color:${vColor};border:1px solid ${vColor}66;">
-              CHỌN ${s.recommendedVendor} (-€${fmtDec(s.savingsPerUnit, 2)}/u)
+            <span style="display:inline-block;padding:0.2rem 0.5rem;border-radius:4px;font-weight:800;background:${vColor}22;color:${vColor};border:1px solid ${vColor}66;">
+              ${s.recommendedVendor} ${s.v08LandedUnitCost === null ? '' : `(-€${fmtDec(s.savingsPerUnit, 2)})`}
             </span>
           </td>
-          <td>${s.breakEvenLotSize === Infinity ? 'V08 luôn rẻ hơn' : `≥ ${s.breakEvenLotSize} units`}</td>
+          <td>${breakEvenStr}</td>
+          <td>
+            <input type="number" class="table-input log-inv-inp" data-sku="${s.code}" data-field="currentStockAndOpenPo" value="${s.currentStockAndOpenPo}" step="50" style="width:70px;" />
+          </td>
+          <td>
+            <input type="number" class="table-input log-inv-inp" data-sku="${s.code}" data-field="desiredOrderQty" value="${s.desiredOrderQty}" step="50" style="width:70px;" />
+          </td>
+          <td style="background:rgba(59,130,246,0.22);color:#93c5fd;font-weight:900;font-size:0.95rem;text-align:center;">
+            ${s.md61TargetToEnter.toLocaleString('en-US')}
+          </td>
+          <td style="font-size:0.76rem;color:#cbd5e1;">
+            N:<strong>${s.zmb1bTargetNO}</strong> | S:<strong>${s.zmb1bTargetSO}</strong> | W:<strong>${s.zmb1bTargetWE}</strong>
+          </td>
           <td>€${fmtDec(s.initialPrice, 2)}</td>
           <td style="background:rgba(16,185,129,0.16);color:#10b981;font-weight:800;font-size:0.95rem;">
             €${fmtDec(s.recommendedPriceDC16, 2)}
@@ -612,6 +686,35 @@ document.addEventListener('DOMContentLoaded', () => {
         </tr>
       `;
     }).join('');
+
+    skuTbody.querySelectorAll('.log-inv-inp').forEach(inp => {
+      inp.addEventListener('change', (e) => {
+        const code = e.target.dataset.sku;
+        const field = e.target.dataset.field;
+        const val = Number(e.target.value);
+        if (skuInventoryState[code]) {
+          skuInventoryState[code][field] = Number.isFinite(val) ? Math.max(0, val) : 0;
+          updateLogisticsPreset3Module();
+        }
+      });
+    });
+
+    const capSummaryEl = document.getElementById('md61-cap-summary');
+    if (capSummaryEl) {
+      const overCap = res.totalMd61TargetUnits > 4000;
+      capSummaryEl.className = overCap ? 'alert-card danger' : 'alert-card';
+      capSummaryEl.innerHTML = `
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.75rem;">
+          <div>
+            <strong>📊 Kiểm Tra Trần Kho MD61 &amp; Quỹ Tiền Mặt Weizen Bank (Trang 10, 16, 32 Participant's Guide):</strong><br/>
+            • Tổng Mức Tồn Kho Mục Tiêu gõ vào <code>MD61</code>: <strong style="color:${overCap ? '#fb7185' : '#34d399'};font-size:0.95rem;">${res.totalMd61TargetUnits.toLocaleString('en-US')} / 4,000 units</strong>
+            (${overCap ? `⚠️ Đang vượt trần ${res.totalMd61TargetUnits - 4000} units → Sẽ bị phạt €300 + 500kg CO₂e/1,000u khi hàng về!` : '✅ Nằm trong trần 4,000 units miễn phí lưu kho!'})<br/>
+            • Tổng Lượng Đặt Mua Mới (PO Qty): <strong>${res.totalNewOrderUnits.toLocaleString('en-US')} units</strong> &rarr; Cần chuẩn bị Tiền mặt thanh toán (sau 5 ngày với V04): <strong style="color:#fbbf24;">${fmtEur(res.totalPoCashNeeded)}</strong>
+            <em>(Khởi điểm công ty chỉ có €250,000 Cash; tuyệt đối không đặt PO vượt quá Cash hiện có + Tiền khách trả sau 4 ngày để tránh bị Weizen Bank phạt thấu chi hạ Credit Rating!).</em>
+          </div>
+        </div>
+      `;
+    }
 
     const disTbody = document.getElementById('logistics-disruptors-tbody');
     disTbody.innerHTML = ERPsimEngine.LOGISTICS_DISRUPTORS.map(d => {

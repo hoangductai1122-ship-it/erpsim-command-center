@@ -687,13 +687,13 @@
       <div class="grid-2">
         <div class="card">
           <div class="card-title">
-            <span>1. Lập Dự Báo Nhu Cầu Mua Hàng</span>
+            <span>1. Lập Dự Báo Mức Tồn Kho Mục Tiêu (Target Inventory)</span>
             <span class="tcode">MD61</span>
           </div>
           <ol class="step-list">
-            <li>Tích chọn ô tròn <span class="kbd-btn">Product group</span> và nhập <strong><code>$$-T</code></strong> <em>(thay <code>$$</code> bằng ký hiệu đội của bạn, ví dụ <code>A1-T</code> hoặc <code>Z1-T</code>)</em>.</li>
-            <li>Bấm nút <span class="kbd-btn">Continue</span> (hoặc phím <span class="kbd-btn">Enter</span>).</li>
-            <li>Nhập số lượng muốn đặt mua cho từng mặt hàng (<code>T01..T06</code>) vào <strong>Cột ngày thứ 2 (2nd date column)</strong>. <em>Lưu ý sống còn: Chỉ nhập vào đúng 1 cột ngày duy nhất để SAP gộp chung thành 1 PO!</em></li>
+            <li>Tích chọn ô tròn <span class="kbd-btn">Product group</span> và nhập <strong><code>$$-T</code></strong> <em>(thay <code>$$</code> bằng ký hiệu đội của bạn, ví dụ <code>A1-T</code> hoặc <code>Z1-T</code>)</em> &rarr; Bấm <span class="kbd-btn">Continue (Enter)</span>.</li>
+            <li><strong>QUY TẮC SỐNG CÒN (Trang 16 &amp; 32 Participant's Guide):</strong> Con số nhập vào <strong>Cột ngày thứ 2 (2nd column)</strong> của <code>MD61</code> là <strong>MỨC TỒN KHO MỤC TIÊU (Target Inventory)</strong>, KHÔNG phải số lượng đặt mua thêm! Khi chạy <code>MD01</code>, SAP lấy: <code>Số lượng đặt mua mới = Con số ở MD61 - (Tồn kho hiện tại ZMB52 + Đơn PO đang trên đường về ZME2N)</code>.</li>
+            <li>Ví dụ: Nếu kho còn <code>345</code> hộp mà bạn muốn mua thêm <code>155</code> hộp, bạn phải gõ <strong><code>500</code></strong> (<code>345 + 155</code>) vào <code>MD61</code>! (Nếu gõ số nhỏ hơn tồn kho hiện tại, <code>ME59N</code> sẽ báo <em>"No suitable requisitions found"</em>).</li>
             <li>Bấm nút <span class="kbd-btn">Save (Ctrl + S)</span>.</li>
           </ol>
         </div>
@@ -863,12 +863,12 @@
                 <td>Cream (Kem sữa)</td>
                 <td>300 units</td>
                 <td style="color:#34d399;font-weight:700;">€72.07</td>
-                <td>€73.67</td>
-                <td>V04 rẻ hơn <strong>€1.60</strong></td>
-                <td>€75.78</td>
-                <td style="background:rgba(16,185,129,0.15);color:#10b981;font-weight:800;">€84.50 – €86.50</td>
-                <td>~€13.20</td>
-                <td style="color:#38bdf8;font-weight:700;">€11.00 / kg CO2e (Cao #3)</td>
+                <td>€75.67</td>
+                <td>V04 rẻ hơn <strong>€3.60</strong></td>
+                <td>€79.78</td>
+                <td style="background:rgba(16,185,129,0.15);color:#10b981;font-weight:800;">€86.50 – €89.50</td>
+                <td>~€15.50</td>
+                <td style="color:#38bdf8;font-weight:700;">€12.92 / kg CO2e (Cao #2)</td>
               </tr>
               <tr>
                 <td><strong>$$-T03</strong></td>
