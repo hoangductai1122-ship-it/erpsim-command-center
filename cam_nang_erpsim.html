@@ -1438,11 +1438,11 @@
             Debt Loading = (Cash + Accounts Receivable) - (|Bank Loans| + |Accounts Payable|)
           </div>
           <div class="formula-block">
-            Company Valuation = [ (Current Profit / Elapsed_Steps) × Total_Steps ] / (7% + Company_Risk_Rate)
+            Company Valuation = [ (Current Profit / Elapsed_Days) × 80 Days ] / (7% + Company_Risk_Rate)
           </div>
           <ul class="step-list">
-            <li>Khi <strong><code>Debt Loading &ge; €0</code></strong>: Đạt hạng tín dụng cao nhất <strong><code>AAA+</code></strong> (Company Risk Rate = <strong>3.00%</strong>, tổng mẫu số chiết khấu = <strong>10.00%</strong> &rarr; Nhân <strong>10 lần</strong> lợi nhuận năm hóa).</li>
-            <li>Mỗi <code>-€1,000,000</code> Debt Loading âm sẽ làm tụt 1 bậc tín dụng (<code>AA+, AA, AA-, A+...</code> xuống <code>C = 15% risk</code>).</li>
+            <li>Khi <strong><code>Debt Loading &ge; €0</code></strong>: Đạt hạng tín dụng cao nhất <strong><code>AAA+</code></strong> (Interest Rate = <strong>6.00%</strong>, Risk Rate = <strong>3.00%</strong>, tổng chiết khấu = <strong>10.00%</strong> &rarr; Cuối R1 nhân <strong>×80</strong>, R2 nhân <strong>×40</strong>, R3 nhân <strong>×26.67</strong>, R4 nhân <strong>×20</strong> lợi nhuận lũy kế!).</li>
+            <li>Với vốn cổ đông <code>€500,000</code> của bản <strong>Logistics Preset 3</strong>, chỉ cần <strong><code>Debt Loading</code> âm khoảng <code>-€50,000</code></strong> (hoặc bị âm tiền mặt thấu chi <strong>Weizen Bank</strong>) là tụt 1 bậc tín dụng (<code>AAA+ &rarr; AA+ = 10.75%</code>, mất ngay <strong>7% giá trị công ty</strong>!).</li>
             <li><strong>Mẹo Cuối Game:</strong> Giá trị Hàng tồn kho (<code>ZMB52</code>) không được cộng vào <code>Debt Loading</code>, nhưng nợ phải trả nhà cung cấp (<code>AP</code>) lại bị trừ trực tiếp. Vì vậy ở 3–4 ngày cuối trận, ngừng mua hàng mới và xả tồn kho thành Tiền mặt/Phải thu sẽ đẩy hạng tín dụng vọt lên <strong><code>AAA+</code></strong>!</li>
           </ul>
         </div>

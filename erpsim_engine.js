@@ -8,40 +8,42 @@
  */
 
 const ERPsimEngine = (() => {
-  // 1. OFFICIAL 21-TIER CREDIT RATING & COMPANY RISK RATE TABLE
+  // 1. LOGISTICS GAME (PRESET 3 - €500,000 EQUITY) 21-TIER CREDIT RATING & COMPANY RISK RATE TABLE
+  // Calibrated to Preset 3 €500k equity (-€50,000 per tier, verified against real R1-R4 Preset 3 statements)
   const CREDIT_RATING_TABLE = [
     { minDebtLoading: 0, rating: 'AAA+', riskRate: 0.0300, tierIndex: 1, color: '#10b981' },
-    { minDebtLoading: -1000000, rating: 'AA+', riskRate: 0.0375, tierIndex: 2, color: '#22c55e' },
-    { minDebtLoading: -2000000, rating: 'AA', riskRate: 0.0400, tierIndex: 3, color: '#34d399' },
-    { minDebtLoading: -3000000, rating: 'AA-', riskRate: 0.0425, tierIndex: 4, color: '#4ade80' },
-    { minDebtLoading: -4000000, rating: 'A+', riskRate: 0.0475, tierIndex: 5, color: '#84cc16' },
-    { minDebtLoading: -5000000, rating: 'A', riskRate: 0.0500, tierIndex: 6, color: '#a3e635' },
-    { minDebtLoading: -6000000, rating: 'A-', riskRate: 0.0525, tierIndex: 7, color: '#bef264' },
-    { minDebtLoading: -7000000, rating: 'BBB+', riskRate: 0.0575, tierIndex: 8, color: '#eab308' },
-    { minDebtLoading: -8000000, rating: 'BBB', riskRate: 0.0600, tierIndex: 9, color: '#facc15' },
-    { minDebtLoading: -9000000, rating: 'BBB-', riskRate: 0.0625, tierIndex: 10, color: '#fde047' },
-    { minDebtLoading: -10000000, rating: 'BB+', riskRate: 0.0675, tierIndex: 11, color: '#f59e0b' },
-    { minDebtLoading: -11000000, rating: 'BB', riskRate: 0.0700, tierIndex: 12, color: '#fb923c' },
-    { minDebtLoading: -12000000, rating: 'BB-', riskRate: 0.0725, tierIndex: 13, color: '#f97316' },
-    { minDebtLoading: -13000000, rating: 'B+', riskRate: 0.0775, tierIndex: 14, color: '#ea580c' },
-    { minDebtLoading: -14000000, rating: 'B', riskRate: 0.0800, tierIndex: 15, color: '#ef4444' },
-    { minDebtLoading: -15000000, rating: 'B-', riskRate: 0.0825, tierIndex: 16, color: '#dc2626' },
-    { minDebtLoading: -16000000, rating: 'CCC+', riskRate: 0.0900, tierIndex: 17, color: '#b91c1c' },
-    { minDebtLoading: -17000000, rating: 'CCC', riskRate: 0.1000, tierIndex: 18, color: '#991b1b' },
-    { minDebtLoading: -18000000, rating: 'CCC-', riskRate: 0.1100, tierIndex: 19, color: '#7f1d1d' },
-    { minDebtLoading: -19000000, rating: 'CC', riskRate: 0.1200, tierIndex: 20, color: '#641e16' },
+    { minDebtLoading: -50000, rating: 'AA+', riskRate: 0.0375, tierIndex: 2, color: '#22c55e' },
+    { minDebtLoading: -100000, rating: 'AA', riskRate: 0.0400, tierIndex: 3, color: '#34d399' },
+    { minDebtLoading: -150000, rating: 'AA-', riskRate: 0.0425, tierIndex: 4, color: '#4ade80' },
+    { minDebtLoading: -200000, rating: 'A+', riskRate: 0.0475, tierIndex: 5, color: '#84cc16' },
+    { minDebtLoading: -250000, rating: 'A', riskRate: 0.0500, tierIndex: 6, color: '#a3e635' },
+    { minDebtLoading: -300000, rating: 'A-', riskRate: 0.0525, tierIndex: 7, color: '#bef264' },
+    { minDebtLoading: -350000, rating: 'BBB+', riskRate: 0.0575, tierIndex: 8, color: '#eab308' },
+    { minDebtLoading: -400000, rating: 'BBB', riskRate: 0.0600, tierIndex: 9, color: '#facc15' },
+    { minDebtLoading: -450000, rating: 'BBB-', riskRate: 0.0625, tierIndex: 10, color: '#fde047' },
+    { minDebtLoading: -500000, rating: 'BB+', riskRate: 0.0675, tierIndex: 11, color: '#f59e0b' },
+    { minDebtLoading: -550000, rating: 'BB', riskRate: 0.0700, tierIndex: 12, color: '#fb923c' },
+    { minDebtLoading: -600000, rating: 'BB-', riskRate: 0.0725, tierIndex: 13, color: '#f97316' },
+    { minDebtLoading: -650000, rating: 'B+', riskRate: 0.0775, tierIndex: 14, color: '#ea580c' },
+    { minDebtLoading: -700000, rating: 'B', riskRate: 0.0800, tierIndex: 15, color: '#ef4444' },
+    { minDebtLoading: -750000, rating: 'B-', riskRate: 0.0825, tierIndex: 16, color: '#dc2626' },
+    { minDebtLoading: -800000, rating: 'CCC+', riskRate: 0.0900, tierIndex: 17, color: '#b91c1c' },
+    { minDebtLoading: -850000, rating: 'CCC', riskRate: 0.1000, tierIndex: 18, color: '#991b1b' },
+    { minDebtLoading: -900000, rating: 'CCC-', riskRate: 0.1100, tierIndex: 19, color: '#7f1d1d' },
+    { minDebtLoading: -950000, rating: 'CC', riskRate: 0.1200, tierIndex: 20, color: '#641e16' },
     { minDebtLoading: -Infinity, rating: 'C', riskRate: 0.1500, tierIndex: 21, color: '#450a0a' }
   ];
 
   // 2. OFFICIAL 6 DAIRY PRODUCTS IN LOGISTICS SUSTAINABILITY (PRESET 3)
-  // Elasticities calibrated to homogeneous Dairy commodity competition on DC 16 (epsilon ~ 6.2 - 7.2 -> Lerner optimal Gross Margin ~ 14.5% - 17%)
+  // Initial Stock = 3,000 units (~10 days of sales -> ~300 units/day total baseline)
+  // Elasticities calibrated to homogeneous Dairy commodity competition on DC 16 (epsilon ~ 6.2 - 7.1 -> Lerner optimal Gross Margin ~ 14.5% - 17%)
   const LOGISTICS_PRESET3_SKUS = [
-    { code: 'T01', name: 'Milk ($$-T01)', shortName: 'Milk', initialStock: 950, costV04: 22.95, costV08: 24.10, initialPrice: 25.25, elasticity: 7.10, defaultTarget: 1100 },
-    { code: 'T02', name: 'Cream ($$-T02)', shortName: 'Cream', initialStock: 300, costV04: 72.07, costV08: 75.67, initialPrice: 79.78, elasticity: 6.35, defaultTarget: 450 },
-    { code: 'T03', name: 'Yoghurt ($$-T03)', shortName: 'Yoghurt', initialStock: 700, costV04: 25.85, costV08: 27.14, initialPrice: 28.43, elasticity: 6.95, defaultTarget: 850 },
-    { code: 'T04', name: 'Cheese ($$-T04)', shortName: 'Cheese', initialStock: 350, costV04: 82.68, costV08: 86.81, initialPrice: 90.95, elasticity: 6.20, defaultTarget: 550 },
-    { code: 'T05', name: 'Butter ($$-T05)', shortName: 'Butter', initialStock: 400, costV04: 59.88, costV08: 62.87, initialPrice: 65.87, elasticity: 6.55, defaultTarget: 550 },
-    { code: 'T06', name: 'Ice Cream ($$-T06)', shortName: 'Ice Cream', initialStock: 300, costV04: 43.15, costV08: 45.31, initialPrice: 47.47, elasticity: 6.70, defaultTarget: 450 }
+    { code: 'T01', name: 'Milk ($$-T01)', shortName: 'Milk', initialStock: 950, costV04: 22.95, costV08: 24.10, initialPrice: 25.25, elasticity: 7.10, defaultDailyRate: 95, defaultTarget: 950 },
+    { code: 'T02', name: 'Cream ($$-T02)', shortName: 'Cream', initialStock: 300, costV04: 72.07, costV08: 75.67, initialPrice: 79.78, elasticity: 6.35, defaultDailyRate: 30, defaultTarget: 300 },
+    { code: 'T03', name: 'Yoghurt ($$-T03)', shortName: 'Yoghurt', initialStock: 700, costV04: 25.85, costV08: 27.14, initialPrice: 28.43, elasticity: 6.95, defaultDailyRate: 70, defaultTarget: 700 },
+    { code: 'T04', name: 'Cheese ($$-T04)', shortName: 'Cheese', initialStock: 350, costV04: 82.68, costV08: 86.81, initialPrice: 90.95, elasticity: 6.20, defaultDailyRate: 35, defaultTarget: 350 },
+    { code: 'T05', name: 'Butter ($$-T05)', shortName: 'Butter', initialStock: 400, costV04: 59.88, costV08: 62.87, initialPrice: 65.87, elasticity: 6.55, defaultDailyRate: 40, defaultTarget: 400 },
+    { code: 'T06', name: 'Ice Cream ($$-T06)', shortName: 'Ice Cream', initialStock: 300, costV04: 43.15, costV08: 45.31, initialPrice: 47.47, elasticity: 6.70, defaultDailyRate: 30, defaultTarget: 300 }
   ];
 
   // 3. OFFICIAL 8 RANDOM DISRUPTORS IN LOGISTICS SUSTAINABILITY (PRESET 3)
@@ -143,12 +145,26 @@ const ERPsimEngine = (() => {
     const recommendedUse03 = (roundNumber === 1 && dayInRound === 1 && !hubGridlockActive && !carbonDecreeActive);
     const isEndgameLiquidation = isFinalRound && dayInRound >= 8;
 
-    // First pass: calculate real current stock sum across 6 SKUs
+    // First pass: calculate real current stock sum and total daily sales across 6 SKUs
     const sumSkuCurrentStock = LOGISTICS_PRESET3_SKUS.reduce((acc, sku) => {
       const st = skuInventoryState[sku.code] || {};
       const cur = st.currentStockAndOpenPo !== undefined ? st.currentStockAndOpenPo : Math.round(sku.initialStock * 0.5);
       return acc + cur;
     }, 0);
+    const sumDailySalesUnits = LOGISTICS_PRESET3_SKUS.reduce((acc, sku) => {
+      const st = skuInventoryState[sku.code] || {};
+      const rate = st.dailySalesRate !== undefined ? st.dailySalesRate : sku.defaultDailyRate;
+      return acc + rate;
+    }, 0);
+    const avgUnitsPerRegionalOrder = Math.max(15, sumDailySalesUnits / Math.max(1, regionalSalesOrdersPerDay));
+
+    // Shared PO Fixed Parameters (ME59N consolidates all SKUs of the same vendor into 1 single PO!)
+    const v04PoCo2 = 100 + (supplierDisruptionActive && impactedSupplier === 'V04' ? 200 : 0) + (hubGridlockActive ? 100 : 0);
+    const v04PoFixedFee = 1000;
+    const v08PoCo2 = 400 + (supplierDisruptionActive && impactedSupplier === 'V08' ? 200 : 0) + (hubGridlockActive ? 100 : 0);
+    const v08PoFixedFee = 600;
+    const v04PoTotalFixed = v04PoFixedFee + v04PoCo2 * effectiveCarbonTax;
+    const v08PoTotalFixed = v08PoFixedFee + v08PoCo2 * effectiveCarbonTax;
 
     let skuAnalysis = LOGISTICS_PRESET3_SKUS.map(sku => {
       const isColdHit = coldSpellActive && coldSpellSkus.includes(sku.code);
@@ -156,25 +172,22 @@ const ERPsimEngine = (() => {
 
       // Preset 3 V04 parameters: 1.2 kg/unit, 100 kg/PO, €1,000/PO
       const v04UnitCo2 = 1.2 + coldExtraUnitCo2 + (supplierDisruptionActive && impactedSupplier === 'V04' ? 2.50 : 0);
-      const v04PoCo2 = 100 + (supplierDisruptionActive && impactedSupplier === 'V04' ? 200 : 0) + (hubGridlockActive ? 100 : 0);
-      const v04PoFixedFee = 1000;
-
       // Preset 3 V08 parameters: 0.8 kg/unit, 400 kg/PO, €600/PO
       const v08UnitCo2 = 0.8 + coldExtraUnitCo2 + (supplierDisruptionActive && impactedSupplier === 'V08' ? 2.50 : 0);
-      const v08PoCo2 = 400 + (supplierDisruptionActive && impactedSupplier === 'V08' ? 200 : 0) + (hubGridlockActive ? 100 : 0);
-      const v08PoFixedFee = 600;
 
       const safeLot = Math.max(50, orderLotSizePerPo);
-      const v04LandedUnitCost = sku.costV04 + (v04UnitCo2 * effectiveCarbonTax) + (v04PoFixedFee + v04PoCo2 * effectiveCarbonTax) / safeLot;
-      const v08LandedUnitCost = sku.costV08 + (v08UnitCo2 * effectiveCarbonTax) + (v08PoFixedFee + v08PoCo2 * effectiveCarbonTax) / safeLot;
+      const v04VarUnitCost = sku.costV04 + (v04UnitCo2 * effectiveCarbonTax);
+      const v08VarUnitCost = sku.costV08 + (v08UnitCo2 * effectiveCarbonTax);
+      const v04LandedUnitCost = v04VarUnitCost + v04PoTotalFixed / safeLot;
+      const v08LandedUnitCost = v08VarUnitCost + v08PoTotalFixed / safeLot;
 
       const recommendedVendor = v04LandedUnitCost <= v08LandedUnitCost ? 'V04' : 'V08';
       const minLandedCost = Math.min(v04LandedUnitCost, v08LandedUnitCost);
       const savingsPerUnit = Math.abs(v08LandedUnitCost - v04LandedUnitCost);
 
       // Break-even Lot Size Q* where TC_V04(Q*) == TC_V08(Q*)
-      const unitVarDiff = (sku.costV08 + v08UnitCo2 * effectiveCarbonTax) - (sku.costV04 + v04UnitCo2 * effectiveCarbonTax);
-      const fixedPoDiff = (v04PoFixedFee + v04PoCo2 * effectiveCarbonTax) - (v08PoFixedFee + v08PoCo2 * effectiveCarbonTax);
+      const unitVarDiff = v08VarUnitCost - v04VarUnitCost;
+      const fixedPoDiff = v04PoTotalFixed - v08PoTotalFixed;
       const breakEvenLotSize = unitVarDiff > 0 ? Math.max(0, Math.round(fixedPoDiff / unitVarDiff)) : Infinity;
 
       // Regional ZVA05 Split (Area: NO, SO, WE) -> ZMB1B allocation
@@ -188,29 +201,11 @@ const ERPsimEngine = (() => {
       const shareWE = sWE / totRegSales;
 
       const currentStockAndOpenPo = st.currentStockAndOpenPo !== undefined ? st.currentStockAndOpenPo : Math.round(sku.initialStock * 0.5);
-      const dailySalesRate = st.dailySalesRate !== undefined ? st.dailySalesRate : Math.round(sku.defaultTarget / 5);
-
-      // Effective stock after Flash Flood (if active)
-      let effectiveStock = currentStockAndOpenPo;
-      let orderNote = '';
-      if (autoOrderCalc && flashFloodActive) {
-        if (flashFloodWarehouse === '03') {
-          effectiveStock = Math.round(currentStockAndOpenPo * 0.60);
-          orderNote = 'Bù lũ kho 03';
-        } else if (flashFloodWarehouse === '03N') {
-          effectiveStock = Math.round(currentStockAndOpenPo * (1 - shareNO * 0.85));
-          orderNote = 'Bù lũ 03N';
-        } else if (flashFloodWarehouse === '03S') {
-          effectiveStock = Math.round(currentStockAndOpenPo * (1 - shareSO * 0.85));
-          orderNote = 'Bù lũ 03S';
-        } else if (flashFloodWarehouse === '03W') {
-          effectiveStock = Math.round(currentStockAndOpenPo * (1 - shareWE * 0.85));
-          orderNote = 'Bù lũ 03W';
-        }
-      }
+      const dailySalesRate = st.dailySalesRate !== undefined ? st.dailySalesRate : sku.defaultDailyRate;
+      const effectiveStock = currentStockAndOpenPo; // No silent double-counting when Flash Flood is checked; user updates ZMB52 or clicks 1-time flood button
 
       // Dynamic Retail Price on DC 16 (Retail Stores) via Amoroso-Robinson with true Dairy elasticity (epsilon ~ 6.2 - 7.1)
-      const regionalOrderCo2CostPerUnit = (75 * effectiveCarbonTax) / 25;
+      const regionalOrderCo2CostPerUnit = (75 * effectiveCarbonTax) / avgUnitsPerRegionalOrder;
       const fullEffectiveMarginalCost = minLandedCost + regionalOrderCo2CostPerUnit;
       const optimalPriceDC16 = fullEffectiveMarginalCost * (sku.elasticity / (sku.elasticity - 1));
       let baseRecPrice = optimalPriceDC16;
@@ -220,7 +215,7 @@ const ERPsimEngine = (() => {
       if (effectiveStock <= 0 || daysOfStockOnHand < 1.2) {
         baseRecPrice *= 1.055; // Page 19: Short-term price increase to prevent stockout
         priceActionNote = 'Tăng giá chống đứt hàng';
-      } else if (daysOfStockOnHand > 5.5) {
+      } else if (daysOfStockOnHand > 6.5) {
         baseRecPrice *= 0.965; // Gently accelerate inventory turnover without selling below cost
         priceActionNote = 'Giảm nhẹ xả tồn';
       }
@@ -229,11 +224,12 @@ const ERPsimEngine = (() => {
       const netProfitPerUnit = Number((recommendedPriceDC16 - fullEffectiveMarginalCost).toFixed(2));
 
       // Dynamic coverage days reaction to V08 (1-4d lead time), Hub Gridlock, and Endgame Liquidation
+      let orderNote = '';
       let effectiveCoverageDays = isEndgameLiquidation ? 0 : Math.max(0, coverageDays);
       if (autoOrderCalc && effectiveCoverageDays > 0) {
         if (recommendedVendor === 'V08') {
           effectiveCoverageDays += 2;
-          orderNote = orderNote ? `${orderNote} + V08(+2d)` : 'V08 Lead 1-4d (+2d)';
+          orderNote = 'V08 Lead 1-4d (+2d)';
         }
         if (hubGridlockActive) {
           effectiveCoverageDays += 1;
@@ -259,6 +255,8 @@ const ERPsimEngine = (() => {
         isColdHit,
         v04UnitCo2: Number(v04UnitCo2.toFixed(2)),
         v08UnitCo2: Number(v08UnitCo2.toFixed(2)),
+        v04VarUnitCost,
+        v08VarUnitCost,
         v04LandedUnitCost: Number(v04LandedUnitCost.toFixed(2)),
         v08LandedUnitCost: Number(v08LandedUnitCost.toFixed(2)),
         minLandedCost: Number(minLandedCost.toFixed(2)),
@@ -307,13 +305,45 @@ const ERPsimEngine = (() => {
       });
     }
 
-    // Optional Auto-Cap 2: Weizen Bank Cash Overdraft Protection (keep PO cost <= 80% of available Cash)
+    // Portfolio-Level ME59N PO Consolidation Optimization (All V04 vs All V08 vs Split 2 POs!)
+    const activeOrders = skuAnalysis.filter(s => s.desiredOrderQty > 0);
+    let portfolioPoStrategy = 'ALL_V04';
+    let portfolioPoFixedFeeEur = 0;
+    let portfolioPoFixedNote = 'Chưa có đơn đặt mua mới';
+
+    if (activeOrders.length > 0) {
+      const costAllV04 = v04PoTotalFixed + activeOrders.reduce((acc, s) => acc + s.desiredOrderQty * s.v04VarUnitCost, 0);
+      const costAllV08 = v08PoTotalFixed + activeOrders.reduce((acc, s) => acc + s.desiredOrderQty * s.v08VarUnitCost, 0);
+      const splitUsesV04 = activeOrders.some(s => s.v04VarUnitCost <= s.v08VarUnitCost);
+      const splitUsesV08 = activeOrders.some(s => s.v08VarUnitCost < s.v04VarUnitCost);
+      const splitFixed = (splitUsesV04 ? v04PoTotalFixed : 0) + (splitUsesV08 ? v08PoTotalFixed : 0);
+      const costSplit = splitFixed + activeOrders.reduce((acc, s) => acc + s.desiredOrderQty * Math.min(s.v04VarUnitCost, s.v08VarUnitCost), 0);
+
+      if (costAllV04 <= costAllV08 && costAllV04 <= costSplit) {
+        portfolioPoStrategy = 'ALL_V04';
+        portfolioPoFixedFeeEur = v04PoFixedFee;
+        portfolioPoFixedNote = `Gom cả 6 mã vào 1 PO duy nhất của V04 (Phí PO €1,000, tiết kiệm ${Math.round(Math.min(costAllV08, costSplit) - costAllV04)}€ so với đổi/tách NCC)`;
+        skuAnalysis = skuAnalysis.map(s => ({ ...s, recommendedVendor: 'V04' }));
+      } else if (costAllV08 <= costAllV04 && costAllV08 <= costSplit) {
+        portfolioPoStrategy = 'ALL_V08';
+        portfolioPoFixedFeeEur = v08PoFixedFee;
+        portfolioPoFixedNote = `Gom cả 6 mã vào 1 PO duy nhất của V08 (Phí PO €600, tiết kiệm ${Math.round(Math.min(costAllV04, costSplit) - costAllV08)}€ so với V04)`;
+        skuAnalysis = skuAnalysis.map(s => ({ ...s, recommendedVendor: 'V08' }));
+      } else {
+        portfolioPoStrategy = 'SPLIT';
+        portfolioPoFixedFeeEur = (splitUsesV04 ? v04PoFixedFee : 0) + (splitUsesV08 ? v08PoFixedFee : 0);
+        portfolioPoFixedNote = `Tách 2 PO (V04 + V08 = €1,600 phí cố định) vẫn rẻ hơn gom 1 NCC ${Math.round(Math.min(costAllV04, costAllV08) - costSplit)}€!`;
+        skuAnalysis = skuAnalysis.map(s => ({ ...s, recommendedVendor: s.v04VarUnitCost <= s.v08VarUnitCost ? 'V04' : 'V08' }));
+      }
+    }
+
+    // Optional Auto-Cap 2: Weizen Bank Cash Overdraft Protection (keep PO cost <= 82% of available Cash)
     let wasCappedByCash = false;
     const rawPoCost = skuAnalysis.reduce((acc, s) => {
       const p = s.recommendedVendor === 'V04' ? s.costV04 : s.costV08;
       return acc + s.desiredOrderQty * p;
     }, 0);
-    const safeCashBudget = Math.max(0, availableCash * 0.82 - 1000);
+    const safeCashBudget = Math.max(0, availableCash * 0.82 - portfolioPoFixedFeeEur);
     if (autoOrderCalc && capCashSafety && rawPoCost > safeCashBudget && rawPoCost > 0) {
       wasCappedByCash = true;
       const cashScale = safeCashBudget / rawPoCost;
@@ -333,11 +363,16 @@ const ERPsimEngine = (() => {
     let totalNewOrderUnits = 0;
 
     skuAnalysis = skuAnalysis.map(s => {
-      // In PULL mode: regional target inventory (~82% of total target distributed across 03N/03S/03W, keeping ~18% buffer at 03)
       // In PUSH mode: exact shipment quantity per transfer cycle = dailySalesRate * recommendedZmb1bFreqDays * regionalShare
-      const regionalPool = zmb1bMode === 'PUSH'
-        ? Math.round(s.dailySalesRate * recommendedZmb1bFreqDays)
-        : Math.round(s.md61TargetToEnter * 0.85);
+      // In PULL mode: regional target inventory = (recommendedZmb1bFreqDays + 1.5 days safety) * dailySalesRate (or 100% flush in Endgame)
+      let regionalPool;
+      if (isEndgameLiquidation) {
+        regionalPool = s.effectiveStock; // Flush 100% out of Main Warehouse 03 in final 3 days
+      } else if (zmb1bMode === 'PUSH') {
+        regionalPool = Math.round(s.dailySalesRate * recommendedZmb1bFreqDays);
+      } else {
+        regionalPool = Math.min(s.md61TargetToEnter, Math.round(s.dailySalesRate * (recommendedZmb1bFreqDays + 1.5)));
+      }
 
       const zmb1bTargetNO = Math.round(regionalPool * s.shareNO);
       const zmb1bTargetSO = Math.round(regionalPool * s.shareSO);
@@ -357,7 +392,7 @@ const ERPsimEngine = (() => {
     });
 
     if (totalNewOrderUnits > 0) {
-      totalPoCashNeeded += 1000;
+      totalPoCashNeeded += portfolioPoFixedFeeEur;
     }
 
     const excessUnits = Math.max(0, totalWarehouseUnits - 4000);
@@ -398,6 +433,9 @@ const ERPsimEngine = (() => {
       totalMd61TargetUnits,
       totalNewOrderUnits,
       totalPoCashNeeded: Math.round(totalPoCashNeeded),
+      portfolioPoStrategy,
+      portfolioPoFixedFeeEur,
+      portfolioPoFixedNote,
       wasCappedTo4000,
       wasCappedByCash,
       recommendedZmb1bFreqDays,
@@ -598,12 +636,38 @@ const ERPsimEngine = (() => {
   }
 
   /**
-   * 4. SAP ZVA05 / ZVC2 / ZMB52 TSV & CSV PARSER
+   * 4. SAP ZVA05 / ZVC2 / ZMB52 TSV & CSV PARSER (Handles both US 1,250.50 & EU 1.250,50 & SAP trailing minus 120-)
    */
+  function parseSapNumber(raw) {
+    if (raw === undefined || raw === null) return NaN;
+    let s = String(raw).trim().replace(/[€$\s]/g, '');
+    if (!s) return NaN;
+    let neg = false;
+    if (s.endsWith('-')) { neg = true; s = s.slice(0, -1); }
+    else if (s.startsWith('-')) { neg = true; s = s.slice(1); }
+    // European format check: e.g. "1.250,50" or "28,20"
+    if (s.includes(',') && s.includes('.')) {
+      if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
+        s = s.replace(/\./g, '').replace(',', '.');
+      } else {
+        s = s.replace(/,/g, '');
+      }
+    } else if (s.includes(',')) {
+      const parts = s.split(',');
+      if (parts.length === 2 && parts[1].length <= 2) {
+        s = s.replace(',', '.');
+      } else {
+        s = s.replace(/,/g, '');
+      }
+    }
+    const v = Number(s);
+    return Number.isFinite(v) ? (neg ? -v : v) : NaN;
+  }
+
   function parseSapTableText(rawText) {
-    if (!rawText || !rawText.trim()) return [];
+    if (!rawText || !rawText.trim()) return { headers: [], records: [] };
     const lines = rawText.trim().split(/\r?\n/).filter(l => l.trim() && !l.trim().startsWith('---'));
-    if (lines.length < 2) return [];
+    if (lines.length < 2) return { headers: [], records: [] };
 
     const headerLine = lines[0];
     let delimiter = '\t';
@@ -636,6 +700,7 @@ const ERPsimEngine = (() => {
     calculateCompanyValuation,
     solveLogisticsSustainabilityPreset3,
     solveDairyDc16Pricing,
+    parseSapNumber,
     parseSapTableText
   };
 })();

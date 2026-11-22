@@ -153,19 +153,19 @@
               </div>
               <div class="form-group">
                 <label>Tổng lượng gộp/PO (Tự đồng bộ)</label>
-                <input type="number" id="log-po-lot" class="form-control" value="1800" step="100" />
+                <input type="number" id="log-po-lot" class="form-control" value="900" step="100" />
               </div>
               <div class="form-group">
                 <label>Tổng Tồn Kho 4 Kho (ZMB52)</label>
-                <input type="number" id="log-total-stock" class="form-control" value="1530" step="100" />
+                <input type="number" id="log-total-stock" class="form-control" value="1500" step="100" />
               </div>
               <div class="form-group">
                 <label>Số chuyến ZMB1B / ngày</label>
-                <input type="number" id="log-transfers-day" class="form-control" value="3" min="0" max="20" />
+                <input type="number" id="log-transfers-day" class="form-control" value="1.5" min="0" max="20" step="0.5" />
               </div>
               <div class="form-group">
                 <label>Đơn bán từ Kho Vùng/ngày</label>
-                <input type="number" id="log-reg-orders" class="form-control" value="32" min="0" max="100" />
+                <input type="number" id="log-reg-orders" class="form-control" value="8" min="0" max="100" />
               </div>
               <div class="form-group">
                 <label>Tiền mặt 113300 hiện có (€)</label>
@@ -271,7 +271,7 @@
               </label>
               <div style="display:flex; align-items:center; gap:0.35rem; font-size:0.78rem;">
                 <span>Phủ hàng:</span>
-                <input type="number" id="log-coverage-days" class="form-control" value="5" min="0" max="12" step="0.5" style="width:60px; padding:0.2rem 0.4rem;" />
+                <input type="number" id="log-coverage-days" class="form-control" value="8" min="0" max="15" step="0.5" style="width:60px; padding:0.2rem 0.4rem;" />
                 <span>ngày</span>
               </div>
               <div style="display:flex; align-items:center; gap:0.35rem; font-size:0.78rem;">
@@ -283,8 +283,8 @@
               </div>
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:0.35rem;">
-              <button class="btn btn-outline" id="btn-md61-preset-start" style="padding:0.23rem 0.5rem; font-size:0.72rem;">Khai cuộc (4 ngày)</button>
-              <button class="btn btn-primary" id="btn-md61-preset-normal" style="padding:0.23rem 0.5rem; font-size:0.72rem;">Chuẩn V04 (5 ngày)</button>
+              <button class="btn btn-outline" id="btn-md61-preset-start" style="padding:0.23rem 0.5rem; font-size:0.72rem;">Khai cuộc (6 ngày)</button>
+              <button class="btn btn-primary" id="btn-md61-preset-normal" style="padding:0.23rem 0.5rem; font-size:0.72rem;">Chuẩn V04 (8 ngày)</button>
               <button class="btn btn-outline" id="btn-md61-preset-endgame" style="padding:0.23rem 0.5rem; font-size:0.72rem; border-color:#f43f5e; color:#fb7185;">3 Ngày Cuối (Xả kho = 0)</button>
             </div>
           </div>
@@ -470,7 +470,7 @@
           <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
             <div class="form-group">
               <label>Lợi nhuận lũy kế (Net Income €)</label>
-              <input type="number" id="val-profit" class="form-control" value="185000" step="25000" />
+              <input type="number" id="val-profit" class="form-control" value="18000" step="2000" />
             </div>
             <div class="form-group">
               <label>Số ngày đã chạy (Elapsed Days)</label>
@@ -492,29 +492,29 @@
 
           <hr style="border: 0; border-top: 1px solid var(--border); margin: 1rem 0;" />
           <div style="font-size: 0.82rem; font-weight: 700; margin-bottom: 0.65rem; color: #60a5fa;">
-            Bảng Cân Đối Kế Toán (F.01) — Kiểm Soát Tiền Mặt Weizen Bank &amp; Credit Rating
+            Bảng Cân Đối Kế Toán (F.01) — Kiểm Soát Tiền Mặt Weizen Bank &amp; Credit Rating (Vốn chủ €500,000)
           </div>
 
           <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
             <div class="form-group">
               <label>Tiền mặt (113300 Cash €)</label>
-              <input type="number" id="val-cash" class="form-control" value="250000" step="25000" />
+              <input type="number" id="val-cash" class="form-control" value="225000" step="10000" />
             </div>
             <div class="form-group">
               <label>Phải thu KH (140000 AR €)</label>
-              <input type="number" id="val-ar" class="form-control" value="180000" step="25000" />
+              <input type="number" id="val-ar" class="form-control" value="55000" step="5000" />
             </div>
             <div class="form-group">
               <label>Vay thấu chi NH (Bank Loan €)</label>
-              <input type="number" id="val-loans" class="form-control" value="0" step="50000" />
+              <input type="number" id="val-loans" class="form-control" value="0" step="10000" />
             </div>
             <div class="form-group">
               <label>Phải trả NCC (160000 AP €)</label>
-              <input type="number" id="val-ap" class="form-control" value="145000" step="25000" />
+              <input type="number" id="val-ap" class="form-control" value="32000" step="5000" />
             </div>
             <div class="form-group" style="grid-column: span 2;">
               <label>Giá trị Tồn kho Hàng hóa (792000 Finished Goods €)</label>
-              <input type="number" id="val-inventory" class="form-control" value="138000" step="25000" />
+              <input type="number" id="val-inventory" class="form-control" value="115000" step="10000" />
             </div>
           </div>
         </div>
