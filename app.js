@@ -42,12 +42,12 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   let dairyPricingState = [
-    { skuCode: 'T01', landedCogs: 23.68, prevPrice: 25.25, prevQty: 360, currPrice: 28.10, currQty: 315, inventoryRemaining: 500 },
-    { skuCode: 'T02', landedCogs: 72.80, prevPrice: 79.78, prevQty: 120, currPrice: 87.50, currQty: 105, inventoryRemaining: 150 },
-    { skuCode: 'T03', landedCogs: 26.58, prevPrice: 28.43, prevQty: 270, currPrice: 31.80, currQty: 235, inventoryRemaining: 350 },
-    { skuCode: 'T04', landedCogs: 83.41, prevPrice: 90.95, prevQty: 140, currPrice: 102.50, currQty: 125, inventoryRemaining: 0   },
-    { skuCode: 'T05', landedCogs: 60.61, prevPrice: 65.87, prevQty: 155, currPrice: 73.80, currQty: 138, inventoryRemaining: 200 },
-    { skuCode: 'T06', landedCogs: 43.88, prevPrice: 47.47, prevQty: 125, currPrice: 53.20, currQty: 112, inventoryRemaining: 150 }
+    { skuCode: 'T01', landedCogs: 23.51, prevPrice: 25.25, prevQty: 250, currPrice: 27.60, currQty: 220, inventoryRemaining: 500 },
+    { skuCode: 'T02', landedCogs: 72.63, prevPrice: 79.78, prevQty: 105, currPrice: 86.50, currQty: 90,  inventoryRemaining: 150 },
+    { skuCode: 'T03', landedCogs: 26.41, prevPrice: 28.43, prevQty: 195, currPrice: 31.10, currQty: 170, inventoryRemaining: 350 },
+    { skuCode: 'T04', landedCogs: 83.24, prevPrice: 90.95, prevQty: 125, currPrice: 99.50, currQty: 110, inventoryRemaining: 180 },
+    { skuCode: 'T05', landedCogs: 60.44, prevPrice: 65.87, prevQty: 125, currPrice: 71.80, currQty: 110, inventoryRemaining: 200 },
+    { skuCode: 'T06', landedCogs: 43.71, prevPrice: 47.47, prevQty: 105, currPrice: 51.80, currQty: 90,  inventoryRemaining: 150 }
   ];
 
   // =========================================================================

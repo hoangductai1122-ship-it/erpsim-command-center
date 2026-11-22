@@ -34,13 +34,14 @@ const ERPsimEngine = (() => {
   ];
 
   // 2. OFFICIAL 6 DAIRY PRODUCTS IN LOGISTICS SUSTAINABILITY (PRESET 3)
+  // Elasticities calibrated to homogeneous Dairy commodity competition on DC 16 (epsilon ~ 6.2 - 7.2 -> Lerner optimal Gross Margin ~ 14.5% - 17%)
   const LOGISTICS_PRESET3_SKUS = [
-    { code: 'T01', name: 'Milk ($$-T01)',      shortName: 'Milk',      initialStock: 950, costV04: 22.95, costV08: 24.10, initialPrice: 25.25, elasticity: 3.15, defaultTarget: 1100 },
-    { code: 'T02', name: 'Cream ($$-T02)',     shortName: 'Cream',     initialStock: 300, costV04: 72.07, costV08: 75.67, initialPrice: 79.78, elasticity: 2.55, defaultTarget: 450  },
-    { code: 'T03', name: 'Yoghurt ($$-T03)',   shortName: 'Yoghurt',   initialStock: 700, costV04: 25.85, costV08: 27.14, initialPrice: 28.43, elasticity: 3.05, defaultTarget: 850  },
-    { code: 'T04', name: 'Cheese ($$-T04)',    shortName: 'Cheese',    initialStock: 350, costV04: 82.68, costV08: 86.81, initialPrice: 90.95, elasticity: 2.45, defaultTarget: 550  },
-    { code: 'T05', name: 'Butter ($$-T05)',    shortName: 'Butter',    initialStock: 400, costV04: 59.88, costV08: 62.87, initialPrice: 65.87, elasticity: 2.75, defaultTarget: 550  },
-    { code: 'T06', name: 'Ice Cream ($$-T06)', shortName: 'Ice Cream', initialStock: 300, costV04: 43.15, costV08: 45.31, initialPrice: 47.47, elasticity: 2.85, defaultTarget: 450  }
+    { code: 'T01', name: 'Milk ($$-T01)',      shortName: 'Milk',      initialStock: 950, costV04: 22.95, costV08: 24.10, initialPrice: 25.25, elasticity: 7.10, defaultTarget: 1100 },
+    { code: 'T02', name: 'Cream ($$-T02)',     shortName: 'Cream',     initialStock: 300, costV04: 72.07, costV08: 75.67, initialPrice: 79.78, elasticity: 6.35, defaultTarget: 450  },
+    { code: 'T03', name: 'Yoghurt ($$-T03)',   shortName: 'Yoghurt',   initialStock: 700, costV04: 25.85, costV08: 27.14, initialPrice: 28.43, elasticity: 6.95, defaultTarget: 850  },
+    { code: 'T04', name: 'Cheese ($$-T04)',    shortName: 'Cheese',    initialStock: 350, costV04: 82.68, costV08: 86.81, initialPrice: 90.95, elasticity: 6.20, defaultTarget: 550  },
+    { code: 'T05', name: 'Butter ($$-T05)',    shortName: 'Butter',    initialStock: 400, costV04: 59.88, costV08: 62.87, initialPrice: 65.87, elasticity: 6.55, defaultTarget: 550  },
+    { code: 'T06', name: 'Ice Cream ($$-T06)', shortName: 'Ice Cream', initialStock: 300, costV04: 43.15, costV08: 45.31, initialPrice: 47.47, elasticity: 6.70, defaultTarget: 450  }
   ];
 
   // 3. OFFICIAL 8 RANDOM DISRUPTORS IN LOGISTICS SUSTAINABILITY (PRESET 3)
@@ -208,23 +209,23 @@ const ERPsimEngine = (() => {
         }
       }
 
-      // Dynamic Retail Price on DC 16 (Retail Stores) with Stockout / Overstock Feedback (Page 19 Participant's Guide)
+      // Dynamic Retail Price on DC 16 (Retail Stores) via Amoroso-Robinson with true Dairy elasticity (epsilon ~ 6.2 - 7.1)
       const regionalOrderCo2CostPerUnit = (75 * effectiveCarbonTax) / 25;
       const fullEffectiveMarginalCost = minLandedCost + regionalOrderCo2CostPerUnit;
       const optimalPriceDC16 = fullEffectiveMarginalCost * (sku.elasticity / (sku.elasticity - 1));
-      let baseRecPrice = optimalPriceDC16 * 0.65 + sku.initialPrice * 0.42;
+      let baseRecPrice = optimalPriceDC16;
 
       const daysOfStockOnHand = dailySalesRate > 0 ? (effectiveStock / dailySalesRate) : 3;
-      let priceActionNote = 'Tối ưu biên lãi';
+      let priceActionNote = 'Tối ưu Lerner (DC 16)';
       if (effectiveStock <= 0 || daysOfStockOnHand < 1.2) {
-        baseRecPrice *= 1.06; // Page 19: Short-term price increase to prevent stockout
+        baseRecPrice *= 1.055; // Page 19: Short-term price increase to prevent stockout
         priceActionNote = 'Tăng giá chống đứt hàng';
       } else if (daysOfStockOnHand > 5.5) {
-        baseRecPrice *= 0.96; // Gently accelerate inventory turnover without selling below cost
+        baseRecPrice *= 0.965; // Gently accelerate inventory turnover without selling below cost
         priceActionNote = 'Giảm nhẹ xả tồn';
       }
 
-      const recommendedPriceDC16 = Number(Math.min(sku.initialPrice * 1.34, Math.max(fullEffectiveMarginalCost * 1.10, baseRecPrice)).toFixed(2));
+      const recommendedPriceDC16 = Number(Math.min(sku.initialPrice * 1.22, Math.max(fullEffectiveMarginalCost * 1.09, baseRecPrice)).toFixed(2));
       const netProfitPerUnit = Number((recommendedPriceDC16 - fullEffectiveMarginalCost).toFixed(2));
 
       // Dynamic coverage days reaction to V08 (1-4d lead time), Hub Gridlock, and Endgame Liquidation
@@ -443,29 +444,29 @@ const ERPsimEngine = (() => {
     }
 
     // 2. Blend with Dairy SKU structural elasticity on DC 16
-    const relativePriceRatio = currPrice / Math.max(1, skuInfo.initialPrice * 1.12);
-    const modelElasticity = skuInfo.elasticity * Math.pow(relativePriceRatio, 1.1);
+    const relativePriceRatio = currPrice / Math.max(1, skuInfo.initialPrice * 1.08);
+    const modelElasticity = skuInfo.elasticity * Math.pow(relativePriceRatio, 1.15);
     const effectiveElasticity = (empiricalElasticity !== null && !isStockout)
       ? (0.55 * empiricalElasticity + 0.45 * modelElasticity)
       : modelElasticity;
 
-    const clampedElasticity = Math.max(1.30, Math.min(10.0, effectiveElasticity));
+    const clampedElasticity = Math.max(2.50, Math.min(14.0, effectiveElasticity));
 
     // 3. Amoroso-Robinson / Lerner Optimal Price & MNL Best-Response Search
     const lernerOptimalPrice = landedCogs * (clampedElasticity / (clampedElasticity - 1));
-    const priceCeiling = skuInfo.initialPrice * 1.35;
+    const priceCeiling = skuInfo.initialPrice * 1.24;
 
     let bestPrice = currPrice;
     let maxExpectedProfit = -Infinity;
     let expectedQtyAtOptimal = estimatedTrueCurrQty;
 
     const beta = clampedElasticity / Math.max(1, currPrice);
-    const refPrice = skuInfo.initialPrice * 1.14;
+    const refPrice = skuInfo.initialPrice * 1.08;
     const currentShareProxy = Math.exp(-beta * (currPrice - refPrice));
 
-    for (let p = Math.max(landedCogs * 1.05, skuInfo.initialPrice * 0.90); p <= priceCeiling; p += 0.10) {
-      const ceilingPenalty = p > skuInfo.initialPrice * 1.22
-        ? Math.exp(-2.2 * Math.pow((p - skuInfo.initialPrice * 1.22) / (priceCeiling - skuInfo.initialPrice * 1.22 + 0.05), 2))
+    for (let p = Math.max(landedCogs * 1.05, skuInfo.initialPrice * 0.92); p <= priceCeiling; p += 0.10) {
+      const ceilingPenalty = p > skuInfo.initialPrice * 1.15
+        ? Math.exp(-2.5 * Math.pow((p - skuInfo.initialPrice * 1.15) / (priceCeiling - skuInfo.initialPrice * 1.15 + 0.05), 2))
         : 1.0;
       const relAttractiveness = Math.exp(-beta * (p - refPrice)) * ceilingPenalty;
       const predictedQty = estimatedTrueCurrQty * (relAttractiveness / Math.max(1e-6, currentShareProxy));
@@ -548,7 +549,7 @@ const ERPsimEngine = (() => {
     const {
       currentProfit = 0,
       elapsedSteps = 10,
-      totalRounds = 4,
+      totalRounds = 8, // ERPsim Logistics fiscal year = 80 days (8 rounds x 10 days) -> R1=x80, R2=x40, R3=x26.67, R4=x20 at AAA+
       stepsPerRound = 10,
       marketRiskRate = 0.07,
       cash = 250000,
