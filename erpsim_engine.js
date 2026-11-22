@@ -10,38 +10,38 @@
 const ERPsimEngine = (() => {
   // 1. OFFICIAL 21-TIER CREDIT RATING & COMPANY RISK RATE TABLE
   const CREDIT_RATING_TABLE = [
-    { minDebtLoading: 0,         rating: 'AAA+', riskRate: 0.0300, tierIndex: 1,  color: '#10b981' },
-    { minDebtLoading: -1000000,  rating: 'AA+',  riskRate: 0.0375, tierIndex: 2,  color: '#22c55e' },
-    { minDebtLoading: -2000000,  rating: 'AA',   riskRate: 0.0400, tierIndex: 3,  color: '#34d399' },
-    { minDebtLoading: -3000000,  rating: 'AA-',  riskRate: 0.0425, tierIndex: 4,  color: '#4ade80' },
-    { minDebtLoading: -4000000,  rating: 'A+',   riskRate: 0.0475, tierIndex: 5,  color: '#84cc16' },
-    { minDebtLoading: -5000000,  rating: 'A',    riskRate: 0.0500, tierIndex: 6,  color: '#a3e635' },
-    { minDebtLoading: -6000000,  rating: 'A-',   riskRate: 0.0525, tierIndex: 7,  color: '#bef264' },
-    { minDebtLoading: -7000000,  rating: 'BBB+', riskRate: 0.0575, tierIndex: 8,  color: '#eab308' },
-    { minDebtLoading: -8000000,  rating: 'BBB',  riskRate: 0.0600, tierIndex: 9,  color: '#facc15' },
-    { minDebtLoading: -9000000,  rating: 'BBB-', riskRate: 0.0625, tierIndex: 10, color: '#fde047' },
-    { minDebtLoading: -10000000, rating: 'BB+',  riskRate: 0.0675, tierIndex: 11, color: '#f59e0b' },
-    { minDebtLoading: -11000000, rating: 'BB',   riskRate: 0.0700, tierIndex: 12, color: '#fb923c' },
-    { minDebtLoading: -12000000, rating: 'BB-',  riskRate: 0.0725, tierIndex: 13, color: '#f97316' },
-    { minDebtLoading: -13000000, rating: 'B+',   riskRate: 0.0775, tierIndex: 14, color: '#ea580c' },
-    { minDebtLoading: -14000000, rating: 'B',    riskRate: 0.0800, tierIndex: 15, color: '#ef4444' },
-    { minDebtLoading: -15000000, rating: 'B-',   riskRate: 0.0825, tierIndex: 16, color: '#dc2626' },
+    { minDebtLoading: 0, rating: 'AAA+', riskRate: 0.0300, tierIndex: 1, color: '#10b981' },
+    { minDebtLoading: -1000000, rating: 'AA+', riskRate: 0.0375, tierIndex: 2, color: '#22c55e' },
+    { minDebtLoading: -2000000, rating: 'AA', riskRate: 0.0400, tierIndex: 3, color: '#34d399' },
+    { minDebtLoading: -3000000, rating: 'AA-', riskRate: 0.0425, tierIndex: 4, color: '#4ade80' },
+    { minDebtLoading: -4000000, rating: 'A+', riskRate: 0.0475, tierIndex: 5, color: '#84cc16' },
+    { minDebtLoading: -5000000, rating: 'A', riskRate: 0.0500, tierIndex: 6, color: '#a3e635' },
+    { minDebtLoading: -6000000, rating: 'A-', riskRate: 0.0525, tierIndex: 7, color: '#bef264' },
+    { minDebtLoading: -7000000, rating: 'BBB+', riskRate: 0.0575, tierIndex: 8, color: '#eab308' },
+    { minDebtLoading: -8000000, rating: 'BBB', riskRate: 0.0600, tierIndex: 9, color: '#facc15' },
+    { minDebtLoading: -9000000, rating: 'BBB-', riskRate: 0.0625, tierIndex: 10, color: '#fde047' },
+    { minDebtLoading: -10000000, rating: 'BB+', riskRate: 0.0675, tierIndex: 11, color: '#f59e0b' },
+    { minDebtLoading: -11000000, rating: 'BB', riskRate: 0.0700, tierIndex: 12, color: '#fb923c' },
+    { minDebtLoading: -12000000, rating: 'BB-', riskRate: 0.0725, tierIndex: 13, color: '#f97316' },
+    { minDebtLoading: -13000000, rating: 'B+', riskRate: 0.0775, tierIndex: 14, color: '#ea580c' },
+    { minDebtLoading: -14000000, rating: 'B', riskRate: 0.0800, tierIndex: 15, color: '#ef4444' },
+    { minDebtLoading: -15000000, rating: 'B-', riskRate: 0.0825, tierIndex: 16, color: '#dc2626' },
     { minDebtLoading: -16000000, rating: 'CCC+', riskRate: 0.0900, tierIndex: 17, color: '#b91c1c' },
-    { minDebtLoading: -17000000, rating: 'CCC',  riskRate: 0.1000, tierIndex: 18, color: '#991b1b' },
+    { minDebtLoading: -17000000, rating: 'CCC', riskRate: 0.1000, tierIndex: 18, color: '#991b1b' },
     { minDebtLoading: -18000000, rating: 'CCC-', riskRate: 0.1100, tierIndex: 19, color: '#7f1d1d' },
-    { minDebtLoading: -19000000, rating: 'CC',   riskRate: 0.1200, tierIndex: 20, color: '#641e16' },
-    { minDebtLoading: -Infinity, rating: 'C',    riskRate: 0.1500, tierIndex: 21, color: '#450a0a' }
+    { minDebtLoading: -19000000, rating: 'CC', riskRate: 0.1200, tierIndex: 20, color: '#641e16' },
+    { minDebtLoading: -Infinity, rating: 'C', riskRate: 0.1500, tierIndex: 21, color: '#450a0a' }
   ];
 
   // 2. OFFICIAL 6 DAIRY PRODUCTS IN LOGISTICS SUSTAINABILITY (PRESET 3)
   // Elasticities calibrated to homogeneous Dairy commodity competition on DC 16 (epsilon ~ 6.2 - 7.2 -> Lerner optimal Gross Margin ~ 14.5% - 17%)
   const LOGISTICS_PRESET3_SKUS = [
-    { code: 'T01', name: 'Milk ($$-T01)',      shortName: 'Milk',      initialStock: 950, costV04: 22.95, costV08: 24.10, initialPrice: 25.25, elasticity: 7.10, defaultTarget: 1100 },
-    { code: 'T02', name: 'Cream ($$-T02)',     shortName: 'Cream',     initialStock: 300, costV04: 72.07, costV08: 75.67, initialPrice: 79.78, elasticity: 6.35, defaultTarget: 450  },
-    { code: 'T03', name: 'Yoghurt ($$-T03)',   shortName: 'Yoghurt',   initialStock: 700, costV04: 25.85, costV08: 27.14, initialPrice: 28.43, elasticity: 6.95, defaultTarget: 850  },
-    { code: 'T04', name: 'Cheese ($$-T04)',    shortName: 'Cheese',    initialStock: 350, costV04: 82.68, costV08: 86.81, initialPrice: 90.95, elasticity: 6.20, defaultTarget: 550  },
-    { code: 'T05', name: 'Butter ($$-T05)',    shortName: 'Butter',    initialStock: 400, costV04: 59.88, costV08: 62.87, initialPrice: 65.87, elasticity: 6.55, defaultTarget: 550  },
-    { code: 'T06', name: 'Ice Cream ($$-T06)', shortName: 'Ice Cream', initialStock: 300, costV04: 43.15, costV08: 45.31, initialPrice: 47.47, elasticity: 6.70, defaultTarget: 450  }
+    { code: 'T01', name: 'Milk ($$-T01)', shortName: 'Milk', initialStock: 950, costV04: 22.95, costV08: 24.10, initialPrice: 25.25, elasticity: 7.10, defaultTarget: 1100 },
+    { code: 'T02', name: 'Cream ($$-T02)', shortName: 'Cream', initialStock: 300, costV04: 72.07, costV08: 75.67, initialPrice: 79.78, elasticity: 6.35, defaultTarget: 450 },
+    { code: 'T03', name: 'Yoghurt ($$-T03)', shortName: 'Yoghurt', initialStock: 700, costV04: 25.85, costV08: 27.14, initialPrice: 28.43, elasticity: 6.95, defaultTarget: 850 },
+    { code: 'T04', name: 'Cheese ($$-T04)', shortName: 'Cheese', initialStock: 350, costV04: 82.68, costV08: 86.81, initialPrice: 90.95, elasticity: 6.20, defaultTarget: 550 },
+    { code: 'T05', name: 'Butter ($$-T05)', shortName: 'Butter', initialStock: 400, costV04: 59.88, costV08: 62.87, initialPrice: 65.87, elasticity: 6.55, defaultTarget: 550 },
+    { code: 'T06', name: 'Ice Cream ($$-T06)', shortName: 'Ice Cream', initialStock: 300, costV04: 43.15, costV08: 45.31, initialPrice: 47.47, elasticity: 6.70, defaultTarget: 450 }
   ];
 
   // 3. OFFICIAL 8 RANDOM DISRUPTORS IN LOGISTICS SUSTAINABILITY (PRESET 3)
