@@ -26,12 +26,16 @@
         📖 Mở Cẩm Nang Chiến Thuật (HTML)
       </a>
       <div class="kpi-pill">
+        <span class="label">Dự Báo Lãi Ròng / Hiệp</span>
+        <span class="val" id="top-round-profit" style="color: #34d399;">€21,400</span>
+      </div>
+      <div class="kpi-pill">
         <span class="label">Định giá Công ty (ZVAL)</span>
         <span class="val" id="top-valuation" style="color: #10b981;">€0</span>
       </div>
       <div class="kpi-pill">
-        <span class="label">Hạng Tín Dụng / Risk</span>
-        <span class="val" id="top-credit" style="color: #34d399;">AAA+ (3.00%)</span>
+        <span class="label">Hạng Tín Dụng / ESG</span>
+        <span class="val" id="top-credit" style="color: #34d399;">AAA+ (6.00%)</span>
       </div>
       <div class="kpi-pill">
         <span class="label">Tổng Target MD61 / Trần Kho</span>
@@ -97,16 +101,16 @@
               <button class="btn btn-outline round-quick-btn" data-round="4" data-tax="0.25" style="padding:0.25rem 0.6rem; font-size:0.74rem;">Hiệp 4 (€0.25/kg)</button>
               <div style="display:flex; align-items:center; gap:0.35rem; font-size:0.78rem; margin-left:0.35rem;">
                 <span>Ngày:</span>
-                <select id="log-day-in-round" class="form-control" style="padding:0.2rem 0.4rem; font-size:0.75rem; width:96px;">
-                  <option value="1">Ngày 1 (Bật Use 03)</option>
-                  <option value="2">Ngày 2 (Tắt Use 03!)</option>
-                  <option value="3">Ngày 3</option>
-                  <option value="4">Ngày 4</option>
-                  <option value="5" selected>Ngày 5 (Giữa hiệp)</option>
+                <select id="log-day-in-round" class="form-control" style="padding:0.2rem 0.4rem; font-size:0.75rem; width:155px;">
+                  <option value="1">Ngày 1 (Sửa VK32 + ZMB1B ngay!)</option>
+                  <option value="2">Ngày 2 (Kiểm tra hàng ra 3 vùng)</option>
+                  <option value="3">Ngày 3 (Soi ZVA05 khóa 3 miền)</option>
+                  <option value="4" selected>Ngày 4 (Điểm vàng đặt PO #1)</option>
+                  <option value="5">Ngày 5 (Giữa hiệp)</option>
                   <option value="6">Ngày 6</option>
-                  <option value="7">Ngày 7</option>
-                  <option value="8">Ngày 8 (Xả kho nếu hiệp cuối)</option>
-                  <option value="9">Ngày 9 (Xả kho nếu hiệp cuối)</option>
+                  <option value="7">Ngày 7 (Điểm vàng đặt PO #2)</option>
+                  <option value="8">Ngày 8 (Ngừng PO nếu hiệp cuối!)</option>
+                  <option value="9">Ngày 9 (Đẩy sạch kho 03 nếu cuối)</option>
                   <option value="10">Ngày 10 (Kết thúc hiệp)</option>
                 </select>
               </div>
@@ -233,10 +237,15 @@
 
         <!-- KPI Summary Strip for Logistics Preset 3 -->
         <div class="stat-grid">
-          <div class="stat-box">
-            <div class="s-label">THUẾ SUẤT CARBON HIỆU LỰC</div>
-            <div class="s-value" id="log-eff-tax" style="color:#fbbf24;">€0.10 / kg CO₂e</div>
-            <div class="s-sub">Round 1 = €0.10 (+€0.05 mỗi Round, +€0.20 nếu Carbon Decree)</div>
+          <div class="stat-box" style="border-top: 2px solid #10b981;">
+            <div class="s-label">DỰ BÁO LÃI RÒNG &amp; BIÊN GỘP / HIỆP</div>
+            <div class="s-value" id="log-proj-profit" style="color:#10b981;">€21,400 / hiệp</div>
+            <div class="s-sub" id="log-proj-gm-sub">Doanh thu ~€153,000 • Biên gộp ~15.1%</div>
+          </div>
+          <div class="stat-box" style="border-top: 2px solid #3b82f6;">
+            <div class="s-label">CHUẨN XANH ESG (CO₂e / HỘP BÁN)</div>
+            <div class="s-value" id="log-esg-co2-unit" style="color:#34d399;">3.35 kg / hộp</div>
+            <div class="s-sub" id="log-esg-rating-sub">Cổng ESG: AAA+ (Giữ ≤ 4.25 kg/u để không tụt hạng!)</div>
           </div>
           <div class="stat-box">
             <div class="s-label">PHÍ PHẠT VƯỢT KHO (&gt; 4,000 UNITS)</div>
@@ -244,16 +253,14 @@
             <div class="s-sub" id="log-overstock-co2">Vượt 0 units (0 kg CO₂e/ngày)</div>
           </div>
           <div class="stat-box">
-            <div class="s-label">TỔNG PHÍ VẬN CHUYỂN + THUẾ CARBON/NGÀY</div>
-            <div class="s-value" id="log-daily-total-cost" style="color:#fb7185;">€0 / ngày</div>
-            <div class="s-sub" id="log-daily-co2-sub">Phát thải vận hành: 0 kg CO₂e/ngày</div>
-          </div>
-          <div class="stat-box">
-            <div class="s-label">SỐ TIỀN MẤT NẾU BÁN TỪ KHO TỔNG 03</div>
-            <div class="s-value" id="log-direct-loss" style="color:#f43f5e;">-€372.50 / đơn</div>
-            <div class="s-sub">Bỏ tích "Sales from Sloc 3 / Use 03" ở Ngày 2 khi kho vùng có hàng!</div>
+            <div class="s-label">VẬN HÀNH/NGÀY &amp; BẪY KHO TỔNG 03</div>
+            <div class="s-value" id="log-daily-total-cost" style="color:#fbbf24;">€0 / ngày</div>
+            <div class="s-sub"><span id="log-daily-co2-sub">0 kg/ngày</span> • Bán từ 03 mất <strong id="log-direct-loss" style="color:#fb7185;">-€372.50/đơn</strong> (<span id="log-eff-tax">€0.10/kg</span>)</div>
           </div>
         </div>
+
+        <!-- Smart PO Timing Banner -->
+        <div id="po-timing-banner" class="alert-card" style="margin-bottom: 0.85rem;"></div>
 
         <!-- 6 Dairy Products Vendor, Auto MD61 Target & Pricing Solver Table -->
         <div class="stat-box" style="margin-bottom: 0.85rem; border-left: 3px solid #3b82f6; background: rgba(30, 58, 138, 0.16);">
@@ -271,31 +278,32 @@
               </label>
               <div style="display:flex; align-items:center; gap:0.35rem; font-size:0.78rem;">
                 <span>Phủ hàng:</span>
-                <input type="number" id="log-coverage-days" class="form-control" value="8" min="0" max="15" step="0.5" style="width:60px; padding:0.2rem 0.4rem;" />
+                <input type="number" id="log-coverage-days" class="form-control" value="9" min="0" max="15" step="0.5" style="width:60px; padding:0.2rem 0.4rem;" />
                 <span>ngày</span>
               </div>
               <div style="display:flex; align-items:center; gap:0.35rem; font-size:0.78rem;">
                 <span>Chế độ ZMB1B:</span>
-                <select id="log-zmb1b-mode" class="form-control" style="padding:0.2rem 0.4rem; font-size:0.75rem; width:135px;">
+                <select id="log-zmb1b-mode" class="form-control" style="padding:0.2rem 0.4rem; font-size:0.75rem; width:145px;">
                   <option value="PULL" selected>PULL (Định mức tồn)</option>
-                  <option value="PUSH">PUSH (Lượng đẩy/lần)</option>
+                  <option value="PUSH">PUSH (Bù vùng thiếu)</option>
                 </select>
               </div>
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:0.35rem;">
-              <button class="btn btn-outline" id="btn-md61-preset-start" style="padding:0.23rem 0.5rem; font-size:0.72rem;">Khai cuộc (6 ngày)</button>
-              <button class="btn btn-primary" id="btn-md61-preset-normal" style="padding:0.23rem 0.5rem; font-size:0.72rem;">Chuẩn V04 (8 ngày)</button>
-              <button class="btn btn-outline" id="btn-md61-preset-endgame" style="padding:0.23rem 0.5rem; font-size:0.72rem; border-color:#f43f5e; color:#fb7185;">3 Ngày Cuối (Xả kho = 0)</button>
+              <button class="btn btn-outline" id="btn-md61-preset-r1d1" style="padding:0.23rem 0.5rem; font-size:0.72rem; border-color:#34d399; color:#6ee7b7;">🚀 Khai Cuộc H1-N1 (3,000u)</button>
+              <button class="btn btn-outline" id="btn-md61-preset-start" style="padding:0.23rem 0.5rem; font-size:0.72rem;">Ổn Định (300u/ngày)</button>
+              <button class="btn btn-primary" id="btn-md61-preset-top1" style="padding:0.23rem 0.5rem; font-size:0.72rem;">🔥 Đua Top 1 (362u/ngày)</button>
+              <button class="btn btn-outline" id="btn-md61-preset-endgame" style="padding:0.23rem 0.5rem; font-size:0.72rem; border-color:#f43f5e; color:#fb7185;">🏁 3 Ngày Cuối (Khóa AAA+)</button>
             </div>
           </div>
           <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.5rem; margin-top:0.55rem; padding-top:0.45rem; border-top:1px solid rgba(148,163,184,0.18);">
             <div style="font-size:0.74rem; color:#cbd5e1;" id="zmb1b-live-recommendation">
-              Khuyến nghị ZMB1B: Chế độ <strong>PULL</strong> • Chu kỳ <strong>2 ngày/lần</strong> • <strong>BỎ TÍCH Use 03</strong> từ Ngày 2 trở đi!
+              Khuyến nghị ZMB1B: Chế độ <strong>PULL</strong> • Chu kỳ <strong>2 ngày/lần</strong> • <strong>BỎ TÍCH Sales from SLoc 03 ngay từ Ngày 1</strong> để giữ chuẩn xanh AAA+!
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:0.4rem; align-items:center;">
               <button class="btn btn-outline" id="btn-copy-md61" style="padding:0.2rem 0.55rem; font-size:0.72rem; border-color:#60a5fa; color:#93c5fd;">📋 Copy 6 Số MD61</button>
               <button class="btn btn-outline" id="btn-copy-vk32" style="padding:0.2rem 0.55rem; font-size:0.72rem; border-color:#10b981; color:#6ee7b7;">📋 Copy 6 Giá VK32</button>
-              <button class="btn btn-outline" id="btn-copy-zmb1b" style="padding:0.2rem 0.55rem; font-size:0.72rem; border-color:#f59e0b; color:#fcd34d;">📋 Copy Bảng ZMB1B</button>
+              <button class="btn btn-outline" id="btn-copy-zmb1b" style="padding:0.2rem 0.55rem; font-size:0.72rem; border-color:#f59e0b; color:#fcd34d;">📋 Copy Bảng ZMB1B (6×3)</button>
               <span id="copy-toast-msg" style="font-size:0.72rem; color:#34d399; font-weight:700;"></span>
             </div>
           </div>
@@ -360,9 +368,14 @@
               Nhập Giá kỳ trước (P₁), Sản lượng bán kỳ trước (Q₁), Giá hiện tại (P₂), Sản lượng bán hiện tại (Q₂ từ <code>ZVC2</code>) và Tồn kho còn lại (<code>ZMB52</code>) cho 6 mặt hàng Sữa (<code>$$-T01..T06</code>). Hệ thống tự động giải độ co giãn thực nghiệm và tìm mức giá tối đa hóa lợi nhuận ròng trên Kênh 16!
             </p>
           </div>
-          <button class="btn btn-emerald" id="btn-apply-optimal-prices">
-            Áp Dụng Toàn Bộ Giá Tối Ưu P*
-          </button>
+          <div style="display:flex; gap:0.45rem; align-items:center; flex-wrap:wrap;">
+            <button class="btn btn-outline" id="btn-copy-tab2-vk32" style="border-color:#10b981; color:#6ee7b7;">
+              📋 Copy 6 Giá P* VK32
+            </button>
+            <button class="btn btn-emerald" id="btn-apply-optimal-prices">
+              Áp Dụng Toàn Bộ Giá Tối Ưu P*
+            </button>
+          </div>
         </div>
 
         <div class="formula-box">
@@ -423,6 +436,12 @@
               Theo Trang 18 &amp; 31 <em>Participant's Guide</em>: Thị hiếu của 12 cửa hàng tại 3 vùng <strong>North (NO - 03N)</strong>, <strong>South (SO - 03S)</strong>, <strong>West (WE - 03W)</strong> đối với 6 mặt hàng sữa là <strong>cố định suốt cả trận đấu</strong>. Nhập lượng bán từng vùng từ báo cáo <code>ZVA05</code> vào bảng dưới để nhận chính xác con số cần gõ vào <code>ZMB1B</code>!
             </p>
           </div>
+          <div style="display:flex; gap:0.45rem; align-items:center;">
+            <button class="btn btn-outline" id="btn-copy-tab2-zmb1b" style="border-color:#f59e0b; color:#fcd34d;">
+              📋 Copy Bảng ZMB1B (6×3 số)
+            </button>
+            <span id="tab2-copy-toast" style="font-size:0.74rem; color:#34d399; font-weight:700;"></span>
+          </div>
         </div>
 
         <div class="table-wrap">
@@ -457,12 +476,15 @@
             <div class="panel-title">
               Nhập Chỉ Số Tài Chính <span class="badge-tcode">F.01</span> <span class="badge-tcode emerald">ZVAL</span>
             </div>
-            <div style="display:flex; gap:0.4rem;">
+            <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+              <button class="btn btn-primary" id="btn-load-team-e-r2" style="padding: 0.3rem 0.55rem; font-size: 0.72rem;">
+                ⭐ Thực Chiến Team E (Hết R2)
+              </button>
               <button class="btn btn-outline" id="btn-load-start-demo" style="padding: 0.3rem 0.55rem; font-size: 0.72rem;">
                 Khai Cuộc (AAA+)
               </button>
               <button class="btn btn-outline" id="btn-load-endgame-demo" style="padding: 0.3rem 0.55rem; font-size: 0.72rem;">
-                Mẫu Giữa Trận
+                Mẫu Nợ Cao
               </button>
             </div>
           </div>
@@ -470,11 +492,11 @@
           <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
             <div class="form-group">
               <label>Lợi nhuận lũy kế (Net Income €)</label>
-              <input type="number" id="val-profit" class="form-control" value="18000" step="2000" />
+              <input type="number" id="val-profit" class="form-control" value="21314.85" step="1000" />
             </div>
             <div class="form-group">
               <label>Số ngày đã chạy (Elapsed Days)</label>
-              <input type="number" id="val-elapsed" class="form-control" value="10" min="1" max="120" />
+              <input type="number" id="val-elapsed" class="form-control" value="20" min="1" max="120" />
             </div>
             <div class="form-group">
               <label>Chuẩn Năm Tài Chính (8 Hiệp = 80 Ngày)</label>
@@ -484,9 +506,19 @@
               <label>Số ngày / Round</label>
               <input type="number" id="val-steps-round" class="form-control" value="10" min="5" max="30" />
             </div>
-            <div class="form-group" style="grid-column: span 2;">
-              <label>Market Risk Rate (% - Mặc định 7.0%)</label>
+            <div class="form-group">
+              <label>CO₂e / Hộp Đã Bán (kg/unit)</label>
+              <input type="number" id="val-co2-unit" class="form-control" value="3.48" step="0.10" />
+            </div>
+            <div class="form-group">
+              <label>Market Risk Rate (% - Chuẩn 7.0%)</label>
               <input type="number" id="val-mkt-risk" class="form-control" value="7.0" step="0.25" />
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; color:#34d399;">
+                <input type="checkbox" id="val-use-esg" checked />
+                <strong>Áp dụng cổng tín dụng xanh ESG Preset 3 (CO₂e/unit &le; 4.25 = AAA+, &gt; 4.25 bị hạ xuống AA+ / AA / AA-)</strong>
+              </label>
             </div>
           </div>
 
@@ -697,7 +729,7 @@
           <div class="stat-box" style="border-top: 3px solid #f59e0b;">
             <div class="s-label">BƯỚC 5: CHUYỂN KHO VÙNG</div>
             <div class="s-value" style="font-size:1.05rem;">ZMB1B</div>
-            <div class="s-sub">Chọn <strong>Push/Pull</strong>, Frequency = <strong>2–3 ngày</strong>. <strong>Bỏ tích Sales from Sloc 3 (Use 03)</strong> từ Ngày 2 khi kho vùng có hàng &rarr; <strong>Save</strong>.</div>
+            <div class="s-sub">Chọn <strong>Pull</strong>, Scheduling = <strong>2–3 ngày</strong>. <strong>BỎ TÍCH Sales from SLoc 03 ngay từ Ngày 1</strong>, dán bảng 6×3 số &rarr; <strong>Save</strong>.</div>
           </div>
           <div class="stat-box" style="border-top: 3px solid #8b5cf6;">
             <div class="s-label">BƯỚC 6: ĐỊNH GIÁ BÁN LẺ</div>
@@ -837,9 +869,9 @@
           </div>
 
           <div class="stat-box" style="border-left: 3px solid #f43f5e;">
-            <strong style="color:#fb7185; font-size:0.84rem;">4. Bộ Lọc <code>Min Qty</code> Khi Tạm Bật <code>Sales from Sloc 3</code> Ở Ngày 1 (Job Aid Preset 3)</strong>
+            <strong style="color:#fb7185; font-size:0.84rem;">4. Cái Bẫy Mặc Định Chết Người Trong <code>ZMB1B</code> Lúc Mở Màn &amp; Cổng Tín Dụng Xanh ESG (<code>CO₂e/unit &le; 4.25</code>)</strong>
             <p style="font-size:0.78rem; color:#cbd5e1; margin-top:0.35rem;">
-              Trong <code>ZMB1B</code>, bên cạnh ô <code>Sales from Sloc 3 (Use 03)</code> có ô <strong><code>Min Qty</code></strong>. Ở Ngày 1 Hiệp 1 (khi hàng chưa kịp ra kho vùng), nếu bật <code>Use 03</code> mà để <code>Min Qty</code> quá nhỏ, bot khách hàng đặt đơn lẻ 10–15 hộp cũng được xuất từ kho <code>03</code> và bị trừ cứng <strong>€350 + 300kg CO₂e/đơn</strong> (lỗ nặng!). Hãy đặt <strong><code>Min Qty = 80</code></strong> trong Ngày 1 để chỉ nhận đơn sỉ lớn, và <strong>bỏ tích <code>Sales from Sloc 3</code> ngay đầu Ngày 2</strong>!
+              Khi mới vào Hiệp 1 Ngày 1, màn hình <code>ZMB1B</code> mặc định để bảng 3 miền trống trơn <code>0 | 0 | 0</code> nhưng lại <strong>tích sẵn <code>Sales from SLoc 03</code> với <code>Minimum Quantity = 10</code></strong>! Nếu không sửa ngay trong 30 giây đầu, toàn bộ hàng sẽ xuất lẻ từ kho <code>03</code>, mất <strong>-€350 + 300kg CO₂e/đơn</strong> và đẩy chỉ số <code>CO₂e per Unit Sold</code> vượt ngưỡng <strong>4.25 kg/hộp</strong> &rarr; bị hệ thống ESG hạ bậc tín dụng từ <code>AAA+ (6.0%)</code> xuống <code>AA+ / AA / AA-</code> dù không hề vay nợ! <strong>Giải pháp:</strong> Bỏ tích <code>Sales from SLoc 03</code> ngay từ Ngày 1!
             </p>
           </div>
 
