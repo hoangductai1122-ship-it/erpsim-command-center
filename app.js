@@ -675,65 +675,85 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function parseAndSyncAnySapReport(rawText, statusEl) {
     const parsed = ERPsimEngine.parseSapTableText(rawText);
-    if (!parsed.records || parsed.records.length === 0) {
-      if (statusEl) {
-        statusEl.style.color = '#fb7185';
-        statusEl.textContent = 'Không tìm thấy dòng dữ liệu hợp lệ. Hãy chắc chắn dòng đầu tiên là tiêu đề cột từ SAP.';
-      }
-      return;
-    }
-
     const headersUpper = (parsed.headers || []).map(h => h.toUpperCase());
-    const isZmb52Only = headersUpper.includes('SLOC') && headersUpper.includes('STOCK') && !headersUpper.includes('PRICE') && !headersUpper.includes('VALUE');
+    let isZmb52Only = headersUpper.includes('STOCK') && (headersUpper.includes('SLOC') || headersUpper.includes('LOCATION') || headersUpper.includes('RESERVED')) && !headersUpper.includes('PRICE') && !headersUpper.includes('VALUE');
     const isZme2nOnly = headersUpper.includes('STATUS') && (headersUpper.includes('RECEPTION') || headersUpper.includes('VENDOR'));
 
     const dairyAgg = {};
     let matchedRows = 0;
 
-    parsed.records.forEach(rec => {
-      const rawSku = (rec.Material || rec.MATERIAL || rec.SKU || '').trim();
-      const dairyMatch = rawSku.match(/T0[1-6]$/i);
-      if (!dairyMatch) return;
+    if (parsed.records && parsed.records.length > 0) {
+      parsed.records.forEach(rec => {
+        const rawSku = (rec.Material || rec.MATERIAL || rec.SKU || '').trim();
+        const dairyMatch = rawSku.match(/T0[1-6]$/i);
+        if (!dairyMatch) return;
 
-      const dCode = dairyMatch[0].toUpperCase();
-      if (!dairyAgg[dCode]) {
-        dairyAgg[dCode] = { NO: 0, SO: 0, WE: 0, totalQty: 0, stockSum: 0, openPoSum: 0, lastPrice: null, lastInv: null, daysSet: new Set() };
-      }
+        const dCode = dairyMatch[0].toUpperCase();
+        if (!dairyAgg[dCode]) {
+          dairyAgg[dCode] = { NO: 0, SO: 0, WE: 0, totalQty: 0, stockSum: 0, openPoSum: 0, lastPrice: null, lastInv: null, daysSet: new Set() };
+        }
 
-      const dayKey = `${rec.Rnd || rec.Round || '1'}_${rec.Day || '1'}`;
-      if (rec.Day !== undefined && rec.Day !== '') {
-        dairyAgg[dCode].daysSet.add(dayKey);
-      }
+        const dayKey = `${rec.Rnd || rec.Round || '1'}_${rec.Day || '1'}`;
+        if (rec.Day !== undefined && rec.Day !== '') {
+          dairyAgg[dCode].daysSet.add(dayKey);
+        }
 
-      if (isZmb52Only) {
-        const stQty = ERPsimEngine.parseSapNumber(rec.Stock || rec.Qty) || 0;
+        if (isZmb52Only) {
+          const stQty = ERPsimEngine.parseSapNumber(rec.Stock || rec.STOCK || rec.Qty) || 0;
+          dairyAgg[dCode].stockSum += stQty;
+        } else if (isZme2nOnly) {
+          const stStatus = String(rec.Status || '').toUpperCase();
+          if (!stStatus.includes('DELIVERED')) {
+            const poQty = ERPsimEngine.parseSapNumber(rec.Quantity || rec.Qty) || 0;
+            dairyAgg[dCode].openPoSum += poQty;
+          }
+        } else {
+          const qty = ERPsimEngine.parseSapNumber(rec.Qty || rec.Quantity) || 0;
+          const area = (rec.Area || rec.Region || '').trim().toUpperCase();
+
+          if (area.includes('N')) dairyAgg[dCode].NO += qty;
+          else if (area.includes('S')) dairyAgg[dCode].SO += qty;
+          else if (area.includes('W')) dairyAgg[dCode].WE += qty;
+
+          dairyAgg[dCode].totalQty += qty;
+          if (rec.Price !== undefined && rec.Price !== '') {
+            const parsedP = ERPsimEngine.parseSapNumber(rec.Price);
+            if (Number.isFinite(parsedP)) dairyAgg[dCode].lastPrice = parsedP;
+          }
+          if (rec.Inventory !== undefined && rec.Inventory !== '') {
+            const parsedInv = ERPsimEngine.parseSapNumber(rec.Inventory);
+            if (Number.isFinite(parsedInv)) dairyAgg[dCode].lastInv = parsedInv;
+          }
+        }
+        matchedRows++;
+      });
+    }
+
+    // Fallback: Raw SAP Fiori Ctrl+A / drag-select extractor for ZMB52 Inventory Report (even without headers or with newlines per cell!)
+    if (matchedRows === 0 && rawText && rawText.trim()) {
+      const fiorRegex = /[A-Z0-9]{1,3}-(T0[1-6])[\s\t|]+(?:Milk|Cream|Yoghurt|Cheese|Butter|Ice\s*Cream)[\s\t|]+([0-9.,]+)/gi;
+      let m;
+      while ((m = fiorRegex.exec(rawText)) !== null) {
+        const dCode = m[1].toUpperCase();
+        const stQty = ERPsimEngine.parseSapNumber(m[2]) || 0;
+        if (!dairyAgg[dCode]) {
+          dairyAgg[dCode] = { NO: 0, SO: 0, WE: 0, totalQty: 0, stockSum: 0, openPoSum: 0, lastPrice: null, lastInv: null, daysSet: new Set() };
+        }
         dairyAgg[dCode].stockSum += stQty;
-      } else if (isZme2nOnly) {
-        const stStatus = String(rec.Status || '').toUpperCase();
-        if (!stStatus.includes('DELIVERED')) {
-          const poQty = ERPsimEngine.parseSapNumber(rec.Quantity || rec.Qty) || 0;
-          dairyAgg[dCode].openPoSum += poQty;
-        }
-      } else {
-        const qty = ERPsimEngine.parseSapNumber(rec.Qty || rec.Quantity) || 0;
-        const area = (rec.Area || rec.Region || '').trim().toUpperCase();
-
-        if (area.includes('N')) dairyAgg[dCode].NO += qty;
-        else if (area.includes('S')) dairyAgg[dCode].SO += qty;
-        else if (area.includes('W')) dairyAgg[dCode].WE += qty;
-
-        dairyAgg[dCode].totalQty += qty;
-        if (rec.Price !== undefined && rec.Price !== '') {
-          const parsedP = ERPsimEngine.parseSapNumber(rec.Price);
-          if (Number.isFinite(parsedP)) dairyAgg[dCode].lastPrice = parsedP;
-        }
-        if (rec.Inventory !== undefined && rec.Inventory !== '') {
-          const parsedInv = ERPsimEngine.parseSapNumber(rec.Inventory);
-          if (Number.isFinite(parsedInv)) dairyAgg[dCode].lastInv = parsedInv;
-        }
+        matchedRows++;
       }
-      matchedRows++;
-    });
+      if (matchedRows > 0) {
+        isZmb52Only = true;
+      }
+    }
+
+    if (matchedRows === 0) {
+      if (statusEl) {
+        statusEl.style.color = '#fb7185';
+        statusEl.textContent = 'Không tìm thấy dòng dữ liệu T01..T06 hợp lệ. Hãy bấm Ctrl+A, Ctrl+C trên bảng SAP (hoặc bấm biểu tượng Xuất/Copy góc trên bên phải bảng Fiori) rồi dán vào đây.';
+      }
+      return;
+    }
 
     Object.keys(dairyAgg).forEach(code => {
       const agg = dairyAgg[code];
