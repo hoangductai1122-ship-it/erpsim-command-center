@@ -395,8 +395,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-copy-zmb1b').addEventListener('click', () => {
-    const text = lastSolvedAnalysis.map(s => `${s.code}\t${s.zmb1bTargetNO}\t${s.zmb1bTargetSO}\t${s.zmb1bTargetWE}`).join('\n');
-    navigator.clipboard.writeText(text).then(() => showCopyToast('✅ Đã copy bảng phân bổ ZMB1B (03N / 03S / 03W)!'));
+    const text = lastSolvedAnalysis.map(s => `${s.zmb1bTargetNO}\t${s.zmb1bTargetSO}\t${s.zmb1bTargetWE}`).join('\n');
+    navigator.clipboard.writeText(text).then(() => showCopyToast('✅ Đã copy đúng 6×3 số ZMB1B (North / South / West — không kèm mã SP)!'));
   });
 
   document.getElementById('btn-toggle-quick-paste').addEventListener('click', () => {
@@ -709,15 +709,16 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         } else {
           const qty = ERPsimEngine.parseSapNumber(rec.Qty || rec.Quantity) || 0;
-          const area = (rec.Area || rec.Region || '').trim().toUpperCase();
+          const area = (rec.Area || rec.Region || rec.Location || '').trim().toUpperCase();
 
           if (area.includes('N')) dairyAgg[dCode].NO += qty;
           else if (area.includes('S')) dairyAgg[dCode].SO += qty;
           else if (area.includes('W')) dairyAgg[dCode].WE += qty;
 
           dairyAgg[dCode].totalQty += qty;
-          if (rec.Price !== undefined && rec.Price !== '') {
-            const parsedP = ERPsimEngine.parseSapNumber(rec.Price);
+          const rawPrice = rec['Net Price'] !== undefined && rec['Net Price'] !== '' ? rec['Net Price'] : rec.Price;
+          if (rawPrice !== undefined && rawPrice !== '') {
+            const parsedP = ERPsimEngine.parseSapNumber(rawPrice);
             if (Number.isFinite(parsedP)) dairyAgg[dCode].lastPrice = parsedP;
           }
           if (rec.Inventory !== undefined && rec.Inventory !== '') {
