@@ -457,3 +457,269 @@ table.data-table tr.active-tier td {
   color: var(--text-muted);
   margin-top: 0.2rem;
 }
+
+/* ==========================================================================
+   VISUAL SAP FIORI SHORTCUT DOCK, INLINE PILLS & INTERACTIVE HOTSPOT MODAL
+   ========================================================================== */
+.fiori-shortcut-dock {
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.95), rgba(11, 17, 30, 0.95));
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.9rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.fiori-dock-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
+.fiori-dock-scroll {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(126px, 1fr));
+  gap: 0.5rem;
+}
+
+.fiori-dock-scroll.collapsed {
+  display: none;
+}
+
+.fiori-shortcut-card {
+  position: relative;
+  background: #0b111e;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  padding: 0;
+  color: var(--text-main);
+}
+
+.fiori-shortcut-card:hover {
+  transform: translateY(-2px);
+  border-color: #60a5fa;
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.28);
+}
+
+.fiori-shortcut-card.trap-warn {
+  border-color: rgba(245, 158, 11, 0.55);
+}
+
+.fiori-shortcut-thumb {
+  width: 100%;
+  height: 56px;
+  object-fit: cover;
+  object-position: top left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  filter: brightness(0.92) contrast(1.08);
+  transition: filter 0.16s ease;
+}
+
+.fiori-shortcut-card:hover .fiori-shortcut-thumb {
+  filter: brightness(1.08) contrast(1.12);
+}
+
+.fiori-shortcut-meta {
+  padding: 0.32rem 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.fiori-shortcut-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.fiori-shortcut-code {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #60a5fa;
+}
+
+.fiori-shortcut-step {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.fiori-shortcut-title {
+  font-size: 0.67rem;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Inline miniature camera button next to T-codes & Copy buttons */
+.btn-fiori-eye {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  padding: 0.14rem 0.42rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: rgba(59, 130, 246, 0.16);
+  color: #93c5fd;
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  vertical-align: middle;
+}
+
+.btn-fiori-eye:hover {
+  background: rgba(59, 130, 246, 0.32);
+  color: #fff;
+  border-color: #60a5fa;
+}
+
+/* Interactive Lightbox Modal with Pulsing Hotspots */
+.fiori-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 8, 18, 0.86);
+  backdrop-filter: blur(5px);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.fiori-modal-backdrop.open {
+  display: flex;
+}
+
+.fiori-modal-dialog {
+  background: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 12px;
+  max-width: 1280px;
+  width: 100%;
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75);
+}
+
+.fiori-modal-header {
+  padding: 0.75rem 1.1rem;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.fiori-modal-body {
+  padding: 0.9rem 1.1rem;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 310px;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .fiori-modal-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fiori-canvas-wrap {
+  position: relative;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #050811;
+}
+
+.fiori-canvas-wrap img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.fiori-hotspot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-width: 26px;
+  height: 26px;
+  padding: 0 0.42rem;
+  border-radius: 999px;
+  background: #10b981;
+  color: #04130d;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.38), 0 4px 12px rgba(0, 0, 0, 0.65);
+  pointer-events: auto;
+  cursor: pointer;
+  animation: pulseHotspot 1.8s infinite;
+  white-space: nowrap;
+}
+
+.fiori-hotspot.danger {
+  background: #f43f5e;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.45), 0 4px 12px rgba(0, 0, 0, 0.65);
+}
+
+@keyframes pulseHotspot {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.fiori-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.fiori-step-item {
+  background: #172033;
+  border: 1px solid #334155;
+  border-left: 3px solid #10b981;
+  border-radius: 7px;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.78rem;
+  color: #e2e8f0;
+}
+
+.fiori-step-item.danger {
+  border-left-color: #f43f5e;
+  background: rgba(244, 63, 94, 0.1);
+}
+
+.fiori-nav-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0.55rem 1.1rem;
+  background: #0b111e;
+  border-top: 1px solid #334155;
+}

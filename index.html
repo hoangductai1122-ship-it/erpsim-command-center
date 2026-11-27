@@ -119,6 +119,9 @@
               </label>
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">
+              <button class="btn btn-outline" id="btn-open-fiori-tour" style="padding:0.28rem 0.65rem; font-size:0.75rem; border-color:#60a5fa; color:#93c5fd;">
+                📸 Mở Hướng Dẫn Ảnh Nút Bấm (11 Màn Fiori)
+              </button>
               <button class="btn btn-emerald" id="btn-toggle-quick-paste" style="padding:0.28rem 0.65rem; font-size:0.75rem;">
                 📥 Dán Nhanh Bảng SAP (ZMB52 / ZVC2 / ZVA05)
               </button>
@@ -129,7 +132,11 @@
           <div id="tab1-quick-paste-drawer" style="display:none; margin-top:0.75rem; padding-top:0.75rem; border-top:1px dashed var(--border);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem; flex-wrap:wrap; gap:0.5rem;">
               <span style="font-size:0.76rem; color:#93c5fd;">
-                <strong>⚡ DÁN BẤT KỲ BẢNG SAP NÀO VÀO ĐÂY:</strong> Hệ thống tự nhận diện <code>ZMB52</code> (Tồn kho 4 kho), <code>ZVC2</code> (Tốc độ bán TB/ngày), <code>ZVA05</code> (Tỷ lệ 3 miền NO/SO/WE &amp; Giá bán), hoặc <code>ZME2N</code> (Đơn PO đang về)!
+                <strong>⚡ DÁN BẤT KỲ BẢNG SAP NÀO VÀO ĐÂY:</strong> Xem mẫu màn hình thật:
+                <button type="button" class="btn-fiori-eye" data-fiori="ZMB52">🖼️ ZMB52</button>
+                <button type="button" class="btn-fiori-eye" data-fiori="ZVA05">🖼️ ZVA05</button>
+                <button type="button" class="btn-fiori-eye" data-fiori="ZVC2">🖼️ ZVC2</button>
+                <button type="button" class="btn-fiori-eye" data-fiori="ZME2N">🖼️ ZME2N</button>
               </span>
               <div style="display:flex; gap:0.4rem;">
                 <button class="btn btn-outline" id="btn-tab1-sample-paste" style="padding:0.2rem 0.5rem; font-size:0.72rem;">Nạp Mẫu Thử</button>
@@ -139,6 +146,20 @@
             <textarea id="tab1-raw-paste" class="form-control" rows="4" style="font-family:var(--font-mono); font-size:0.74rem;" placeholder="Ctrl+A, Ctrl+C từ màn hình ZMB52, ZVC2 hoặc ZVA05 trên SAP rồi Ctrl+V vào đây..."></textarea>
             <div id="tab1-paste-status" style="font-size:0.74rem; color:#34d399; margin-top:0.35rem; font-weight:600;"></div>
           </div>
+        </div>
+
+        <!-- Pinned Visual SAP Fiori Shortcut Dock (All 11 Official Screens) -->
+        <div class="fiori-shortcut-dock">
+          <div class="fiori-dock-header">
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <strong style="font-size:0.8rem; color:#60a5fa;">📸 SHORTCUT HÌNH ẢNH THAO TÁC TRỰC QUAN SAP FIORI (Bấm vào ảnh để phóng to &amp; xem vị trí nút bấm):</strong>
+              <span style="font-size:0.72rem; color:#94a3b8;">Đúng theo thứ tự thao tác thi thật của Đội E</span>
+            </div>
+            <button type="button" class="btn btn-outline" id="btn-toggle-fiori-dock" style="padding:0.16rem 0.5rem; font-size:0.7rem;">
+              Thu gọn / Hiện ảnh
+            </button>
+          </div>
+          <div class="fiori-dock-scroll" id="fiori-dock-grid"></div>
         </div>
 
         <!-- Controls & Active Disruptor Switches -->
@@ -160,11 +181,11 @@
                 <input type="number" id="log-po-lot" class="form-control" value="900" step="100" />
               </div>
               <div class="form-group">
-                <label>Tổng Tồn Kho 4 Kho (ZMB52)</label>
+                <label>Tổng Tồn Kho 4 Kho <button type="button" class="btn-fiori-eye" data-fiori="ZMB52">🖼️ ZMB52</button></label>
                 <input type="number" id="log-total-stock" class="form-control" value="1500" step="100" />
               </div>
               <div class="form-group">
-                <label>Số chuyến ZMB1B / ngày</label>
+                <label>Số chuyến ZMB1B / ngày <button type="button" class="btn-fiori-eye" data-fiori="ZMB1B">🖼️ ZMB1B</button></label>
                 <input type="number" id="log-transfers-day" class="form-control" value="1.5" min="0" max="20" step="0.5" />
               </div>
               <div class="form-group">
@@ -172,7 +193,7 @@
                 <input type="number" id="log-reg-orders" class="form-control" value="8" min="0" max="100" />
               </div>
               <div class="form-group">
-                <label>Tiền mặt 113300 hiện có (€)</label>
+                <label>Tiền mặt 113300 (€) <button type="button" class="btn-fiori-eye" data-fiori="F01">🖼️ F.01</button></label>
                 <input type="number" id="log-available-cash" class="form-control" value="250000" step="25000" />
               </div>
               <input type="hidden" id="log-dir-orders" value="0" />
@@ -302,8 +323,12 @@
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:0.4rem; align-items:center;">
               <button class="btn btn-outline" id="btn-copy-md61" style="padding:0.2rem 0.55rem; font-size:0.72rem; border-color:#60a5fa; color:#93c5fd;">📋 Copy 6 Số MD61</button>
+              <button type="button" class="btn-fiori-eye" data-fiori="MD61" title="Xem ảnh màn hình MD61">🖼️ MD61</button>
+              <button type="button" class="btn-fiori-eye" data-fiori="ME59N" title="Xem ảnh màn hình ME59N">🖼️ ME59N</button>
               <button class="btn btn-outline" id="btn-copy-vk32" style="padding:0.2rem 0.55rem; font-size:0.72rem; border-color:#10b981; color:#6ee7b7;">📋 Copy 6 Giá VK32</button>
+              <button type="button" class="btn-fiori-eye" data-fiori="VK32" title="Xem ảnh màn hình VK32">🖼️ VK32</button>
               <button class="btn btn-outline" id="btn-copy-zmb1b" style="padding:0.2rem 0.55rem; font-size:0.72rem; border-color:#f59e0b; color:#fcd34d;">📋 Copy Bảng ZMB1B (6×3)</button>
+              <button type="button" class="btn-fiori-eye" data-fiori="ZMB1B" title="Xem ảnh màn hình ZMB1B">🖼️ ZMB1B</button>
               <span id="copy-toast-msg" style="font-size:0.72rem; color:#34d399; font-weight:700;"></span>
             </div>
           </div>
@@ -318,13 +343,13 @@
                 <th>CO₂/Unit (V04 | V08)</th>
                 <th>Giá Vốn Thực (V04)</th>
                 <th>Giá Vốn Thực (V08)</th>
-                <th>CHỌN NCC (ZME12)</th>
-                <th>Bán TB/ngày (ZVC2)</th>
-                <th>Tồn ZMB52 + Đang Về</th>
+                <th>CHỌN NCC <button type="button" class="btn-fiori-eye" data-fiori="ZME12">🖼️ ZME12</button></th>
+                <th>Bán TB/ngày <button type="button" class="btn-fiori-eye" data-fiori="ZVC2">🖼️ ZVC2</button></th>
+                <th>Tồn Kho <button type="button" class="btn-fiori-eye" data-fiori="ZMB52">🖼️ ZMB52</button></th>
                 <th style="background:rgba(16,185,129,0.14);color:#6ee7b7;">LƯỢNG ĐẶT THÊM</th>
-                <th style="background:#1e3a8a;color:#93c5fd;">CON SỐ GÕ VÀO MD61</th>
-                <th>ZMB1B (03N | 03S | 03W)</th>
-                <th>GIÁ TỐI ƯU VK32 (DC 16)</th>
+                <th style="background:#1e3a8a;color:#93c5fd;">CON SỐ MD61 <button type="button" class="btn-fiori-eye" data-fiori="MD61">🖼️</button></th>
+                <th>ZMB1B (N | S | W) <button type="button" class="btn-fiori-eye" data-fiori="ZMB1B">🖼️</button></th>
+                <th>GIÁ VK32 (DC 16) <button type="button" class="btn-fiori-eye" data-fiori="VK32">🖼️</button></th>
                 <th>Lãi Ròng /Unit</th>
               </tr>
             </thead>
@@ -474,7 +499,7 @@
         <div class="panel">
           <div class="panel-header">
             <div class="panel-title">
-              Nhập Chỉ Số Tài Chính <span class="badge-tcode">F.01</span> <span class="badge-tcode emerald">ZVAL</span>
+              Nhập Chỉ Số Tài Chính <button type="button" class="btn-fiori-eye" data-fiori="F01">🖼️ Xem màn hình F.01</button> <span class="badge-tcode emerald">ZVAL</span>
             </div>
             <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
               <button class="btn btn-primary" id="btn-load-team-e-r2" style="padding: 0.3rem 0.55rem; font-size: 0.72rem;">
@@ -708,32 +733,32 @@
         <div class="stat-grid">
           <div class="stat-box" style="border-top: 3px solid #3b82f6;">
             <div class="s-label">BƯỚC 1: TỒN KHO MỤC TIÊU</div>
-            <div class="s-value" style="font-size:1.05rem;">MD61</div>
+            <div class="s-value" style="font-size:1.05rem;">MD61 <button type="button" class="btn-fiori-eye" data-fiori="MD61">🖼️ Xem ảnh</button></div>
             <div class="s-sub">Chọn <code>Product group</code> = <strong>$$-T</strong> &rarr; Nhập <strong>Mức Tồn Kho Mục Tiêu (Tồn + Mua)</strong> vào <strong>cột ngày thứ 2</strong> &rarr; Bấm <strong>Save</strong>.</div>
           </div>
           <div class="stat-box" style="border-top: 3px solid #06b6d4;">
             <div class="s-label">BƯỚC 2: CHẠY TÍNH TOÁN MRP</div>
-            <div class="s-value" style="font-size:1.05rem;">MD01</div>
+            <div class="s-value" style="font-size:1.05rem;">MD01 <button type="button" class="btn-fiori-eye" data-fiori="MD01">🖼️ Xem ảnh</button></div>
             <div class="s-sub">Bấm <strong>Enter / Execute</strong> &rarr; Bỏ qua cảnh báo màu cam, bấm <strong>Enter thêm 2 lần nữa</strong> &rarr; Ở cửa sổ pop-up bấm <strong>Continue</strong>.</div>
           </div>
           <div class="stat-box" style="border-top: 3px solid #ec4899;">
             <div class="s-label">BƯỚC 3: CHỌN NHÀ CUNG CẤP</div>
-            <div class="s-value" style="font-size:1.05rem;">ZME12</div>
+            <div class="s-value" style="font-size:1.05rem;">ZME12 <button type="button" class="btn-fiori-eye" data-fiori="ZME12">🖼️ Xem ảnh</button></div>
             <div class="s-sub">Bấm nút <strong>Assign Source of Supply</strong> &rarr; Gán <strong>V04</strong> (hoặc V08) cho cả 6 mặt hàng Dairy &rarr; Bấm <strong>Save</strong>.</div>
           </div>
           <div class="stat-box" style="border-top: 3px solid #f43f5e;">
             <div class="s-label">BƯỚC 4: TẠO ĐƠN MUA PO</div>
-            <div class="s-value" style="font-size:1.05rem;">ME59N</div>
+            <div class="s-value" style="font-size:1.05rem;">ME59N <button type="button" class="btn-fiori-eye" data-fiori="ME59N">🖼️ Xem ảnh</button></div>
             <div class="s-sub">Đảm bảo ô <code>Fixed Vendor</code> để trống (và bỏ tích <code>Test Run</code>) &rarr; Bấm <strong>Execute (F8)</strong> để gộp cả 6 mã vào 1 PO duy nhất!</div>
           </div>
           <div class="stat-box" style="border-top: 3px solid #f59e0b;">
             <div class="s-label">BƯỚC 5: CHUYỂN KHO VÙNG</div>
-            <div class="s-value" style="font-size:1.05rem;">ZMB1B</div>
+            <div class="s-value" style="font-size:1.05rem;">ZMB1B <button type="button" class="btn-fiori-eye" data-fiori="ZMB1B">🖼️ Xem ảnh</button></div>
             <div class="s-sub">Chọn <strong>Pull</strong>, Scheduling = <strong>2–3 ngày</strong>. <strong>BỎ TÍCH Sales from SLoc 03 ngay từ Ngày 1</strong>, dán bảng 6×3 số &rarr; <strong>Save</strong>.</div>
           </div>
           <div class="stat-box" style="border-top: 3px solid #8b5cf6;">
             <div class="s-label">BƯỚC 6: ĐỊNH GIÁ BÁN LẺ</div>
-            <div class="s-value" style="font-size:1.05rem;">VK32</div>
+            <div class="s-value" style="font-size:1.05rem;">VK32 <button type="button" class="btn-fiori-eye" data-fiori="VK32">🖼️ Xem ảnh</button></div>
             <div class="s-sub">Mở <code>Prices &rarr; Price List</code> &rarr; Kiểm tra <strong>Distribution Channel = 16</strong> &rarr; <strong>Execute</strong> &rarr; Sửa giá 6 mã &rarr; <strong>Save &amp; F3</strong>.</div>
           </div>
         </div>
@@ -907,6 +932,41 @@
     </section>
 
   </main>
+
+  <!-- INTERACTIVE SAP FIORI SCREENSHOT LIGHTBOX MODAL WITH PULSING CALLOUT HOTSPOTS -->
+  <div class="fiori-modal-backdrop" id="fiori-modal" role="dialog" aria-modal="true">
+    <div class="fiori-modal-dialog">
+      <div class="fiori-modal-header">
+        <div>
+          <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+            <span class="badge-tcode emerald" id="fiori-modal-code" style="font-size:0.85rem;">VK32</span>
+            <strong id="fiori-modal-title" style="font-size:0.98rem; color:#f8fafc;">Sửa Bảng Giá Bán Lẻ (Change Condition Records)</strong>
+          </div>
+          <div id="fiori-modal-subtitle" style="font-size:0.75rem; color:#94a3b8; margin-top:0.15rem;"></div>
+        </div>
+        <div style="display:flex; gap:0.4rem; align-items:center;">
+          <button type="button" class="btn btn-outline" id="fiori-modal-prev" style="padding:0.28rem 0.65rem; font-size:0.76rem;">◀ Màn trước</button>
+          <button type="button" class="btn btn-primary" id="fiori-modal-next" style="padding:0.28rem 0.65rem; font-size:0.76rem;">Màn tiếp theo ▶</button>
+          <button type="button" class="btn btn-outline" id="fiori-modal-close" style="padding:0.28rem 0.65rem; font-size:0.76rem; border-color:#f43f5e; color:#fb7185;">✕ Đóng (ESC)</button>
+        </div>
+      </div>
+
+      <div class="fiori-modal-body">
+        <div class="fiori-canvas-wrap" id="fiori-canvas-wrap">
+          <img id="fiori-modal-img" src="" alt="SAP Fiori Official Screen" />
+          <div id="fiori-hotspots-layer"></div>
+        </div>
+        <div>
+          <div style="font-size:0.8rem; font-weight:800; color:#60a5fa; margin-bottom:0.55rem;">
+            🎯 CÁC ĐIỂM PHẢI BẤM TRÊN MÀN HÌNH NÀY:
+          </div>
+          <div class="fiori-steps-list" id="fiori-modal-steps"></div>
+        </div>
+      </div>
+
+      <div class="fiori-nav-pills" id="fiori-modal-pills"></div>
+    </div>
+  </div>
 
   <script src="erpsim_engine.js"></script>
   <script src="app.js"></script>

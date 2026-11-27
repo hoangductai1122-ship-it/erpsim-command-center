@@ -1088,7 +1088,292 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Initial render of all Preset 3 modules
+  // =========================================================================
+  // INTERACTIVE SAP FIORI VISUAL SHORTCUT DOCK & HOTSPOT LIGHTBOX ENGINE
+  // Uses the 11 official SAP Fiori competition screenshots in repo root
+  // =========================================================================
+  const FIORI_SCREENS = [
+    {
+      key: 'VK32',
+      stepBadge: 'Phút 1',
+      shortTitle: 'Sửa Giá Bán (DC 16)',
+      fullTitle: 'VK32 — Sửa Bảng Giá Bán Lẻ (Change Condition Records)',
+      subtitle: 'Người 1 phụ trách • Bấm ngay giây đầu tiên Hiệp 1 & đầu mỗi Hiệp mới (Nhớ Exit sau khi Save!)',
+      img: '1795745897076_198706489928851749_85406405293001931_ba5a7ee41dc5ebeaf0cd2733ff8af35b.jpg',
+      hotspots: [
+        { x: 6, y: 20, label: '① Price List', danger: false, desc: 'Cây bên trái chọn <strong>Prices &rarr; Price List</strong> (kiểm tra tiêu đề đúng <code>Distribution Channel: 16 Retailers</code>).' },
+        { x: 41, y: 40, label: '② Dán 6 Giá', danger: false, desc: 'Bấm <strong>📋 Copy 6 Giá VK32</strong> trên Dashboard rồi nhập/dán đè vào cột <strong>Amount</strong> của <code>EE-T01 .. EE-T06</code>.' },
+        { x: 96, y: 96, label: '③ Save', danger: false, desc: 'Bấm nút xanh <strong>Save</strong> góc dưới phải.' },
+        { x: 96.5, y: 11, label: '④ Exit!', danger: true, desc: '<strong>BẮT BUỘC bấm Exit</strong> góc trên phải ngay sau khi Save để không khóa màn hình của đồng đội!' }
+      ]
+    },
+    {
+      key: 'ZMB1B',
+      stepBadge: '⚠️ Bẫy N1',
+      trapWarn: true,
+      shortTitle: 'Chia 3 Miền (Bẫy 03!)',
+      fullTitle: 'ZMB1B — Điều Phối Chuyển Kho 3 Miền (Stock Transfer Planning)',
+      subtitle: 'Người 2 phụ trách • PHÁ BẪY MẶC ĐỊNH NGAY NGÀY 1 (Đang tích sẵn Sales from SLoc 03 + Min Qty 10!)',
+      img: '1795745689511_198706489928851749_85406405293001931_afd1ac0950d28709c8a6ef0bb2fc0532.jpg',
+      hotspots: [
+        { x: 5, y: 23.5, label: '① Chọn Pull', danger: false, desc: 'Chuyển từ <code>Push</code> sang nút tròn <strong>Pull</strong> (tự bù đúng định mức thiếu của từng kho vùng).' },
+        { x: 15.5, y: 20, label: '② 2 days', danger: false, desc: 'Đổi <strong>Scheduling</strong> từ <code>3</code> xuống <strong>2 days</strong> (lên <code>3 days</code> nếu gặp thuế Carbon cao / Hub Gridlock).' },
+        { x: 26.5, y: 20, label: '⚠️ BỎ TÍCH NGAY!', danger: true, desc: '<strong>CÁI BẪY CHẾT NGƯỜI:</strong> Mặc định đang tích <code>Sales from SLoc 03</code> với <code>Min Qty = 10</code>! <strong>BỎ TÍCH NGAY LẬP TỨC</strong> để không mất -€372/đơn &amp; hỏng hạng AAA+!' },
+        { x: 23, y: 42, label: '③ Dán 6×3 số', danger: false, desc: 'Click vào ô đầu tiên cột <strong>North</strong> (dòng <code>EE-T01 Milk</code>) &rarr; nhấn <code>Ctrl+V</code> dán ma trận <strong>6×3 số ZMB1B</strong> từ Dashboard.' },
+        { x: 93, y: 97, label: '④ Save', danger: false, desc: 'Bấm nút xanh <strong>Save</strong> góc dưới phải.' }
+      ]
+    },
+    {
+      key: 'MD61',
+      stepBadge: 'Mua B1',
+      shortTitle: 'Nhập Đích Tồn Kho',
+      fullTitle: 'MD61 — Bước 1 Mua Hàng: Nhập Tồn Kho Mục Tiêu (PIR)',
+      subtitle: 'Người 3 phụ trách • Chạy vào Ngày 4 & Ngày 7 mỗi hiệp (Tổng 6 số ≤ 3,950 hộp!)',
+      img: '1795745571417_198706489928851749_85406405293001931_9410f4a860a8c411bbb16482a33d0843.jpg',
+      hotspots: [
+        { x: 4, y: 31, label: '① Tích tròn 2!', danger: true, desc: '<strong>NHÌN KỸ:</strong> Bấm chọn nút tròn thứ 2 <strong>Product group</strong> (mặc định đang chọn <code>Material</code> — quên đổi sẽ báo lỗi!).' },
+        { x: 22, y: 31, label: '② Gõ EE-T', danger: false, desc: 'Gõ <strong>EE-T</strong> (Mã đội của bạn + <code>-T</code>) vào ô <code>Product group</code>. Giữ nguyên <code>Plant: EE</code>, <code>Version: 00</code>, <code>M Month</code>.' },
+        { x: 90.5, y: 97, label: '③ Continue → Cột 2', danger: false, desc: 'Bấm <strong>Continue</strong> &rarr; Sang bảng tiếp theo, dán <strong>6 Số MD61</strong> vào <strong>CỘT THÁNG THỨ 2</strong> (cột kế tiếp) &rarr; Bấm <strong>Save</strong>!' }
+      ]
+    },
+    {
+      key: 'MD01',
+      stepBadge: 'Mua B2',
+      shortTitle: 'Chạy Tính MRP',
+      fullTitle: 'MD01 — Bước 2 Mua Hàng: Chạy Tính Toán Nhu Cầu (MRP Run)',
+      subtitle: 'Người 3 phụ trách • Bấm ngay sau khi Save màn hình MD61',
+      img: '1795745586833_198706489928851749_85406405293001931_03547c6d33c1be6ba1291b8186aa78b9.jpg',
+      hotspots: [
+        { x: 18, y: 39, label: '① Không sửa gì!', danger: false, desc: 'Toàn bộ thông số <code>EE / NEUPL / 1 / 3 / 1 / 3 / 1</code> đã được cài chuẩn 100% — <strong>không sửa bất kỳ ô nào</strong>!' },
+        { x: 96, y: 97, label: '② Execute + Enter×2', danger: false, desc: 'Bấm nút xanh <strong>Execute</strong> &rarr; Nhấn phím <strong>Enter 2 lần</strong> để vượt qua dòng cảnh báo vàng/cam &rarr; Bấm <strong>Continue</strong> ở hộp thoại.' }
+      ]
+    },
+    {
+      key: 'ZME12',
+      stepBadge: 'Mua B3',
+      shortTitle: 'Chọn NCC V04/V08',
+      fullTitle: 'ZME12 — Bước 3 Mua Hàng: Chọn Nhà Cung Cấp (Procurement Sourcing)',
+      subtitle: 'Người 3 phụ trách • Mặc định đã tích sẵn V04 cho cả 6 mã (chỉ đổi khi Dashboard báo ALL_V08)',
+      img: '1795745621490_198706489928851749_85406405293001931_35bace28b0c04e50f176171184e414a3.jpg',
+      hotspots: [
+        { x: 53, y: 26, label: '① Tích cùng 1 NCC', danger: false, desc: 'Mặc định cả 6 dòng đầu đã tích sẵn <strong>V04</strong>. Giữ cả 6 mã ở <strong>cùng 1 NCC</strong> để <code>ME59N</code> gộp thành 1 đơn PO duy nhất!' },
+        { x: 17.5, y: 11, label: '② Assign Source', danger: false, desc: 'Nếu bạn đổi dấu tích sang <code>V08</code> (do Event 3), nhớ bấm nút <strong>Assign Source of Supply</strong> phía trên để lưu.' },
+        { x: 86, y: 25, label: '③ Phí PO & CO₂', danger: false, desc: 'Bảng bên phải hiện rõ phí cố định: <code>V04 = €1,000 + 100kg</code> | <code>V08 = €600 + 400kg</code>.' }
+      ]
+    },
+    {
+      key: 'ME59N',
+      stepBadge: 'Mua B4',
+      shortTitle: 'Chốt Tạo Đơn PO',
+      fullTitle: 'ME59N — Bước 4 Mua Hàng: Phát Hành Đơn Đặt Hàng Gộp (Create PO)',
+      subtitle: 'Người 3 phụ trách • Kiểm tra Cash (F.01) đủ tiền trước khi bấm! Ngừng bấm từ Ngày 8 Hiệp Cuối!',
+      img: '1795745635224_198706489928851749_85406405293001931_34bdec129c28564f19a9179f71c6ad28.jpg',
+      hotspots: [
+        { x: 23, y: 24, label: '① Để TRỐNG!', danger: true, desc: 'Ô <strong>Fixed Vendor PHẢI ĐỂ TRỐNG</strong> (hệ thống sẽ tự lấy V04/V08 từ ZME12).' },
+        { x: 5, y: 76.5, label: '② Bỏ tích Test Run!', danger: true, desc: 'Đảm bảo ô <strong>Test Run KHÔNG ĐƯỢC TÍCH</strong> (nếu tích thì chỉ chạy thử chứ không tạo đơn thật!).' },
+        { x: 96, y: 97, label: '③ Execute', danger: false, desc: 'Bấm nút xanh <strong>Execute</strong> góc dưới phải &rarr; Hệ thống tạo ra <strong>1 số PO duy nhất</strong> chứa đủ 6 mặt hàng!' }
+      ]
+    },
+    {
+      key: 'ZMB52',
+      stepBadge: 'Soi Kho',
+      shortTitle: 'Tồn Kho 4 Kho',
+      fullTitle: 'ZMB52 — Báo Cáo Tồn Kho 4 Kho (Inventory Report)',
+      subtitle: 'Người 2 phụ trách • Ctrl+A, Ctrl+C dán thẳng vào nút 📥 Dán Nhanh trên Dashboard!',
+      img: '1795745703856_198706489928851749_85406405293001931_ab30dc0a5c880fed20fdee4be1203378.jpg',
+      hotspots: [
+        { x: 84, y: 16.5, label: '① Refresh 🔄', danger: false, desc: 'Bấm nút <strong>🔄 Refresh</strong> đầu tiên bên trái cụm icon để lấy tồn kho mới nhất.' },
+        { x: 93, y: 28.5, label: '② Trần 4,000!', danger: true, desc: 'Canh kỹ <strong>Warehouse Capacity &le; 4,000</strong>. Vượt 4,001 là mất ngay €300 + 500kg CO₂e/ngày!' },
+        { x: 30, y: 45, label: '③ Ctrl+A, Ctrl+C', danger: false, desc: 'Click vào bảng &rarr; nhấn <strong>Ctrl+A, Ctrl+C</strong> &rarr; dán vào Dashboard để tự đọc tồn <code>03, 03N, 03S, 03W</code> và báo đỏ kho vùng nào đang đứt hàng!' }
+      ]
+    },
+    {
+      key: 'ZVA05',
+      stepBadge: 'Soi 3 Miền',
+      shortTitle: 'Doanh Số 3 Miền',
+      fullTitle: 'ZVA05 — Báo Cáo Bán Hàng Chi Tiết 3 Miền (Sales Report)',
+      subtitle: 'Người 1 phụ trách • Mở cuối Ngày 3 Hiệp 1, Ctrl+A Ctrl+C dán vào Dashboard để khóa tỷ lệ NO : SO : WE!',
+      img: '1795745973136_198706489928851749_85406405293001931_72a8b504212a1e7c6129b2647654a423.jpg',
+      hotspots: [
+        { x: 84, y: 16.5, label: '① Refresh 🔄', danger: false, desc: 'Bấm <strong>🔄 Refresh</strong> để tải toàn bộ hóa đơn bán hàng tại 3 miền.' },
+        { x: 18, y: 24, label: '② Area & Location', danger: false, desc: 'Cột <strong>Area (NO/SO/WE)</strong> và <strong>Net Price</strong> giúp Dashboard giải ra chính xác thị hiếu cố định suốt 4 hiệp của 12 cửa hàng!' },
+        { x: 96.5, y: 16.5, label: '③ Copy / Export', danger: false, desc: 'Bấm <strong>Ctrl+A, Ctrl+C</strong> trên bảng (hoặc nút Export ngoài cùng bên phải) rồi dán vào ô <strong>📥 Dán Nhanh</strong>.' }
+      ]
+    },
+    {
+      key: 'ZVC2',
+      stepBadge: 'Tốc Độ Bán',
+      shortTitle: 'Tổng Hợp Bán/Ngày',
+      fullTitle: 'ZVC2 — Báo Cáo Tổng Hợp Đơn Bán Theo Ngày (Summary Sales Order Report)',
+      subtitle: 'Người 1 phụ trách • Soi tốc độ tiêu thụ mỗi ngày & phát hiện sớm mã bán quá chạy',
+      img: '1795745954807_198706489928851749_85406405293001931_b4a12b62383a0efa24a260109132e7a0.jpg',
+      hotspots: [
+        { x: 84, y: 16.5, label: '① Refresh 🔄', danger: false, desc: 'Bấm <strong>🔄 Refresh</strong> mỗi 2–3 ngày để cập nhật sản lượng bán.' },
+        { x: 39, y: 28, label: '② Quantity & Net Value', danger: false, desc: 'Nhấn <strong>Ctrl+A, Ctrl+C</strong> dán vào Dashboard: hệ thống tự chia trung bình theo số ngày để điền cột <strong>Bán TB/ngày</strong>!' }
+      ]
+    },
+    {
+      key: 'ZME2N',
+      stepBadge: 'Đơn Đang Về',
+      shortTitle: 'Theo Dõi Đơn PO',
+      fullTitle: 'ZME2N — Theo Dõi Trạng Thái Đơn Mua Hàng (Purchase Order Tracking)',
+      subtitle: 'Người 3 phụ trách • Kiểm tra sau khi bấm ME59N để biết ngày hàng về & tránh đặt trùng!',
+      img: '1795745651934_198706489928851749_85406405293001931_f8de88d43bf8caed381dbee32fbd7c2b.jpg',
+      hotspots: [
+        { x: 33, y: 28, label: '① Status', danger: false, desc: '<code>Unconfirmed / Expected</code> = hàng đang trên đường về; <code>Delivered</code> = đã vào Kho <code>03</code>.' },
+        { x: 41, y: 28, label: '② Reception', danger: false, desc: 'Ngày hàng cập Kho <code>03</code>. Nếu dán bảng này vào Dashboard, máy chỉ cộng các dòng chưa <code>Delivered</code> (không bao giờ cộng trùng!).' }
+      ]
+    },
+    {
+      key: 'F01',
+      stepBadge: 'Tiền & Nợ',
+      shortTitle: 'Tiền Mặt 113300',
+      fullTitle: 'F.01 — Bảng Cân Đối Kế Toán & Lãi Lỗ (Balance Sheet / Income Statement)',
+      subtitle: 'Người 4 phụ trách • Luôn soi dòng 113300 Bank Cash > €0 trước khi cho phép bấm ME59N!',
+      img: '1795745995550_198706489928851749_85406405293001931_76e8e55657d7be8b7ece36e184c40b16.jpg',
+      hotspots: [
+        { x: 8, y: 21, label: '① Company: EE', danger: false, desc: 'Nhập mã công ty đội bạn (ví dụ <strong>EE</strong>).' },
+        { x: 32, y: 21, label: '② Version: SIM1', danger: true, desc: '<strong>BẮT BUỘC gõ SIM1</strong> vào ô <code>Statement Version</code> và chọn <code>Currency = EUR</code>!' },
+        { x: 89.2, y: 21, label: '③ Bấm Go', danger: false, desc: 'Bấm nút xanh <strong>Go</strong> &rarr; Chuyển sang tab <strong>Balance Sheet</strong> để lấy số dư <code>113300 Bank Cash</code> nhập vào Dashboard!' }
+      ]
+    }
+  ];
+
+  let currentFioriIdx = 0;
+
+  function openFioriModalByKey(key) {
+    const idx = FIORI_SCREENS.findIndex(s => s.key === key);
+    openFioriModalByIndex(idx >= 0 ? idx : 0);
+  }
+
+  function openFioriModalByIndex(idx) {
+    currentFioriIdx = (idx + FIORI_SCREENS.length) % FIORI_SCREENS.length;
+    const item = FIORI_SCREENS[currentFioriIdx];
+    const modal = document.getElementById('fiori-modal');
+    if (!modal) return;
+
+    document.getElementById('fiori-modal-code').textContent = item.key === 'F01' ? 'F.01' : item.key;
+    document.getElementById('fiori-modal-title').textContent = item.fullTitle;
+    document.getElementById('fiori-modal-subtitle').textContent = item.subtitle;
+    const imgEl = document.getElementById('fiori-modal-img');
+    imgEl.src = item.img;
+    imgEl.alt = item.fullTitle;
+
+    const hsLayer = document.getElementById('fiori-hotspots-layer');
+    hsLayer.innerHTML = item.hotspots.map((h, i) => `
+      <div class="fiori-hotspot ${h.danger ? 'danger' : ''}" style="left:${h.x}%; top:${h.y}%;" data-hs-idx="${i}" title="${h.label}">
+        ${h.label}
+      </div>
+    `).join('');
+
+    const stepsEl = document.getElementById('fiori-modal-steps');
+    stepsEl.innerHTML = item.hotspots.map((h, i) => `
+      <div class="fiori-step-item ${h.danger ? 'danger' : ''}" id="fiori-step-card-${i}">
+        <div style="font-weight:800; color:${h.danger ? '#fb7185' : '#34d399'}; margin-bottom:0.18rem;">${h.label}</div>
+        <div>${h.desc}</div>
+      </div>
+    `).join('');
+
+    hsLayer.querySelectorAll('.fiori-hotspot').forEach(hs => {
+      hs.addEventListener('click', () => {
+        const card = document.getElementById(`fiori-step-card-${hs.dataset.hsIdx}`);
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          card.style.outline = '2px solid #60a5fa';
+          setTimeout(() => { card.style.outline = 'none'; }, 1200);
+        }
+      });
+    });
+
+    const pillsEl = document.getElementById('fiori-modal-pills');
+    pillsEl.innerHTML = FIORI_SCREENS.map((s, i) => {
+      const active = i === currentFioriIdx;
+      const label = s.key === 'F01' ? 'F.01' : s.key;
+      return `<button type="button" class="btn ${active ? 'btn-primary' : 'btn-outline'} fiori-pill-jump" data-idx="${i}" style="padding:0.2rem 0.55rem; font-size:0.72rem;">${i + 1}. ${label} (${s.shortTitle})</button>`;
+    }).join('');
+
+    pillsEl.querySelectorAll('.fiori-pill-jump').forEach(b => {
+      b.addEventListener('click', () => openFioriModalByIndex(Number(b.dataset.idx)));
+    });
+
+    modal.classList.add('open');
+  }
+
+  function initFioriVisualShortcuts() {
+    const dockGrid = document.getElementById('fiori-dock-grid');
+    if (dockGrid) {
+      dockGrid.innerHTML = FIORI_SCREENS.map((s, i) => {
+        const codeLabel = s.key === 'F01' ? 'F.01' : s.key;
+        return `
+          <button type="button" class="fiori-shortcut-card ${s.trapWarn ? 'trap-warn' : ''}" data-idx="${i}" title="Bấm để phóng to màn hình ${codeLabel} và xem các nút cần bấm">
+            <img class="fiori-shortcut-thumb" src="${s.img}" alt="${codeLabel}" loading="lazy" />
+            <div class="fiori-shortcut-meta">
+              <div class="fiori-shortcut-top">
+                <span class="fiori-shortcut-code">${codeLabel}</span>
+                <span class="fiori-shortcut-step" style="${s.trapWarn ? 'background:rgba(244,63,94,0.25);color:#fb7185;' : ''}">${s.stepBadge}</span>
+              </div>
+              <div class="fiori-shortcut-title">${s.shortTitle}</div>
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      dockGrid.querySelectorAll('.fiori-shortcut-card').forEach(card => {
+        card.addEventListener('click', () => openFioriModalByIndex(Number(card.dataset.idx)));
+      });
+    }
+
+    const btnToggleDock = document.getElementById('btn-toggle-fiori-dock');
+    if (btnToggleDock && dockGrid) {
+      btnToggleDock.addEventListener('click', () => {
+        dockGrid.classList.toggle('collapsed');
+      });
+    }
+
+    const btnTour = document.getElementById('btn-open-fiori-tour');
+    if (btnTour) {
+      btnTour.addEventListener('click', () => openFioriModalByIndex(0));
+    }
+
+    // Delegate clicks on any inline .btn-fiori-eye anywhere on the page!
+    document.body.addEventListener('click', (e) => {
+      const eyeBtn = e.target.closest('.btn-fiori-eye');
+      if (eyeBtn && eyeBtn.dataset.fiori) {
+        e.preventDefault();
+        openFioriModalByKey(eyeBtn.dataset.fiori);
+      }
+    });
+
+    const modal = document.getElementById('fiori-modal');
+    const closeBtn = document.getElementById('fiori-modal-close');
+    const prevBtn = document.getElementById('fiori-modal-prev');
+    const nextBtn = document.getElementById('fiori-modal-next');
+
+    if (closeBtn && modal) {
+      closeBtn.addEventListener('click', () => modal.classList.remove('open'));
+    }
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => openFioriModalByIndex(currentFioriIdx - 1));
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => openFioriModalByIndex(currentFioriIdx + 1));
+    }
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('open');
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (!modal || !modal.classList.contains('open')) return;
+      if (e.key === 'Escape') modal.classList.remove('open');
+      else if (e.key === 'ArrowRight') openFioriModalByIndex(currentFioriIdx + 1);
+      else if (e.key === 'ArrowLeft') openFioriModalByIndex(currentFioriIdx - 1);
+    });
+  }
+
+  // Initial render of all Preset 3 modules & Visual Fiori Shortcuts
+  initFioriVisualShortcuts();
   updateLogisticsPreset3Module();
   updateValuationModule();
 });
